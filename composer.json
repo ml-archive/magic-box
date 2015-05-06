@@ -1,0 +1,25 @@
+{
+	"name": "fuzz/magic-box",
+	"description": "A magical implementation of Laravel's Eloquent models as injectable, masked resource respositories.",
+	"require": {
+		"illuminate/database": "~5.0",
+		"fuzz/laravel-data": "5.0.x-dev"
+	},
+	"authors": [
+		{
+			"name": "Fuzz Productions",
+			"email": "fuzzweb@fuzzproductions.com"
+		}
+	],
+	"repositories": [
+		{
+			"type": "vcs",
+			"url": "git@gitlab.fuzzhq.com:web-modules/laravel-data.git"
+		}
+	],
+	"autoload": {
+		"psr-4": {
+			"Fuzz\\MagicBox\\": "src/"
+		}
+	}
+}
