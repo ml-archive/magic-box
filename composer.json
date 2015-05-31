@@ -5,6 +5,9 @@
 		"illuminate/database": "~5.0",
 		"fuzz/laravel-data": "5.0.x-dev"
 	},
+	"require-dev": {
+		"orchestra/testbench": "3.0.*"
+	},
 	"authors": [
 		{
 			"name": "Fuzz Productions",
@@ -15,11 +18,17 @@
 		{
 			"type": "vcs",
 			"url": "git@gitlab.fuzzhq.com:web-modules/laravel-data.git"
+		},
+		{
+			"type": "composer",
+			"url": "https://satis.fuzzhq.com"
 		}
 	],
 	"autoload": {
 		"psr-4": {
-			"Fuzz\\MagicBox\\": "src/"
+			"Fuzz\\MagicBox\\": "src/",
+			"Fuzz\\MagicBox\\Tests\\": "tests/"
 		}
-	}
+	},
+	"minimum-stability": "dev"
 }
