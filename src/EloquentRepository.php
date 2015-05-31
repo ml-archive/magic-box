@@ -100,7 +100,7 @@ class EloquentRepository
 	 * @param int $id
 	 * @return \Fuzz\Data\Eloquent\Model
 	 */
-	final protected function find($id)
+	final public function find($id)
 	{
 		return $this->baseQuery()->find($id);
 	}
@@ -111,7 +111,7 @@ class EloquentRepository
 	 * @param int $id
 	 * @return \Fuzz\Data\Eloquent\Model
 	 */
-	final protected function findOrFail($id)
+	final public function findOrFail($id)
 	{
 		return $this->baseQuery()->findOrFail($id);
 	}
@@ -221,7 +221,7 @@ class EloquentRepository
 
 				// Set foreign keys on the children from the parent, and save.
 				foreach ($input as $sub_input) {
-					$sub_input[$relation->getPlainForeignKey()] = $parent->id;
+					$sub_input[$relation->getPlainForeignKey()] = $parent->{self::KEY_NAME};
 					$model_resource_controller->setInput($sub_input)->save();
 				}
 				break;
@@ -229,7 +229,9 @@ class EloquentRepository
 				// The parent model "owns" the child model; if we have a new and/or different
 				// existing child model, delete the old one.
 				$current = $relation->getResults();
-				if (! is_null($current) && $current->{self::KEY_NAME} !== intval($input[self::KEY_NAME])) {
+				if (! is_null($current)
+					&& (! isset($input[self::KEY_NAME]) || $current->{self::KEY_NAME} !== intval($input[self::KEY_NAME]))
+				) {
 					$relation->delete();
 				}
 
@@ -242,7 +244,7 @@ class EloquentRepository
 				$ids = [];
 
 				foreach ($input as $sub_input) {
-					$id = $model_resource_controller->setInput($sub_input)->save()->id;
+					$id = $model_resource_controller->setInput($sub_input)->save()->{self::KEY_NAME};
 
 					// If we were passed pivot data, pass it through accordingly.
 					if (isset($sub_input['pivot'])) {
