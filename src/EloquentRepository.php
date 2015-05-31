@@ -3,6 +3,7 @@
 namespace Fuzz\MagicBox;
 
 use Fuzz\Data\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class EloquentRepository
 {
@@ -12,13 +13,6 @@ class EloquentRepository
 	 * @var string
 	 */
 	private $model_class;
-
-	/**
-	 * Required input fields.
-	 *
-	 * @var array
-	 */
-	private $required_input_fields = [];
 
 	/**
 	 * An instance variable specifying the input passed to model instances.
@@ -55,29 +49,6 @@ class EloquentRepository
 	}
 
 	/**
-	 * Set the required input fields.
-	 *
-	 * @param array $required_input_fields
-	 * @return static
-	 */
-	public function setRequiredInputFields($required_input_fields)
-	{
-		$this->required_input_fields = $required_input_fields;
-
-		return $this;
-	}
-
-	/**
-	 * Get the required input fields.
-	 *
-	 * @return array
-	 */
-	public function getRequiredInputFields()
-	{
-		return $this->required_input_fields;
-	}
-
-	/**
 	 * Set input manually.
 	 *
 	 * @param array $input
@@ -86,12 +57,6 @@ class EloquentRepository
 	 */
 	public function setInput(array $input)
 	{
-		$missing_required = array_diff($this->getRequiredInputFields(), array_keys(array_filter($input)));
-
-		if (count($missing_required) > 0) {
-			throw new \InvalidArgumentException(sprintf('Missing required fields: [%s]', implode('], [', $missing_required)));
-		}
-
 		$this->input = $input;
 
 		return $this;
@@ -114,7 +79,12 @@ class EloquentRepository
 	 */
 	protected function baseQuery()
 	{
-		return forward_static_call($this->getModelClass(), 'query');
+		return forward_static_call(
+			[
+				$this->getModelClass(),
+				'query'
+			]
+		);
 	}
 
 	/**
@@ -146,8 +116,11 @@ class EloquentRepository
 	 */
 	final protected function getInputId()
 	{
-		$primary_key = forward_static_call($this->getModelClass(), 'newInstance')->getKeyName();
-		$input       = $this->getInput();
+		$model_class   = $this->getModelClass();
+		$temp_instance = new $model_class;
+		$primary_key   = $temp_instance->getKeyName();
+		unset($temp_instance);
+		$input = $this->getInput();
 
 		if (! array_key_exists($primary_key, $input)) {
 			throw new \LogicException('ID is not specified in input.');
@@ -161,10 +134,55 @@ class EloquentRepository
 	 *
 	 * @param \Fuzz\Data\Eloquent\Model $instance
 	 * @return mixed
+	 * @todo support more relationship types, such as polymorphic ones!
 	 */
 	final protected function fill(Model $instance)
 	{
-		// @todo
+		$input            = $this->getInput();
+		$model_fields     = $instance->getFields();
+		$before_relations = [];
+		$after_relations  = [];
+
+		foreach ($input as $key => $value) {
+			if (method_exists($instance, $key)) {
+				$relation = $instance->$key();
+				if ($relation instanceof Relation) {
+					$relation_type = get_class($relation);
+					switch ($relation_type) {
+						case 'Illuminate\Database\Eloquent\Relations\HasOne':
+						case 'Illuminate\Database\Eloquent\Relations\HasMany':
+						case 'Illuminate\Database\Eloquent\Relations\BelongsToMany':
+							$after_relations[] = compact('relation_type', 'relation', 'value');
+							break;
+						case 'Illuminate\Database\Eloquent\Relations\BelongsTo':
+							$before_relations[] = compact('relation_type', 'relation', 'value');
+							break;
+					}
+				}
+			} elseif (in_array($key, $model_fields) || $instance->hasSetMutator($key)) {
+				$instance->$key = $value;
+			}
+		}
+
+		foreach ($before_relations as $before_relation) {
+			switch ($before_relation['relation_type']) {
+				case 'Illuminate\Database\Eloquent\Relations\BelongsTo':
+					$target_model_class        = get_class($before_relation['relation']->getQuery()->getModel());
+					$model_resource_controller = new self;
+					$related                   = $model_resource_controller->setModelClass($target_model_class)
+						->setInput($before_relation['value'])->save();
+					$before_relation['relation']->associate($related);
+					break;
+			}
+		}
+
+		$instance->save();
+
+		foreach ($after_relations as $after_relation) {
+			// … @todo
+		}
+
+		return true;
 	}
 
 	/**
@@ -174,7 +192,8 @@ class EloquentRepository
 	 */
 	final public function create()
 	{
-		$instance = forward_static_call($this->getModelClass(), 'newInstance');
+		$model_class = $this->getModelClass();
+		$instance    = new $model_class;
 		$this->fill($instance);
 
 		return $instance;
@@ -213,5 +232,17 @@ class EloquentRepository
 		$instance = $this->read();
 
 		return $instance->delete();
+	}
+
+	/**
+	 * Save a model, regardless of whether or not it is "new".
+	 *
+	 * @return \Fuzz\Data\Eloquent\Model
+	 */
+	final public function save()
+	{
+		$input = $this->getInput();
+
+		return isset($input['id']) ? $this->update() : $this->create();
 	}
 }
