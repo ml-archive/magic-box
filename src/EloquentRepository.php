@@ -22,6 +22,13 @@ class EloquentRepository
 	private $input;
 
 	/**
+	 * The key name used in all queries.
+	 *
+	 * @var int
+	 */
+	const KEY_NAME = 'id';
+
+	/**
 	 * Set the model for an instance of this resource controller.
 	 *
 	 * @param string $model_class
@@ -114,19 +121,15 @@ class EloquentRepository
 	 *
 	 * @return mixed
 	 */
-	final protected function getInputId()
+	final public function getInputId()
 	{
-		$model_class   = $this->getModelClass();
-		$temp_instance = new $model_class;
-		$primary_key   = $temp_instance->getKeyName();
-		unset($temp_instance);
 		$input = $this->getInput();
 
-		if (! array_key_exists($primary_key, $input)) {
+		if (! array_key_exists(self::KEY_NAME, $input)) {
 			throw new \LogicException('ID is not specified in input.');
 		}
 
-		return $input[$primary_key];
+		return $input[self::KEY_NAME];
 	}
 
 	/**
@@ -147,15 +150,15 @@ class EloquentRepository
 			if (method_exists($instance, $key)) {
 				$relation = $instance->$key();
 				if ($relation instanceof Relation) {
-					$relation_type = get_class($relation);
+					$relation_type = class_basename($relation);
 					switch ($relation_type) {
-						case 'Illuminate\Database\Eloquent\Relations\HasOne':
-						case 'Illuminate\Database\Eloquent\Relations\HasMany':
-						case 'Illuminate\Database\Eloquent\Relations\BelongsToMany':
-							$after_relations[] = compact('relation_type', 'relation', 'value');
+						case 'BelongsTo':
+							$before_relations[] = compact('relation', 'value');
 							break;
-						case 'Illuminate\Database\Eloquent\Relations\BelongsTo':
-							$before_relations[] = compact('relation_type', 'relation', 'value');
+						case 'HasOne':
+						case 'HasMany':
+						case 'BelongsToMany':
+							$after_relations[] = compact('relation', 'value');
 							break;
 					}
 				}
@@ -164,25 +167,95 @@ class EloquentRepository
 			}
 		}
 
-		foreach ($before_relations as $before_relation) {
-			switch ($before_relation['relation_type']) {
-				case 'Illuminate\Database\Eloquent\Relations\BelongsTo':
-					$target_model_class        = get_class($before_relation['relation']->getQuery()->getModel());
-					$model_resource_controller = new self;
-					$related                   = $model_resource_controller->setModelClass($target_model_class)
-						->setInput($before_relation['value'])->save();
-					$before_relation['relation']->associate($related);
-					break;
-			}
-		}
-
+		$this->applyRelations($before_relations, $instance);
 		$instance->save();
-
-		foreach ($after_relations as $after_relation) {
-			// … @todo
-		}
+		$this->applyRelations($after_relations, $instance);
 
 		return true;
+	}
+
+	/**
+	 * Apply relations from an array to an instance model.
+	 *
+	 * @param array                     $specs
+	 * @param \Fuzz\Data\Eloquent\Model $instance
+	 * @return void
+	 */
+	final protected function applyRelations(array $specs, Model $instance)
+	{
+		foreach ($specs as $spec) {
+			$this->cascadeRelation($spec['relation'], $spec['value'], $instance);
+		}
+	}
+
+	/**
+	 * Cascade relations through saves on a model.
+	 *
+	 * @param \Illuminate\Database\Eloquent\Relations\Relation $relation
+	 * @param array                                            $input
+	 * @param \Fuzz\Data\Eloquent\Model                        $parent
+	 *
+	 * @return void
+	 */
+	final protected function cascadeRelation(Relation $relation, array $input, Model $parent = null)
+	{
+		// Make a child repository for containing the cascaded relationship through saves
+		$target_model_class        = get_class($relation->getQuery()->getModel());
+		$model_resource_controller = (new self)->setModelClass($target_model_class);
+
+		switch (class_basename($relation)) {
+			case 'BelongsTo':
+				// For BelongsTo, simply associate by foreign key.
+				// (We don't have to assume the parent model exists to do this.)
+				$related = $model_resource_controller->setInput($input)->save();
+				$relation->associate($related);
+				break;
+			case 'HasMany':
+				// The parent model "owns" child models; any not specified here should be deleted.
+				$current_ids = $relation->lists(self::KEY_NAME);
+				$new_ids     = array_filter(array_column($input, self::KEY_NAME));
+				$removed_ids = array_diff($current_ids, $new_ids);
+				if (! empty($removed_ids)) {
+					$relation->whereIn(self::KEY_NAME, $removed_ids)->delete();
+				}
+
+				// Set foreign keys on the children from the parent, and save.
+				foreach ($input as $sub_input) {
+					$sub_input[$relation->getPlainForeignKey()] = $parent->id;
+					$model_resource_controller->setInput($sub_input)->save();
+				}
+				break;
+			case 'HasOne':
+				// The parent model "owns" the child model; if we have a new and/or different
+				// existing child model, delete the old one.
+				$current = $relation->getResults();
+				if (! is_null($current) && $current->{self::KEY_NAME} !== intval($input[self::KEY_NAME])) {
+					$relation->delete();
+				}
+
+				// Set foreign key on the child from the parent, and save.
+				$input[$relation->getPlainForeignKey()] = $parent->{self::KEY_NAME};
+				$model_resource_controller->setInput($input)->save();
+				break;
+			case 'BelongsToMany':
+				// Find all the IDs to sync.
+				$ids = [];
+
+				foreach ($input as $sub_input) {
+					$id = $model_resource_controller->setInput($sub_input)->save()->id;
+
+					// If we were passed pivot data, pass it through accordingly.
+					if (isset($sub_input['pivot'])) {
+						$ids[$id] = (array) $sub_input['pivot'];
+					} else {
+						$ids[] = $id;
+					}
+				}
+
+				// Sync to save pivot table and optional extra data.
+				$relation->sync($ids);
+				break;
+		}
 	}
 
 	/**
