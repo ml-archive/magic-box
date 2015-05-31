@@ -94,4 +94,5 @@ The public API methods that return models from a repository are:
 
 ### TODO
 1. Ship granular role-based ACL functionality.
+1. Ship controller middleware.
 1. Support more relationships (esp. polymorphic relations) through cascading saves.
