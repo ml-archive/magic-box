@@ -171,6 +171,26 @@ class EloquentRepository
 	}
 
 	/**
+	 * Count all elements against the base query.
+	 *
+	 * @return int
+	 */
+	final public function count()
+	{
+		return $this->query()->count();
+	}
+
+	/**
+	 * Determine if the base query returns a nonzero count.
+	 *
+	 * @return bool
+	 */
+	final public function hasAny()
+	{
+		return $this->count() > 0;
+	}
+
+	/**
 	 * Get the primary key from input.
 	 *
 	 * @return mixed
