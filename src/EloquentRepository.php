@@ -19,7 +19,14 @@ class EloquentRepository
 	 *
 	 * @var array
 	 */
-	private $input;
+	private $input = [];
+
+	/**
+	 * Storage for filters.
+	 *
+	 * @var array
+	 */
+	private $filters = [];
 
 	/**
 	 * The key name used in all queries.
@@ -59,7 +66,6 @@ class EloquentRepository
 	 * Set input manually.
 	 *
 	 * @param array $input
-	 * @throws \ErrorException
 	 * @return static
 	 */
 	public function setInput(array $input)
@@ -80,18 +86,56 @@ class EloquentRepository
 	}
 
 	/**
+	 * Set filters manually.
+	 *
+	 * @param array $filters
+	 * @return static
+	 */
+	public function setFilters(array $filters)
+	{
+		$this->filters = $filters;
+
+		return $this;
+	}
+
+	/**
+	 * Get filters.
+	 *
+	 * @return array
+	 */
+	public function getFilters()
+	{
+		return $this->filters;
+	}
+
+	/**
 	 * Base query for all behaviors within this repository.
 	 *
 	 * @return \Illuminate\Database\Eloquent\Builder
 	 */
-	protected function baseQuery()
+	protected function query()
 	{
-		return forward_static_call(
+		$query = forward_static_call(
 			[
 				$this->getModelClass(),
 				'query'
 			]
 		);
+
+		$filters = $this->getFilters();
+
+		if (! empty($filters)) {
+			// Make a mock instance so we can describe its columns
+			$model_class = $this->getModelClass();
+			$temp_instance = new $model_class;
+			$columns = $temp_instance->getFields();
+			unset($temp_instance);
+			foreach (array_only($filters, $columns) as $column => $value) {
+				$query->orWhere($column, $value);
+			}
+		}
+
+		return $query;
 	}
 
 	/**
@@ -102,7 +146,7 @@ class EloquentRepository
 	 */
 	final public function find($id)
 	{
-		return $this->baseQuery()->find($id);
+		return $this->query()->find($id);
 	}
 
 	/**
@@ -113,7 +157,17 @@ class EloquentRepository
 	 */
 	final public function findOrFail($id)
 	{
-		return $this->baseQuery()->findOrFail($id);
+		return $this->query()->findOrFail($id);
+	}
+
+	/**
+	 * Get all elements against the base query.
+	 *
+	 * @return \Illuminate\Database\Eloquent\Collection
+	 */
+	final public function all()
+	{
+		return $this->query()->get();
 	}
 
 	/**

@@ -42,11 +42,23 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItCanFindASimpleModel()
 	{
-		$repo = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-		$user = $repo->save();
+		$repo       = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$user       = $repo->save();
 		$found_user = $repo->find($user->id);
 		$this->assertNotNull($found_user);
 		$this->assertEquals($user->id, $found_user->id);
+	}
+
+	public function testItCanFilterOnFields()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(['username' => 'bob'])->save();
+		$second_user = $repository->setInput(['username' => 'sue'])->save();
+		$this->assertEquals($repository->all()->count(), 2);
+
+		$found_users = $repository->setFilters(['username' => 'sue'])->all();
+		$this->assertEquals($found_users->count(), 1);
+		$this->assertEquals($found_users->first()->username, 'sue');
 	}
 
 	public function testItCanFillModelFields()
@@ -192,13 +204,13 @@ class EloquentRepositoryTest extends DBTestCase
 		$post = $this->getRepository(
 			'Fuzz\MagicBox\Tests\Models\Post', [
 				'title' => 'All the Tags',
-				'user' => [
+				'user'  => [
 					'username' => 'simon',
-					'profile' => [
+					'profile'  => [
 						'favorite_cheese' => 'brie',
 					],
 				],
-				'tags' => [
+				'tags'  => [
 					[
 						'label' => 'Important Stuff',
 					],
@@ -219,10 +231,10 @@ class EloquentRepositoryTest extends DBTestCase
 		$post = $this->getRepository(
 			'Fuzz\MagicBox\Tests\Models\Post', [
 				'title' => 'All the Tags',
-				'user' => [
+				'user'  => [
 					'username' => 'josh',
 				],
-				'tags' => [
+				'tags'  => [
 					[
 						'label' => 'Has Extra',
 						'pivot' => [
@@ -238,10 +250,10 @@ class EloquentRepositoryTest extends DBTestCase
 
 		$post = $this->getRepository(
 			'Fuzz\MagicBox\Tests\Models\Post', [
-				'id' => $post->id,
+				'id'   => $post->id,
 				'tags' => [
 					[
-						'id' => $tag->id,
+						'id'    => $tag->id,
 						'pivot' => [
 							'extra' => 'Pikachu',
 						],

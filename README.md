@@ -92,7 +92,13 @@ The public API methods that return models from a repository are:
 1. `find`, which will find a model by ID
 1. `findOrFail`, which will find a model by ID or throw `\Illuminate\Database\Eloquent\ModelNotFoundException`
 
+The public API methods that return an `\Illuminate\Database\Eloquent\Collection` are:
+
+1. `all`
+
 ### TODO
 1. Ship granular role-based ACL functionality.
 1. Ship controller middleware.
+1. Document filters functionality.
+1. Make filters support nested relationships.
 1. Support more relationships (esp. polymorphic relations) through cascading saves.
