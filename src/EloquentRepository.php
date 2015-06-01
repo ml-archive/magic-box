@@ -171,6 +171,17 @@ class EloquentRepository
 	}
 
 	/**
+	 * Return paginated response.
+	 *
+	 * @param  int $per_page
+	 * @return \Illuminate\Pagination\Paginator
+	 */
+	final public function paginate($per_page)
+	{
+		return $this->query()->paginate($per_page);
+	}
+
+	/**
 	 * Count all elements against the base query.
 	 *
 	 * @return int
