@@ -131,7 +131,7 @@ class EloquentRepository
 			$columns = $temp_instance->getFields();
 			unset($temp_instance);
 			foreach (array_only($filters, $columns) as $column => $value) {
-				$query->orWhere($column, $value);
+				$query->where($column, $value);
 			}
 		}
 
