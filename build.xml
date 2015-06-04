@@ -40,7 +40,7 @@
     <target name="phpunit" unless="phpunit.done" depends="prepare" description="Run unit tests with PHPUnit">
         <exec executable="${toolsdir}phpunit" failonerror="true" taskname="phpunit">
             <arg value="--configuration"/>
-            <arg path="${basedir}/build/phpunit.xml"/>
+            <arg path="${basedir}/phpunit.xml"/>
         </exec>
         <property name="phpunit.done" value="true"/>
     </target>
