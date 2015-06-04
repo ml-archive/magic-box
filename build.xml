@@ -37,12 +37,6 @@
         </apply>
         <property name="lint.done" value="true"/>
     </target>
-    <exec dir="."
-          command="phpunit --log-junit 'reports/unitreport.xml'
-                       --coverage-html 'reports/coverage'
-                       --coverage-clover 'reports/coverage/coverage.xml'
-                       test/"
-            />
     <target name="phpunit" unless="phpunit.done" depends="prepare" description="Run unit tests with PHPUnit">
         <exec executable="${toolsdir}phpunit" failonerror="true" taskname="phpunit">
             <arg value="--configuration"/>
