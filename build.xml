@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="name-of-project" default="build">
+<project name="magic-box" default="build">
     <!-- By default, we assume all tools to be on the $PATH -->
     <property name="toolsdir" value=""/>
 
@@ -7,11 +7,11 @@
     <!-- <property name="toolsdir" value="${basedir}/vendor/bin/"/> -->
 
     <target name="build"
-            depends="prepare,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdox"
+            depends="prepare,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdoc"
             description=""/>
 
     <target name="build-parallel"
-            depends="prepare,lint,tools-parallel,phpunit,phpdox"
+            depends="prepare,lint,tools-parallel,phpunit,phpdoc"
             description=""/>
 
     <target name="tools-parallel" description="Run tools in parallel">
@@ -33,7 +33,7 @@
         <delete dir="${basedir}/build/coverage"/>
         <delete dir="${basedir}/build/logs"/>
         <delete dir="${basedir}/build/pdepend"/>
-        <delete dir="${basedir}/build/phpdox"/>
+        <delete dir="${basedir}/build/phpdoc"/>
         <property name="clean.done" value="true"/>
     </target>
 
@@ -45,8 +45,14 @@
         <mkdir dir="${basedir}/build/coverage"/>
         <mkdir dir="${basedir}/build/logs"/>
         <mkdir dir="${basedir}/build/pdepend"/>
-        <mkdir dir="${basedir}/build/phpdox"/>
+        <mkdir dir="${basedir}/build/phpdoc"/>
         <property name="prepare.done" value="true"/>
+    </target>
+
+    <target name="composer" description="Run composer install">
+        <exec executable="${toolsdir}composer" failonerror="true">
+            <arg value="install" />
+        </exec>
     </target>
 
     <target name="lint"
@@ -201,9 +207,17 @@
             <arg path="${basedir}/phpunit.xml"/>
         </exec>
 
-
         <property name="phpunit.done" value="true"/>
     </target>
+
+    <phpunit codecoverage="true" haltonfailure="true" haltonerror="true">
+        <formatter type="clover" usefile="false"/>
+        <batchtest>
+            <fileset dir="tests">
+                <include name="**/*Test*.php"/>
+            </fileset>
+        </batchtest>
+    </phpunit>
 
     <target name="phpdox"
             unless="phpdox.done"
@@ -214,10 +228,4 @@
         <property name="phpdox.done" value="true"/>
     </target>
 
-    <exec dir="."
-          command="phpunit --log-junit 'reports/unitreport.xml'
-                       --coverage-html 'reports/coverage'
-                       --coverage-clover 'reports/coverage/coverage.xml'
-                       test/"
-            />
 </project>
