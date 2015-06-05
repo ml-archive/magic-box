@@ -201,6 +201,7 @@
             <arg path="${basedir}/phpunit.xml"/>
         </exec>
 
+
         <property name="phpunit.done" value="true"/>
     </target>
 
@@ -212,4 +213,11 @@
 
         <property name="phpdox.done" value="true"/>
     </target>
+
+    <exec dir="."
+          command="phpunit --log-junit 'reports/unitreport.xml'
+                       --coverage-html 'reports/coverage'
+                       --coverage-clover 'reports/coverage/coverage.xml'
+                       test/"
+            />
 </project>
