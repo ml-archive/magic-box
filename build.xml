@@ -7,11 +7,11 @@
     <!-- <property name="toolsdir" value="${basedir}/vendor/bin/"/> -->
 
     <target name="build"
-            depends="prepare,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit"
+            depends="prepare,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdoc"
             description=""/>
 
     <target name="build-parallel"
-            depends="prepare,lint,tools-parallel,phpunit"
+            depends="prepare,lint,tools-parallel,phpunit,phpdoc"
             description=""/>
 
     <target name="tools-parallel" description="Run tools in parallel">
@@ -33,7 +33,7 @@
         <delete dir="${basedir}/build/coverage"/>
         <delete dir="${basedir}/build/logs"/>
         <delete dir="${basedir}/build/pdepend"/>
-        <delete dir="${basedir}/build/phpdox"/>
+        <delete dir="${basedir}/build/phpdoc"/>
         <property name="clean.done" value="true"/>
     </target>
 
@@ -45,6 +45,7 @@
         <mkdir dir="${basedir}/build/coverage"/>
         <mkdir dir="${basedir}/build/logs"/>
         <mkdir dir="${basedir}/build/pdepend"/>
+        <mkdir dir="${basedir}/build/phpdoc"/>
         <property name="prepare.done" value="true"/>
     </target>
 
@@ -207,6 +208,18 @@
         </exec>
 
         <property name="phpunit.done" value="true"/>
+    </target>
+
+    <target name="phpdoc"
+            unless="phpdoc.done"
+            depends="prepare"
+            description="Generates API documentation">
+        <exec executable="${toolsdir}phpdoc" failonerror="true" taskname="phpdoc">
+            <arg path="-d ${basedir}/src"/>
+            <arg path="-t ${basedir}/build/api"/>
+        </exec>
+
+        <property name="phpdoc.done" value="true"/>
     </target>
 
 </project>
