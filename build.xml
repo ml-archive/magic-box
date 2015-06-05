@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="magic-box" default="build">
+<project name="name-of-project" default="build">
     <!-- By default, we assume all tools to be on the $PATH -->
     <property name="toolsdir" value=""/>
 
@@ -7,11 +7,11 @@
     <!-- <property name="toolsdir" value="${basedir}/vendor/bin/"/> -->
 
     <target name="build"
-            depends="prepare,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdoc"
+            depends="prepare,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdox"
             description=""/>
 
     <target name="build-parallel"
-            depends="prepare,lint,tools-parallel,phpunit,phpdoc"
+            depends="prepare,lint,tools-parallel,phpunit,phpdox"
             description=""/>
 
     <target name="tools-parallel" description="Run tools in parallel">
@@ -33,7 +33,7 @@
         <delete dir="${basedir}/build/coverage"/>
         <delete dir="${basedir}/build/logs"/>
         <delete dir="${basedir}/build/pdepend"/>
-        <delete dir="${basedir}/build/phpdoc"/>
+        <delete dir="${basedir}/build/phpdox"/>
         <property name="clean.done" value="true"/>
     </target>
 
@@ -45,14 +45,8 @@
         <mkdir dir="${basedir}/build/coverage"/>
         <mkdir dir="${basedir}/build/logs"/>
         <mkdir dir="${basedir}/build/pdepend"/>
-        <mkdir dir="${basedir}/build/phpdoc"/>
+        <mkdir dir="${basedir}/build/phpdox"/>
         <property name="prepare.done" value="true"/>
-    </target>
-
-    <target name="composer" description="Run composer install">
-        <exec executable="${toolsdir}composer" failonerror="true">
-            <arg value="install" />
-        </exec>
     </target>
 
     <target name="lint"
@@ -210,16 +204,12 @@
         <property name="phpunit.done" value="true"/>
     </target>
 
-    <target name="phpdoc"
-            unless="phpdoc.done"
-            depends="prepare"
-            description="Generates API documentation">
-        <exec executable="${toolsdir}phpdoc" failonerror="true" taskname="phpdoc">
-            <arg path="-d ${basedir}/src"/>
-            <arg path="-t ${basedir}/build/api"/>
-        </exec>
+    <target name="phpdox"
+            unless="phpdox.done"
+            depends="phploc-ci,phpcs-ci,phpmd-ci"
+            description="Generate project documentation using phpDox">
+        <exec executable="${toolsdir}phpdox" dir="${basedir}/build" taskname="phpdox"/>
 
-        <property name="phpdoc.done" value="true"/>
+        <property name="phpdox.done" value="true"/>
     </target>
-
 </project>

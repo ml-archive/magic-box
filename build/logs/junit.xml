@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Package Test Suite" tests="13" assertions="37" failures="0" errors="0" time="0.220091">
-    <testsuite name="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" tests="13" assertions="37" failures="0" errors="0" time="0.220091">
-      <testcase name="testItRejectsUnfuzzyModels" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="31" assertions="1" time="0.059620"/>
-      <testcase name="testItCanCreateASimpleModel" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="36" assertions="2" time="0.015827"/>
-      <testcase name="testItCanFindASimpleModel" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="43" assertions="2" time="0.013583"/>
-      <testcase name="testItCanFilterOnFields" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="52" assertions="3" time="0.011170"/>
-      <testcase name="testItCanFillModelFields" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="64" assertions="2" time="0.009389"/>
-      <testcase name="testItUpdatesExistingModels" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="71" assertions="4" time="0.012700"/>
-      <testcase name="testItDeletesModels" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="87" assertions="3" time="0.012180"/>
-      <testcase name="testItExpectsInputIds" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="100" assertions="1" time="0.009139"/>
-      <testcase name="testItFillsBelongsToRelations" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="105" assertions="2" time="0.016365"/>
-      <testcase name="testItFillsHasManyRelations" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="120" assertions="6" time="0.014018"/>
-      <testcase name="testItFillsHasOneRelations" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="171" assertions="6" time="0.012006"/>
-      <testcase name="testItCascadesThroughSupportedRelations" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="202" assertions="3" time="0.018972"/>
-      <testcase name="testItUpdatesBelongsToManyPivots" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="229" assertions="2" time="0.015122"/>
+  <testsuite name="Package Test Suite" tests="13" assertions="37" failures="0" errors="0" time="0.395283">
+    <testsuite name="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" tests="13" assertions="37" failures="0" errors="0" time="0.395283">
+      <testcase name="testItRejectsUnfuzzyModels" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="31" assertions="1" time="0.211045"/>
+      <testcase name="testItCanCreateASimpleModel" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="36" assertions="2" time="0.022308"/>
+      <testcase name="testItCanFindASimpleModel" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="43" assertions="2" time="0.018874"/>
+      <testcase name="testItCanFilterOnFields" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="52" assertions="3" time="0.010442"/>
+      <testcase name="testItCanFillModelFields" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="64" assertions="2" time="0.013485"/>
+      <testcase name="testItUpdatesExistingModels" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="71" assertions="4" time="0.009961"/>
+      <testcase name="testItDeletesModels" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="87" assertions="3" time="0.012143"/>
+      <testcase name="testItExpectsInputIds" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="100" assertions="1" time="0.011393"/>
+      <testcase name="testItFillsBelongsToRelations" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="105" assertions="2" time="0.011681"/>
+      <testcase name="testItFillsHasManyRelations" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="120" assertions="6" time="0.015308"/>
+      <testcase name="testItFillsHasOneRelations" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="171" assertions="6" time="0.019369"/>
+      <testcase name="testItCascadesThroughSupportedRelations" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="202" assertions="3" time="0.022696"/>
+      <testcase name="testItUpdatesBelongsToManyPivots" class="Fuzz\MagicBox\Tests\EloquentRepositoryTest" file="/Users/leayousoufov/Sites/web-modules/magic-box/tests/EloquentRepositoryTest.php" line="229" assertions="2" time="0.016579"/>
     </testsuite>
   </testsuite>
 </testsuites>
