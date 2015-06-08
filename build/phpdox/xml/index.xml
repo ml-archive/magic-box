@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<index xmlns="http://xml.phpdox.net/src" basedir="/Users/leayousoufov/Sites/web-modules/magic-box/src">
-  <namespace name="Fuzz\MagicBox">
-    <class name="EloquentRepository" src="EloquentRepository.php" xml="classes/Fuzz_MagicBox_EloquentRepository.xml"/>
-  </namespace>
-</index>
