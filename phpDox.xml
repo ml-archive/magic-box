@@ -62,55 +62,18 @@
             <!-- A generation process consists of one or more build tasks and of (optional) enrich sources -->
 
             <enrich base="${basedir}/build/logs">
-                <!-- @base - (Base-)Directory of datafiles used for enrich process -->
-
-                <source type="phploc">
-                <!-- @type - the handler for the enrichment -->
-                <!--         known types by default are: build, checkstyle, git, phpcs, phploc, phpunit, pmd -->
-
-                <!-- every enrichment source can have additional configuration nodes, most probably need a logfile -->
-                <file name="path/to/log.xml" />
-                </source>
-
-                <!-- add phploc output -->
-
-                <source type="phploc" />
-
-
-                <!-- git vcs information -->
-                <!--
+                <source type="build" />
                 <source type="git">
-                    <git binary="/usr/bin/git" />
-                    <history enabled="true" limit="15" cache="${phpDox.project.workdir}/gitlog.xml" />
+                    <history enabled="true" limit="15" />
                 </source>
-                -->
-
-
-                <source type="phpcs">
-                    <file name="phpcs.xml" />
-                </source>
-
-
-                <!-- PHPMessDetector -->
-                <!--
-                <source type="pmd">
-                    <file name="pmd.xml" />
-                </source>
-                -->
-
-                <!-- PHPUnit Coverage XML -->
-                <!-- <source type="phpunit">  -->
-                    <!-- <coverage path="" /> -->
-                    <!--           @path - the directory where the xml code coverage report can be found -->
-                    <!--<filter directory="${phpDox.project.source}" />-->
-                    <!-- @directory - path of the phpunit config whitelist filter directory -->
-                <!--</source>-->
-                <!--
+                <source type="checkstyle" />
+                <!-- alternative checkstyler to support phpcs xml output -->
+                <!-- <source type="phpcs" /> -->
+                <source type="pmd" />
+                <source type="phploc" />
                 <source type="phpunit">
-                    <filter directory="${phpDox.project.source}" />
+                    <coverage path="coverage/xml" />
                 </source>
-                -->
-
             </enrich>
 
             <!-- <build engine="..." enabled="true" output="..." /> -->

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1433789003">
-  <project timestamp="1433789003">
+<coverage generated="1433791887">
+  <project timestamp="1433791887">
     <package name="Fuzz\MagicBox">
       <file name="/Users/leayousoufov/Sites/web-modules/magic-box/src/EloquentRepository.php">
         <class name="EloquentRepository" namespace="Fuzz\MagicBox">
