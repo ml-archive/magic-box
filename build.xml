@@ -205,7 +205,7 @@
             description="Run unit tests with PHPUnit">
     <exec executable="${toolsdir}phpunit" failonerror="true" taskname="phpunit">
         <arg value="--configuration"/>
-        <arg path="${basedir}/build/phpunit.xml"/>
+        <arg path="${basedir}/phpunit.xml"/>
     </exec>
 
     <property name="phpunit.done" value="true"/>
@@ -215,7 +215,7 @@
             unless="phpdox.done"
             depends="phploc-ci,phpcs-ci,phpmd-ci"
             description="Generate project documentation using phpDox">
-        <exec executable="${toolsdir}phpdox" dir="${basedir}/build/phpdox" taskname="phpdox"/>
+        <exec executable="${toolsdir}phpdox" dir="${basedir}/build" taskname="phpdox"/>
 
         <property name="phpdox.done" value="true"/>
     </target>

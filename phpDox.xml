@@ -1,9 +1,13 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<phpdox xmlns="http://xml.phpdox.net/config">
-    <project name="magic-box" source="${basedir}/src" workdir="${basedir}/build/phpdox">
-        <collector backend="parser" />
-        <generator output="${basedir}/build">
-            <build engine="html" output="html"/>
+<phpdox xmlns="http://phpdox.net/config">
+    <project name="magic-box" source="src" workdir="build/phpdox">
+        <collector publiconly="false">
+            <include mask="*.php" />
+        </collector>
+
+        <generator output="build">
+            <build engine="html" enabled="true" output="api">
+                <file extension="html" />
+            </build>
         </generator>
     </project>
 </phpdox>
