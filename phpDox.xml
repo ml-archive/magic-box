@@ -1,35 +1,13 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<phpdox xmlns="http://xml.phpdox.net/config" silent="false">
+<phpdox xmlns="http://phpdox.net/config">
+    <project name="name-of-project" source="src" workdir="build/phpdox">
+        <collector publiconly="false">
+            <include mask="*.php" />
+        </collector>
 
-    <project name="phpDox" source="${basedir}/src" workdir="${basedir}/build/api/xml">
-
-        <collector publiconly="false" backend="parser" />
-
-        <generator output="${basedir}/build/api/docs">
-
-            <enrich base="${basedir}/build/logs">
-                <source type="build" />
-                <source type="git">
-                    <history enabled="true" limit="15" />
-                </source>
-                <source type="checkstyle" />
-                <!-- alternative checkstyler to support phpcs xml output -->
-                <!-- <source type="phpcs" /> -->
-                <source type="pmd" />
-                <source type="phploc" />
-                <source type="phpunit">
-                    <coverage path="coverage/xml" />
-                </source>
-            </enrich>
-
-            <build engine="html" enabled="true" output="html">
-                <template dir="${phpDox.home}/templates/html" />
-                <file extension="xhtml" />
+        <generator output="build">
+            <build engine="html" enabled="true" output="api">
+                <file extension="html" />
             </build>
-
-            <build engine="xml" enabled="true" output="xml" />
-
         </generator>
     </project>
-
 </phpdox>
