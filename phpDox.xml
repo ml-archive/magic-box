@@ -61,21 +61,21 @@
 
             <!-- A generation process consists of one or more build tasks and of (optional) enrich sources -->
 
-            <enrich base="${basedir}/build">
+            <enrich base="${basedir}/build/logs">
                 <!-- @base - (Base-)Directory of datafiles used for enrich process -->
 
-                <!--<source type="...">-->
+                <source type="phploc">
                 <!-- @type - the handler for the enrichment -->
                 <!--         known types by default are: build, checkstyle, git, phpcs, phploc, phpunit, pmd -->
 
                 <!-- every enrichment source can have additional configuration nodes, most probably need a logfile -->
-                <!-- <file name="path/to/log.xml" /> -->
-                <!--</source> -->
+                <file name="path/to/log.xml" />
+                </source>
 
                 <!-- add phploc output -->
-                <!--
+
                 <source type="phploc" />
-                -->
+
 
                 <!-- git vcs information -->
                 <!--
@@ -87,7 +87,7 @@
 
 
                 <source type="phpcs">
-                    <file name="logs/phpcs.xml" />
+                    <file name="phpcs.xml" />
                 </source>
 
 
