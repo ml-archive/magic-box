@@ -76,16 +76,15 @@
         <property name="lint.done" value="true"/>
     </target>
 
-    <target name="phploc"
-            unless="phploc.done"
-            description="Measure project size using PHPLOC and print human readable output. Intended for usage on the command line.">
-        <exec executable="${toolsdir}phploc" taskname="phploc">
-            <arg value="--count-tests"/>
-            <arg path="${basedir}/src"/>
-            <arg path="${basedir}/tests"/>
+    <target name="phploc" description="Measure project size using PHPLOC">
+        <exec executable="phploc">
+            <!-- exclude tests directory -->
+            <arg value="--exclude" />
+            <arg path="${basedir}/tests" />
+            <arg value="--log-csv" />
+            <arg value="${basedir}/build/logs/phploc.csv" />
+            <arg path="${basedir}" />
         </exec>
-
-        <property name="phploc.done" value="true"/>
     </target>
 
     <target name="phploc-ci"
