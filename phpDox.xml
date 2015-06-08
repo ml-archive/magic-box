@@ -1,5 +1,5 @@
 <phpdox xmlns="http://phpdox.net/config">
-    <project name="magic-box" source="src" workdir="build/phpdox">
+    <project name="magic-box" source="src" workdir="phpdox">
         <collector publiconly="false">
             <include mask="*.php" />
         </collector>
