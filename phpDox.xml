@@ -72,7 +72,7 @@
                 <source type="pmd" />
                 <source type="phploc" />
                 <source type="phpunit">
-                    <coverage path="coverage/xml" />
+                    <coverage path="build/coverage" />
                 </source>
             </enrich>
 

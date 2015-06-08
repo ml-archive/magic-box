@@ -7,11 +7,11 @@
     <!-- <property name="toolsdir" value="${basedir}/vendor/bin/"/> -->
 
     <target name="build"
-            depends="prepare,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdox"
+            depends="prepare,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdoc"
             description=""/>
 
     <target name="build-parallel"
-            depends="prepare,lint,tools-parallel,phpunit,phpdox"
+            depends="prepare,lint,tools-parallel,phpunit,phpdoc"
             description=""/>
 
     <target name="tools-parallel" description="Run tools in parallel">
@@ -33,7 +33,7 @@
         <delete dir="${basedir}/build/coverage"/>
         <delete dir="${basedir}/build/logs"/>
         <delete dir="${basedir}/build/pdepend"/>
-        <delete dir="${basedir}/build/phpdox"/>
+        <delete dir="${basedir}/build/phpdoc"/>
         <property name="clean.done" value="true"/>
     </target>
 
@@ -45,7 +45,7 @@
         <mkdir dir="${basedir}/build/coverage"/>
         <mkdir dir="${basedir}/build/logs"/>
         <mkdir dir="${basedir}/build/pdepend"/>
-        <mkdir dir="${basedir}/build/phpdox"/>
+        <mkdir dir="${basedir}/build/phpdoc"/>
         <mkdir dir="${basedir}/build/vendor"/>
         <property name="prepare.done" value="true"/>
     </target>
@@ -80,9 +80,7 @@
             unless="phploc.done"
             description="Measure project size using PHPLOC and print human readable output. Intended for usage on the command line.">
         <exec executable="${toolsdir}phploc" taskname="phploc">
-            <arg value="--count-tests"/>
-            <arg path="${basedir}/src"/>
-            <arg path="${basedir}/tests"/>
+            <arg line="--count-tests --log-xml ${basedir}/build/logs/phploc.xml ${source} tests"/>
         </exec>
 
         <property name="phploc.done" value="true"/>
@@ -211,13 +209,11 @@
     <property name="phpunit.done" value="true"/>
     </target>
 
-    <target name="phpdox"
-            unless="phpdox.done"
-            depends="phploc-ci,phpcs-ci,phpmd-ci"
-            description="Generate project documentation using phpDox">
-        <exec executable="${toolsdir}phpdox" dir="${basedir}" taskname="phpdox"/>
-
-        <property name="phpdox.done" value="true"/>
+    <target name="phpdoc" description="Generates API documentation">
+        <exec executable="${toolsdir}phpdoc" failonerror="true">
+            <arg line="-d ${basedir}/src"/>
+            <arg line="-t ${basedir}/build/api"/>
+        </exec>
     </target>
 
 </project>
