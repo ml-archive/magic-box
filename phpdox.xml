@@ -6,9 +6,19 @@
 
         <generator output="build">
             <enrich base="${basedir}/build/logs">
+                <source type="build" />
+                <source type="git">
+                    <history enabled="true" limit="15" />
+                </source>
+                <source type="checkstyle" />
+                <source type="pmd" />
                 <source type="phploc" />
+                <source type="phpunit">
+                    <coverage path="" />
+                </source>
             </enrich>
-            <build engine="html" enabled="true" output="api">
+
+            <build engine="html" enabled="true" output="html">
                 <file extension="html" />
             </build>
         </generator>
