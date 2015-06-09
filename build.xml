@@ -7,7 +7,7 @@
     <!-- <property name="toolsdir" value="${basedir}/vendor/bin/"/> -->
 
     <target name="build"
-            depends="prepare,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdox"
+            depends="prepare,composer,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdox"
             description=""/>
 
     <target name="build-parallel"
@@ -51,8 +51,13 @@
     </target>
 
     <target name="composer" description="Run composer install">
-        <exec executable="${toolsdir}composer" failonerror="true">
+        <exec executable="composer" failonerror="true">
             <arg value="install"/>
+            <arg value="--dev"/>
+            <arg value="--prefer-dist"/>
+            <arg value="--no-progress"/>
+
+            <env key="SYMFONY_ENV" value="test"/>
         </exec>
     </target>
 
@@ -193,8 +198,10 @@
     <target name="phpdox"
             depends="phploc-ci,phpcs-ci,phpmd-ci"
             description="Generate project documentation using phpDox">
-        <exec executable="${toolsdir}phpdox" dir="${basedir}" taskname="phpdox"/>
-
+        <exec executable="${toolsdir}phpdox" dir="${basedir}" taskname="phpdox">
+        <arg value="--file" />
+        <arg value="${basedir}/phpdox.xml" />
+        </exec>
     </target>
 
 </project>
