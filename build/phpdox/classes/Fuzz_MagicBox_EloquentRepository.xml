@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class xmlns="http://xml.phpdox.net/src" full="Fuzz\MagicBox\EloquentRepository" namespace="Fuzz\MagicBox" name="EloquentRepository" abstract="false" final="false" start="8" end="408">
+  <file path="src" file="EloquentRepository.php" realpath="/Users/leayousoufov/Sites/web-modules/magic-box/src/EloquentRepository.php" size="8859" time="2015-06-04T15:28:28-04:00" unixtime="1433446108" sha1="79c0d95cafd719e045b732dd0caf3a5ed308fe67" relative="EloquentRepository.php"/>
+  <member name="model_class" visibility="private" line="15">
+    <docblock>
+      <description compact="An instance variable specifying the model handled by this repository."/>
+      <var type="string"/>
+    </docblock>
+  </member>
+  <member name="input" type="array" default="" visibility="private" line="22">
+    <docblock>
+      <description compact="An instance variable specifying the input passed to model instances."/>
+      <var type="array"/>
+    </docblock>
+  </member>
+  <member name="filters" type="array" default="" visibility="private" line="29">
+    <docblock>
+      <description compact="Storage for filters."/>
+      <var type="array"/>
+    </docblock>
+  </member>
+  <constant type="string" name="KEY_NAME" value="'id'">
+    <docblock>
+      <description compact="The key name used in all queries."/>
+      <var type="int"/>
+    </docblock>
+  </constant>
+  <method name="setModelClass" start="44" end="53" abstract="false" final="false" static="false" visibility="public">
+    <docblock>
+      <description compact="Set the model for an instance of this resource controller."/>
+      <param type="string" variable="$model_class"/>
+      <return resolution="static" type="object">
+        <type full="Fuzz\MagicBox\EloquentRepository" namespace="Fuzz\MagicBox" name="EloquentRepository"/>
+      </return>
+    </docblock>
+    <parameter name="model_class" byreference="false" type="{unknown}"/>
+  </method>
+  <method name="getModelClass" start="60" end="63" abstract="false" final="false" static="false" visibility="public">
+    <docblock>
+      <description compact="Get the model class."/>
+      <return type="string"/>
+    </docblock>
+  </method>
+  <method name="setInput" start="71" end="76" abstract="false" final="false" static="false" visibility="public">
+    <docblock>
+      <description compact="Set input manually."/>
+      <param type="array" variable="$input"/>
+      <return resolution="static" type="object">
+        <type full="Fuzz\MagicBox\EloquentRepository" namespace="Fuzz\MagicBox" name="EloquentRepository"/>
+      </return>
+    </docblock>
+    <parameter name="input" byreference="false" type="array"/>
+  </method>
+  <method name="getInput" start="83" end="86" abstract="false" final="false" static="false" visibility="public">
+    <docblock>
+      <description compact="Get input."/>
+      <return type="array"/>
+    </docblock>
+  </method>
+  <method name="setFilters" start="94" end="99" abstract="false" final="false" static="false" visibility="public">
+    <docblock>
+      <description compact="Set filters manually."/>
+      <param type="array" variable="$filters"/>
+      <return resolution="static" type="object">
+        <type full="Fuzz\MagicBox\EloquentRepository" namespace="Fuzz\MagicBox" name="EloquentRepository"/>
+      </return>
+    </docblock>
+    <parameter name="filters" byreference="false" type="array"/>
+  </method>
+  <method name="getFilters" start="106" end="109" abstract="false" final="false" static="false" visibility="public">
+    <docblock>
+      <description compact="Get filters."/>
+      <return type="array"/>
+    </docblock>
+  </method>
+  <method name="query" start="116" end="139" abstract="false" final="false" static="false" visibility="protected">
+    <docblock>
+      <description compact="Base query for all behaviors within this repository."/>
+      <return type="object">
+        <type full="\Illuminate\Database\Eloquent\Builder" namespace="\Illuminate\Database\Eloquent" name="Builder"/>
+      </return>
+    </docblock>
+  </method>
+  <method name="find" start="147" end="150" abstract="false" final="true" static="false" visibility="public">
+    <docblock>
+      <description compact="Find an instance of a model by ID."/>
+      <param type="int" variable="$id"/>
+      <return type="object">
+        <type full="\Fuzz\Data\Eloquent\Model" namespace="\Fuzz\Data\Eloquent" name="Model"/>
+      </return>
+    </docblock>
+    <parameter name="id" byreference="false" type="{unknown}"/>
+  </method>
+  <method name="findOrFail" start="158" end="161" abstract="false" final="true" static="false" visibility="public">
+    <docblock>
+      <description compact="Find an instance of a model by ID, or fail."/>
+      <param type="int" variable="$id"/>
+      <return type="object">
+        <type full="\Fuzz\Data\Eloquent\Model" namespace="\Fuzz\Data\Eloquent" name="Model"/>
+      </return>
+    </docblock>
+    <parameter name="id" byreference="false" type="{unknown}"/>
+  </method>
+  <method name="all" start="168" end="171" abstract="false" final="true" static="false" visibility="public">
+    <docblock>
+      <description compact="Get all elements against the base query."/>
+      <return type="object">
+        <type full="\Illuminate\Database\Eloquent\Collection" namespace="\Illuminate\Database\Eloquent" name="Collection"/>
+      </return>
+    </docblock>
+  </method>
+  <method name="paginate" start="179" end="182" abstract="false" final="true" static="false" visibility="public">
+    <docblock>
+      <description compact="Return paginated response."/>
+      <param type="int" variable="$per_page"/>
+      <return type="object">
+        <type full="\Illuminate\Pagination\Paginator" namespace="\Illuminate\Pagination" name="Paginator"/>
+      </return>
+    </docblock>
+    <parameter name="per_page" byreference="false" type="{unknown}"/>
+  </method>
+  <method name="count" start="189" end="192" abstract="false" final="true" static="false" visibility="public">
+    <docblock>
+      <description compact="Count all elements against the base query."/>
+      <return type="int"/>
+    </docblock>
+  </method>
+  <method name="hasAny" start="199" end="202" abstract="false" final="true" static="false" visibility="public">
+    <docblock>
+      <description compact="Determine if the base query returns a nonzero count."/>
+      <return type="object">
+        <type full="Fuzz\MagicBox\bool" namespace="Fuzz\MagicBox" name="bool"/>
+      </return>
+    </docblock>
+  </method>
+  <method name="getInputId" start="209" end="218" abstract="false" final="true" static="false" visibility="public">
+    <docblock>
+      <description compact="Get the primary key from input."/>
+      <return type="mixed"/>
+    </docblock>
+  </method>
+  <method name="fill" start="227" end="260" abstract="false" final="true" static="false" visibility="protected">
+    <docblock>
+      <description compact="Fill an instance of a model with all known fields."/>
+      <param type="object" variable="$instance">
+        <type full="\Fuzz\Data\Eloquent\Model" namespace="\Fuzz\Data\Eloquent" name="Model"/>
+      </param>
+      <return type="mixed"/>
+      <todo value="support more relationship types, such as polymorphic ones!"/>
+    </docblock>
+    <parameter name="instance" byreference="false" type="object">
+      <type full="Fuzz\Data\Eloquent\Model" namespace="Fuzz\Data\Eloquent" name="Model"/>
+    </parameter>
+  </method>
+  <method name="applyRelations" start="269" end="274" abstract="false" final="true" static="false" visibility="protected">
+    <docblock>
+      <description compact="Apply relations from an array to an instance model."/>
+      <param type="array" variable="$specs"/>
+      <param type="object" variable="$instance">
+        <type full="\Fuzz\Data\Eloquent\Model" namespace="\Fuzz\Data\Eloquent" name="Model"/>
+      </param>
+      <return type="object">
+        <type full="Fuzz\MagicBox\void" namespace="Fuzz\MagicBox" name="void"/>
+      </return>
+    </docblock>
+    <parameter name="specs" byreference="false" type="array"/>
+    <parameter name="instance" byreference="false" type="object">
+      <type full="Fuzz\Data\Eloquent\Model" namespace="Fuzz\Data\Eloquent" name="Model"/>
+    </parameter>
+  </method>
+  <method name="cascadeRelation" start="285" end="346" abstract="false" final="true" static="false" visibility="protected">
+    <docblock>
+      <description compact="Cascade relations through saves on a model."/>
+      <param type="object" variable="$relation">
+        <type full="\Illuminate\Database\Eloquent\Relations\Relation" namespace="\Illuminate\Database\Eloquent\Relations" name="Relation"/>
+      </param>
+      <param type="array" variable="$input"/>
+      <param type="object" variable="$parent">
+        <type full="\Fuzz\Data\Eloquent\Model" namespace="\Fuzz\Data\Eloquent" name="Model"/>
+      </param>
+      <return type="object">
+        <type full="Fuzz\MagicBox\void" namespace="Fuzz\MagicBox" name="void"/>
+      </return>
+    </docblock>
+    <parameter name="relation" byreference="false" type="object">
+      <type full="Illuminate\Database\Eloquent\Relations\Relation" namespace="Illuminate\Database\Eloquent\Relations" name="Relation"/>
+    </parameter>
+    <parameter name="input" byreference="false" type="array"/>
+    <parameter name="parent" byreference="false" type="{unknown}" default="" constant="null">
+      <type full="Fuzz\Data\Eloquent\Model" namespace="Fuzz\Data\Eloquent" name="Model"/>
+    </parameter>
+    <inline>
+      <comment value="Make a child repository for containing the cascaded relationship through saves" line="287"/>
+    </inline>
+  </method>
+  <method name="create" start="353" end="360" abstract="false" final="true" static="false" visibility="public">
+    <docblock>
+      <description compact="Create a model."/>
+      <return type="object">
+        <type full="\Fuzz\Data\Eloquent\Model" namespace="\Fuzz\Data\Eloquent" name="Model"/>
+      </return>
+    </docblock>
+  </method>
+  <method name="read" start="367" end="370" abstract="false" final="true" static="false" visibility="public">
+    <docblock>
+      <description compact="Read a model."/>
+      <return type="object">
+        <type full="\Fuzz\Data\Eloquent\Model" namespace="\Fuzz\Data\Eloquent" name="Model"/>
+      </return>
+    </docblock>
+  </method>
+  <method name="update" start="377" end="383" abstract="false" final="true" static="false" visibility="public">
+    <docblock>
+      <description compact="Update a model."/>
+      <return type="object">
+        <type full="\Fuzz\Data\Eloquent\Model" namespace="\Fuzz\Data\Eloquent" name="Model"/>
+      </return>
+    </docblock>
+  </method>
+  <method name="delete" start="390" end="395" abstract="false" final="true" static="false" visibility="public">
+    <docblock>
+      <description compact="Update a model."/>
+      <return type="boolean"/>
+    </docblock>
+  </method>
+  <method name="save" start="402" end="407" abstract="false" final="true" static="false" visibility="public">
+    <docblock>
+      <description compact="Save a model, regardless of whether or not it is &quot;new&quot;."/>
+      <return type="object">
+        <type full="\Fuzz\Data\Eloquent\Model" namespace="\Fuzz\Data\Eloquent" name="Model"/>
+      </return>
+    </docblock>
+  </method>
+</class>

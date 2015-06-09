@@ -7,11 +7,11 @@
     <!-- <property name="toolsdir" value="${basedir}/vendor/bin/"/> -->
 
     <target name="build"
-            depends="prepare,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdoc"
+            depends="prepare,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdox"
             description=""/>
 
     <target name="build-parallel"
-            depends="prepare,lint,tools-parallel,phpunit,phpdoc"
+            depends="prepare,lint,tools-parallel,phpunit,phpdox"
             description=""/>
 
     <target name="tools-parallel" description="Run tools in parallel">
@@ -33,7 +33,7 @@
         <delete dir="${basedir}/build/coverage"/>
         <delete dir="${basedir}/build/logs"/>
         <delete dir="${basedir}/build/pdepend"/>
-        <delete dir="${basedir}/build/phpdoc"/>
+        <delete dir="${basedir}/build/phpdox"/>
         <property name="clean.done" value="true"/>
     </target>
 
@@ -45,7 +45,7 @@
         <mkdir dir="${basedir}/build/coverage"/>
         <mkdir dir="${basedir}/build/logs"/>
         <mkdir dir="${basedir}/build/pdepend"/>
-        <mkdir dir="${basedir}/build/phpdoc"/>
+        <mkdir dir="${basedir}/build/phpdox"/>
         <mkdir dir="${basedir}/build/vendor"/>
         <property name="prepare.done" value="true"/>
     </target>
@@ -77,17 +77,15 @@
     </target>
 
     <target name="phploc"
-            unless="phploc.done"
             description="Measure project size using PHPLOC and print human readable output. Intended for usage on the command line.">
         <exec executable="${toolsdir}phploc" taskname="phploc">
             <arg line="--count-tests --log-xml ${basedir}/build/logs/phploc.xml ${source} tests"/>
         </exec>
 
-        <property name="phploc.done" value="true"/>
+
     </target>
 
     <target name="phploc-ci"
-            unless="phploc.done"
             depends="prepare"
             description="Measure project size using PHPLOC and log result in CSV and XML format. Intended for usage within a continuous integration environment.">
         <exec executable="${toolsdir}phploc" taskname="phploc">
@@ -100,11 +98,9 @@
             <arg path="${basedir}/tests"/>
         </exec>
 
-        <property name="phploc.done" value="true"/>
     </target>
 
     <target name="pdepend"
-            unless="pdepend.done"
             depends="prepare"
             description="Calculate software metrics using PHP_Depend and log result in XML format. Intended for usage within a continuous integration environment.">
         <exec executable="${toolsdir}pdepend" taskname="pdepend">
@@ -114,11 +110,9 @@
             <arg path="${basedir}/src"/>
         </exec>
 
-        <property name="pdepend.done" value="true"/>
     </target>
 
     <target name="phpmd"
-            unless="phpmd.done"
             description="Perform project mess detection using PHPMD and print human readable output. Intended for usage on the command line before committing.">
         <exec executable="${toolsdir}phpmd" taskname="phpmd">
             <arg path="${basedir}/src"/>
@@ -126,11 +120,9 @@
             <arg path="${basedir}/build/phpmd.xml"/>
         </exec>
 
-        <property name="phpmd.done" value="true"/>
     </target>
 
     <target name="phpmd-ci"
-            unless="phpmd.done"
             depends="prepare"
             description="Perform project mess detection using PHPMD and log result in XML format. Intended for usage within a continuous integration environment.">
         <exec executable="${toolsdir}phpmd" taskname="phpmd">
@@ -141,11 +133,9 @@
             <arg path="${basedir}/build/logs/pmd.xml"/>
         </exec>
 
-        <property name="phpmd.done" value="true"/>
     </target>
 
     <target name="phpcs"
-            unless="phpcs.done"
             description="Find coding standard violations using PHP_CodeSniffer and print human readable output. Intended for usage on the command line before committing.">
         <exec executable="${toolsdir}phpcs" taskname="phpcs">
             <arg value="--standard=PSR2"/>
@@ -155,11 +145,9 @@
             <arg path="${basedir}/tests"/>
         </exec>
 
-        <property name="phpcs.done" value="true"/>
     </target>
 
     <target name="phpcs-ci"
-            unless="phpcs.done"
             depends="prepare"
             description="Find coding standard violations using PHP_CodeSniffer and log result in XML format. Intended for usage within a continuous integration environment.">
         <exec executable="${toolsdir}phpcs" output="/dev/null" taskname="phpcs">
@@ -171,21 +159,17 @@
             <arg path="${basedir}/src"/>
         </exec>
 
-        <property name="phpcs.done" value="true"/>
     </target>
 
     <target name="phpcpd"
-            unless="phpcpd.done"
             description="Find duplicate code using PHPCPD and print human readable output. Intended for usage on the command line before committing.">
         <exec executable="${toolsdir}phpcpd" taskname="phpcpd">
             <arg path="${basedir}/src"/>
         </exec>
 
-        <property name="phpcpd.done" value="true"/>
     </target>
 
     <target name="phpcpd-ci"
-            unless="phpcpd.done"
             depends="prepare"
             description="Find duplicate code using PHPCPD and log result in XML format. Intended for usage within a continuous integration environment.">
         <exec executable="${toolsdir}phpcpd" taskname="phpcpd">
@@ -194,11 +178,9 @@
             <arg path="${basedir}/src"/>
         </exec>
 
-        <property name="phpcpd.done" value="true"/>
     </target>
 
     <target name="phpunit"
-            unless="phpunit.done"
             depends="prepare"
             description="Run unit tests with PHPUnit">
     <exec executable="${toolsdir}phpunit" failonerror="true" taskname="phpunit">
@@ -206,14 +188,13 @@
         <arg path="${basedir}/phpunit.xml"/>
     </exec>
 
-    <property name="phpunit.done" value="true"/>
     </target>
 
-    <target name="phpdoc" description="Generates API documentation">
-        <exec executable="${toolsdir}phpdoc" failonerror="true">
-            <arg line="-d ${basedir}/src"/>
-            <arg line="-t ${basedir}/build/api"/>
-        </exec>
+    <target name="phpdox"
+            depends="phploc-ci,phpcs-ci,phpmd-ci"
+            description="Generate project documentation using phpDox">
+        <exec executable="${toolsdir}phpdox" dir="${basedir}" taskname="phpdox"/>
+
     </target>
 
 </project>
