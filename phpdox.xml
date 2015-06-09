@@ -19,7 +19,7 @@
             </enrich>
 
             <build engine="html" enabled="true" output="html">
-                <file extension="html" />
+                <file extension="xhtml" />
             </build>
         </generator>
     </project>
