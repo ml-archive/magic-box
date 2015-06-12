@@ -49,6 +49,13 @@ class EloquentRepositoryTest extends DBTestCase
 		$this->assertEquals($user->id, $found_user->id);
 	}
 
+	public function testItCountsCollections()
+	{
+		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$this->assertEquals($repository->count(), 0);
+		$this->assertFalse($repository->hasAny());
+	}
+
 	public function testItCanFilterOnFields()
 	{
 		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
@@ -59,6 +66,43 @@ class EloquentRepositoryTest extends DBTestCase
 		$found_users = $repository->setFilters(['username' => 'sue'])->all();
 		$this->assertEquals($found_users->count(), 1);
 		$this->assertEquals($found_users->first()->username, 'sue');
+	}
+
+	public function testItPaginates()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(['username' => 'bob'])->save();
+		$second_user = $repository->setInput(['username' => 'sue'])->save();
+
+		$paginator = $repository->paginate(1);
+		$this->assertInstanceOf('Illuminate\Pagination\LengthAwarePaginator', $paginator);
+		$this->assertTrue($paginator->hasMorePages());
+	}
+
+	public function testItEagerLoadsRelationsSafely()
+	{
+		$this->getRepository(
+			'Fuzz\MagicBox\Tests\Models\User', [
+				'username' => 'joe',
+				'posts'    => [
+					[
+						'title' => 'Some Great Post',
+					],
+				]
+			]
+		)->save();
+
+		$user = $this->getRepository('Fuzz\MagicBox\Tests\Models\User')->setFilters(['username' => 'joe'])
+			->setEagerLoads(
+				[
+					'posts.nothing',
+					'nada'
+				]
+			)->all()->first();
+
+		$this->assertNotNull($user);
+		$this->assertInstanceOf('Illuminate\Database\Eloquent\Collection', $user->posts);
+		$this->assertInstanceOf('Fuzz\MagicBox\Tests\Models\Post', $user->posts->first());
 	}
 
 	public function testItCanFillModelFields()

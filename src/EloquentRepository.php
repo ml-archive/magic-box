@@ -29,6 +29,13 @@ class EloquentRepository
 	private $filters = [];
 
 	/**
+	 * Storage for eager loads.
+	 *
+	 * @var array
+	 */
+	private $eager_loads = [];
+
+	/**
 	 * The key name used in all queries.
 	 *
 	 * @var int
@@ -86,6 +93,29 @@ class EloquentRepository
 	}
 
 	/**
+	 * Set eager load manually.
+	 *
+	 * @param array $eager_loads
+	 * @return static
+	 */
+	public function setEagerLoads(array $eager_loads)
+	{
+		$this->eager_loads = $eager_loads;
+
+		return $this;
+	}
+
+	/**
+	 * Get eager loads.
+	 *
+	 * @return array
+	 */
+	public function getEagerLoads()
+	{
+		return $this->eager_loads;
+	}
+
+	/**
 	 * Set filters manually.
 	 *
 	 * @param array $filters
@@ -126,13 +156,19 @@ class EloquentRepository
 
 		if (! empty($filters)) {
 			// Make a mock instance so we can describe its columns
-			$model_class = $this->getModelClass();
+			$model_class   = $this->getModelClass();
 			$temp_instance = new $model_class;
-			$columns = $temp_instance->getFields();
+			$columns       = $temp_instance->getFields();
 			unset($temp_instance);
 			foreach (array_only($filters, $columns) as $column => $value) {
 				$query->where($column, $value);
 			}
+		}
+
+		$eager_loads = $this->getEagerLoads();
+
+		if (! empty($eager_loads)) {
+			$query->safeWith($eager_loads);
 		}
 
 		return $query;
