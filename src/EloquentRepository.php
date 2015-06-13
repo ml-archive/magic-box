@@ -3,9 +3,10 @@
 namespace Fuzz\MagicBox;
 
 use Fuzz\Data\Eloquent\Model;
+use Fuzz\MagicBox\Contracts\Repository;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
-class EloquentRepository
+class EloquentRepository implements Repository
 {
 	/**
 	 * An instance variable specifying the model handled by this repository.
