@@ -239,6 +239,16 @@ class EloquentRepository implements Repository
 	}
 
 	/**
+	 * Get a random value.
+	 *
+	 * @return \Fuzz\Data\Eloquent\Model
+	 */
+	public function random()
+	{
+		return $this->query()->orderByRaw('RAND()')->first();
+	}
+
+	/**
 	 * Get the primary key from input.
 	 *
 	 * @return mixed

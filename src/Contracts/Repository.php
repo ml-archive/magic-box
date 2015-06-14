@@ -110,6 +110,13 @@ interface Repository
 	public function hasAny();
 
 	/**
+	 * Get a random value.
+	 *
+	 * @return \Fuzz\Data\Eloquent\Model
+	 */
+	public function random();
+
+	/**
 	 * Get the primary key from input.
 	 *
 	 * @return mixed
