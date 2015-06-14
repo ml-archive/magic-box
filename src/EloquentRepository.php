@@ -52,7 +52,7 @@ class EloquentRepository implements Repository
 	public function setModelClass($model_class)
 	{
 		if (! is_subclass_of($model_class, '\Fuzz\Data\Eloquent\Model')) {
-			throw new \InvalidArgumentException('Specified model class mustb e an instance of \Fuzz\Data\Eloquent\Model');
+			throw new \InvalidArgumentException('Specified model class must be an instance of \Fuzz\Data\Eloquent\Model');
 		}
 
 		$this->model_class = $model_class;
