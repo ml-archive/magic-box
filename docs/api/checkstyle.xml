@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<checkstyle version="1.3.0">
+  <file name="EloquentRepository.php">
+    <error line="0" severity="error" message="No summary was found for this file" source="phpDocumentor.file.PPC:ERR-50000"/>
+    <error line="8" severity="error" message="No summary for class \Fuzz\MagicBox\EloquentRepository" source="phpDocumentor.file.PPC:ERR-50005"/>
+  </file>
+</checkstyle>
