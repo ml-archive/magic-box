@@ -18,8 +18,8 @@
                 </source>
             </enrich>
 
-            <build engine="html" enabled="true" output="html">
-                <file extension="xhtml" />
+            <build engine="html" enabled="true" output="api">
+                <file extension="html" />
             </build>
         </generator>
     </project>
