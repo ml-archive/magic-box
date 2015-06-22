@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <class xmlns="http://xml.phpdox.net/src" full="Fuzz\MagicBox\EloquentRepository" namespace="Fuzz\MagicBox" name="EloquentRepository" abstract="false" final="false" start="8" end="408">
-  <file path="src" file="EloquentRepository.php" realpath="/Users/leayousoufov/Sites/web-modules/magic-box/src/EloquentRepository.php" size="8859" time="2015-06-04T15:28:28-04:00" unixtime="1433446108" sha1="79c0d95cafd719e045b732dd0caf3a5ed308fe67" relative="EloquentRepository.php"/>
+  <file path="src" file="EloquentRepository.php" realpath="/Users/leayousoufov/Sites/web-modules/magic-box/src/EloquentRepository.php" size="8859" time="2015-06-22T12:33:00-04:00" unixtime="1434990780" sha1="79c0d95cafd719e045b732dd0caf3a5ed308fe67" relative="EloquentRepository.php"/>
   <member name="model_class" visibility="private" line="15">
     <docblock>
       <description compact="An instance variable specifying the model handled by this repository."/>
