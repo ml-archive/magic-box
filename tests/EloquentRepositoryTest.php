@@ -246,7 +246,7 @@ class EloquentRepositoryTest extends DBTestCase
 		)->save();
 
 		$tag = $post->tags->first();
-		$this->assertEquals($tag->pivot->extra, 'Meowth');
+		$this->assertEquals($tag->pivot->extra, 'notMeowth');
 
 		$post = $this->getRepository(
 			'Fuzz\MagicBox\Tests\Models\Post', [
