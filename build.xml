@@ -7,11 +7,11 @@
     <!-- <property name="toolsdir" value="${basedir}/vendor/bin/"/> -->
 
     <target name="build"
-            depends="prepare,composer,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdox"
+            depends="prepare,composer,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdox, phpdoc"
             description=""/>
 
     <target name="build-parallel"
-            depends="prepare,lint,tools-parallel,phpunit,phpdox"
+            depends="prepare,lint,tools-parallel,phpunit,phpdox, phpdoc"
             description=""/>
 
     <target name="tools-parallel" description="Run tools in parallel">
@@ -34,6 +34,7 @@
         <delete dir="${basedir}/build/logs"/>
         <delete dir="${basedir}/build/pdepend"/>
         <delete dir="${basedir}/build/phpdox"/>
+        <delete dir="${basedir}/build/phpdoc"/>
         <property name="clean.done" value="true"/>
     </target>
 
@@ -46,6 +47,7 @@
         <mkdir dir="${basedir}/build/logs"/>
         <mkdir dir="${basedir}/build/pdepend"/>
         <mkdir dir="${basedir}/build/phpdox"/>
+        <mkdir dir="${basedir}/build/phpdoc"/>
         <mkdir dir="${basedir}/build/vendor"/>
         <property name="prepare.done" value="true"/>
     </target>
@@ -201,6 +203,15 @@
         <exec executable="${toolsdir}phpdox" dir="${basedir}" taskname="phpdox">
         <arg value="--file" />
         <arg value="${basedir}/phpdox.xml" />
+        </exec>
+    </target>
+
+    <target name="phpdoc" description="Generate API documentation using PHPDocumentor">
+        <exec executable="phpdoc">
+            <arg value="--directory" />
+            <arg path="${basedir}/src" />
+            <arg value="--target" />
+            <arg path="${basedir}/build/api" />
         </exec>
     </target>
 

@@ -14,7 +14,8 @@
 		"phploc/phploc": "*",
 		"phpunit/phpunit": "4.7.*",
 		"theseer/phpdox": "0.8.*",
-	  	"phpunit/php-invoker": "1.*"
+	  	"phpunit/php-invoker": "1.*",
+	  	"phpdocumentor/phpdocumentor": "2.*"
 	},
 	"authors": [
 		{
