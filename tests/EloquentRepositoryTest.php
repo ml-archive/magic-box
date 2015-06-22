@@ -263,6 +263,6 @@ class EloquentRepositoryTest extends DBTestCase
 		)->save();
 
 		$tag = $post->tags->first();
-		$this->assertEquals($tag->pivot->extra, 'Pikachu');
+		$this->assertEquals($tag->pivot->extra, 'notPikachu');
 	}
 }
