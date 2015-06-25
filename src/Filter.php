@@ -2,8 +2,6 @@
 
 namespace Fuzz\MagicBox;
 
-use Illuminate\Support\Facades\Log;
-
 class Filter
 {
 	/**
@@ -11,7 +9,7 @@ class Filter
 	 *
 	 * @var array
 	 */
-	public static $supported_tokens = [
+	protected static $supported_tokens = [
 		'^'  => 'startsWith',
 		'~'  => 'contains',
 		'$'  => 'endsWith',
@@ -75,7 +73,7 @@ class Filter
 	 * @param $filter
 	 * @param $query
 	 */
-	public static function startsWith($column, $filter, $query)
+	protected static function startsWith($column, $filter, $query)
 	{
 		$query->where($column, 'LIKE', $filter . '%');
 	}
@@ -85,7 +83,7 @@ class Filter
 	 * @param $filter
 	 * @param $query
 	 */
-	public static function endsWith($column, $filter, $query)
+	protected static function endsWith($column, $filter, $query)
 	{
 		$query->where($column, 'LIKE', '%' . $filter);
 	}
@@ -95,7 +93,7 @@ class Filter
 	 * @param $filter
 	 * @param $query
 	 */
-	public static function contains($column, $filter, $query)
+	protected static function contains($column, $filter, $query)
 	{
 		$query->where($column, 'LIKE', '%' . $filter . '%');
 	}
@@ -105,7 +103,7 @@ class Filter
 	 * @param $filter
 	 * @param $query
 	 */
-	public static function lessThan($column, $filter, $query)
+	protected static function lessThan($column, $filter, $query)
 	{
 		$query->where($column, '<', $filter);
 	}
@@ -115,7 +113,7 @@ class Filter
 	 * @param $filter
 	 * @param $query
 	 */
-	public static function greaterThan($column, $filter, $query)
+	protected static function greaterThan($column, $filter, $query)
 	{
 		$query->where($column, '>', $filter);
 	}
@@ -125,7 +123,7 @@ class Filter
 	 * @param $filter
 	 * @param $query
 	 */
-	public static function greaterThanOrEquals($column, $filter, $query)
+	protected static function greaterThanOrEquals($column, $filter, $query)
 	{
 		$query->where($column, '>=', $filter);
 	}
@@ -135,7 +133,7 @@ class Filter
 	 * @param $filter
 	 * @param $query
 	 */
-	public static function lessThanOrEquals($column, $filter, $query)
+	protected static function lessThanOrEquals($column, $filter, $query)
 	{
 		$query->where($column, '<=', $filter);
 	}
@@ -145,7 +143,7 @@ class Filter
 	 * @param $filter
 	 * @param $query
 	 */
-	public static function equals($column, $filter, $query)
+	protected static function equals($column, $filter, $query)
 	{
 		$where = camel_case('where' . $column);
 		$query->$where($filter);
@@ -156,7 +154,7 @@ class Filter
 	 * @param $filter
 	 * @param $query
 	 */
-	public static function notEquals($column, $filter, $query)
+	protected static function notEquals($column, $filter, $query)
 	{
 		$query->where($column, '!=', $filter);
 	}
@@ -166,7 +164,7 @@ class Filter
 	 * @param $filter
 	 * @param $query
 	 */
-	public static function nullMethod($column, $filter, $query)
+	protected static function nullMethod($column, $filter, $query)
 	{
 		if ($filter === 'NULL') {
 			$query->whereNull($column);
