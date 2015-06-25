@@ -4,7 +4,9 @@ namespace Fuzz\MagicBox;
 
 use Fuzz\Data\Eloquent\Model;
 use Fuzz\MagicBox\Contracts\Repository;
+use Fuzz\MagicBox\Filter;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Log;
 
 class EloquentRepository implements Repository
 {
@@ -161,9 +163,8 @@ class EloquentRepository implements Repository
 			$temp_instance = new $model_class;
 			$columns       = $temp_instance->getFields();
 			unset($temp_instance);
-			foreach (array_only($filters, $columns) as $column => $value) {
-				$query->where($column, $value);
-			}
+
+			Filter::filterQuery($query, $filters, $columns);
 		}
 
 		$eager_loads = $this->getEagerLoads();

@@ -63,7 +63,7 @@ class EloquentRepositoryTest extends DBTestCase
 		$second_user = $repository->setInput(['username' => 'sue'])->save();
 		$this->assertEquals($repository->all()->count(), 2);
 
-		$found_users = $repository->setFilters(['username' => 'sue'])->all();
+		$found_users = $repository->setFilters(['username' => '=sue'])->all();
 		$this->assertEquals($found_users->count(), 1);
 		$this->assertEquals($found_users->first()->username, 'sue');
 	}
