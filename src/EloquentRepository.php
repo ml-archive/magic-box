@@ -6,7 +6,6 @@ use Fuzz\Data\Eloquent\Model;
 use Fuzz\MagicBox\Contracts\Repository;
 use Fuzz\MagicBox\Filter;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Facades\Log;
 
 class EloquentRepository implements Repository
 {
