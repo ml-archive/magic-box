@@ -3,7 +3,7 @@
 	"description": "A magical implementation of Laravel's Eloquent models as injectable, masked resource respositories.",
 	"require": {
 		"illuminate/database": "~5.0",
-		"fuzz/laravel-data": "5.0.x-dev"
+		"fuzz/laravel-data": "5.1.x-dev"
 	},
 	"require-dev": {
 		"orchestra/testbench": "3.0.*"
