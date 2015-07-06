@@ -19,8 +19,27 @@ class Filter
 		'<=' => 'lessThanOrEquals',
 		'='  => 'equals',
 		'!=' => 'notEquals',
+		'![' => 'notIn',
+		'['  => 'in'
 	];
 
+	/**
+	 * Tokens that accept non-scalar filters.
+	 * ex: [One,Two,Three,Fuzz]
+	 *
+	 * @var array
+	 */
+	protected static $non_scalar_tokens = [
+		'![',
+		'['
+	];
+
+	/**
+	 * Retrieve the token
+	 *
+	 * @param $filter
+	 * @return bool|string
+	 */
 	private static function determineTokenType($filter)
 	{
 		if (in_array(substr($filter, 0, 2), array_keys(self::$supported_tokens))) {
@@ -33,6 +52,18 @@ class Filter
 
 		// No token
 		return false;
+	}
+
+	/**
+	 * Determine if a token should accept a scalar value
+	 *
+	 * @param $token
+	 * @return bool
+	 */
+	private static function shouldBeScalar($token)
+	{
+		// Is token in array of tokens that can be non-scalar
+		return ! in_array($token, self::$non_scalar_tokens);
 	}
 
 	/**
@@ -51,7 +82,18 @@ class Filter
 				continue;
 			} elseif ($token = self::determineTokenType($filter)) {
 				// Is a supported method token, run logic
-				$filter = substr($filter, strlen($token));
+				$filter = explode(',', substr($filter, strlen($token)));
+
+				// If this should be a scalar value but is not, don't process as a filter
+				if (self::shouldBeScalar($token)) {
+					if (count($filter) > 1) {
+						continue;
+					}
+
+					// Set to first index if should be scalar
+					$filter = $filter[0];
+				}
+
 				$method = self::$supported_tokens[$token];
 
 				self::$method($column, $filter, $query);
@@ -171,5 +213,25 @@ class Filter
 		} else {
 			$query->whereNotNull($column);
 		}
+	}
+
+	/**
+	 * @param $column
+	 * @param $filter
+	 * @param $query
+	 */
+	protected static function in($column, $filter, $query)
+	{
+		$query->whereIn($column, $filter);
+	}
+
+	/**
+	 * @param $column
+	 * @param $filter
+	 * @param $query
+	 */
+	protected static function notIn($column, $filter, $query)
+	{
+		$query->whereNotIn($column, $filter);
 	}
 }

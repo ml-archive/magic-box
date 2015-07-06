@@ -207,4 +207,29 @@ class FilterTest extends DBTestCase
 		$this->assertEquals($found_users->count(), 1);
 		$this->assertEquals($found_users->first()->username, null);
 	}
+
+	// Wife: Is it in yet?
+	public function testItIn()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(['username' => 'Bobby'])->save();
+		$second_user = $repository->setInput(['username' => 'Robby'])->save();
+		$this->assertEquals($repository->all()->count(), 2);
+
+		$found_users = $repository->setFilters(['username' => '[Bobby,Johnny,NotRob]'])->all();
+		$this->assertEquals($found_users->count(), 1);
+		$this->assertEquals($found_users->first()->username, 'Bobby');
+	}
+
+	public function testItNotIn()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(['username' => 'Bobby'])->save();
+		$second_user = $repository->setInput(['username' => 'Robby'])->save();
+		$this->assertEquals($repository->all()->count(), 2);
+
+		$found_users = $repository->setFilters(['username' => '![Robby,Johnny,NotBob]'])->all();
+		$this->assertEquals($found_users->count(), 1);
+		$this->assertEquals($found_users->first()->username, 'Bobby');
+	}
 }
