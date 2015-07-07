@@ -207,8 +207,7 @@ class FilterTest extends DBTestCase
 		$this->assertEquals($found_users->count(), 1);
 		$this->assertEquals($found_users->first()->username, null);
 	}
-
-	// Wife: Is it in yet?
+	
 	public function testItIn()
 	{
 		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
