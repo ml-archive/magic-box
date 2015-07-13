@@ -163,7 +163,7 @@ class EloquentRepository implements Repository
 			$columns       = $temp_instance->getFields();
 			unset($temp_instance);
 
-			Filter::filterQuery($query, $filters, $columns);
+			Filter::filterQuery($query, $filters);
 		}
 
 		$eager_loads = $this->getEagerLoads();

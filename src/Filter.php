@@ -37,7 +37,7 @@ class Filter
 	/**
 	 * Determine the token (if any) to use for the query
 	 *
-	 * @param $filter
+	 * @param string $filter
 	 * @return bool|string
 	 */
 	private static function determineTokenType($filter)
@@ -57,7 +57,7 @@ class Filter
 	/**
 	 * Determine if a token should accept a scalar value
 	 *
-	 * @param $token
+	 * @param string $token
 	 * @return bool
 	 */
 	private static function shouldBeScalar($token)
@@ -69,8 +69,8 @@ class Filter
 	/**
 	 * Parse a filter string and confirm that it has a scalar value if it should.
 	 *
-	 * @param $token
-	 * @param $filter
+	 * @param string $token
+	 * @param string $filter
 	 * @return array|bool
 	 */
 	private static function cleanAndValidateFilter($token, $filter)
@@ -99,11 +99,11 @@ class Filter
 	 * First check for a dot nested string in the place of a filter column and use the appropriate method
 	 * and relation combination.
 	 *
-	 * @param $query
-	 * @param $filters
-	 * @param $model_columns
+	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param array                                 $filters
+	 * @return void
 	 */
-	public static function filterQuery($query, $filters, $model_columns)
+	public static function filterQuery($query, $filters)
 	{
 		foreach ($filters as $column => $filter) {
 			$nested_relations = self::parseRelations($column);
@@ -126,8 +126,8 @@ class Filter
 				if (is_array($nested_relations)) {
 					$query->whereHas(
 						$relation, function ($query) use ($method, $column, $filter) {
-							self::$method($column, $filter, $query);
-						}
+						self::$method($column, $filter, $query);
+					}
 					);
 				} else {
 					self::$method($column, $filter, $query);
@@ -141,8 +141,8 @@ class Filter
 				if (is_array($nested_relations)) {
 					$query->whereHas(
 						$relation, function ($query) use ($where, $filter) {
-							$query->$where($filter);
-						}
+						$query->$where($filter);
+					}
 					);
 				} else {
 					$query->$where($filter);
@@ -152,8 +152,8 @@ class Filter
 				if (is_array($nested_relations)) {
 					$query->whereHas(
 						$relation, function ($query) use ($column, $filter) {
-							self::nullMethod($column, $filter, $query);
-						}
+						self::nullMethod($column, $filter, $query);
+					}
 					);
 				} else {
 					self::nullMethod($column, $filter, $query);
@@ -169,7 +169,7 @@ class Filter
 	 *
 	 * Ex: users?filters[posts.comments.rating]=>4
 	 *
-	 * @param $filter_name
+	 * @param string $filter_name
 	 * @return array
 	 */
 	protected static function parseRelations($filter_name)
@@ -185,9 +185,9 @@ class Filter
 	 *
 	 * Ex: users?filters[name]=^John
 	 *
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function startsWith($column, $filter, $query)
 	{
@@ -199,9 +199,9 @@ class Filter
 	 *
 	 * Ex: users?filters[name]=$Smith
 	 *
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function endsWith($column, $filter, $query)
 	{
@@ -213,9 +213,9 @@ class Filter
 	 *
 	 * Ex: users?filters[favorite_cheese]=~cheddar
 	 *
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function contains($column, $filter, $query)
 	{
@@ -227,9 +227,9 @@ class Filter
 	 *
 	 * Ex: users?filters[lifetime_value]=<50
 	 *
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function lessThan($column, $filter, $query)
 	{
@@ -241,9 +241,9 @@ class Filter
 	 *
 	 * Ex: users?filters[lifetime_value]=>50
 	 *
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function greaterThan($column, $filter, $query)
 	{
@@ -255,9 +255,9 @@ class Filter
 	 *
 	 * Ex: users?filters[lifetime_value]=>=50
 	 *
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function greaterThanOrEquals($column, $filter, $query)
 	{
@@ -269,9 +269,9 @@ class Filter
 	 *
 	 * Ex: users?filters[lifetime_value]=<=50
 	 *
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function lessThanOrEquals($column, $filter, $query)
 	{
@@ -283,9 +283,9 @@ class Filter
 	 *
 	 * Ex: users?filters[username]==Specific%20Username
 	 *
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function equals($column, $filter, $query)
 	{
@@ -298,9 +298,9 @@ class Filter
 	 *
 	 * Ex: users?filters[username]=!=common%20username
 	 *
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function notEquals($column, $filter, $query)
 	{
@@ -313,9 +313,9 @@ class Filter
 	 * Ex: users?filters[email]=NOT_NULL
 	 * Ex: users?filters[address]=NULL
 	 *
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function nullMethod($column, $filter, $query)
 	{
@@ -331,9 +331,9 @@ class Filter
 	 *
 	 * Ex: users?filters[id]=[1,5,10]
 	 *
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * @param string                                $column
+	 * @param string|array                          $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function in($column, $filter, $query)
 	{
@@ -345,9 +345,9 @@ class Filter
 	 *
 	 * Ex: users?filters[id]=![1,5,10]
 	 *
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * @param string                                $column
+	 * @param string|array                          $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function notIn($column, $filter, $query)
 	{
