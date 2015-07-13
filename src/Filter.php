@@ -35,7 +35,7 @@ class Filter
 	];
 
 	/**
-	 * Retrieve the token
+	 * Determine the token (if any) to use for the query
 	 *
 	 * @param $filter
 	 * @return bool|string
@@ -67,7 +67,37 @@ class Filter
 	}
 
 	/**
-	 * Funnel method to filter queries
+	 * Parse a filter string and confirm that it has a scalar value if it should.
+	 *
+	 * @param $token
+	 * @param $filter
+	 * @return array|bool
+	 */
+	private static function cleanAndValidateFilter($token, $filter)
+	{
+		$filter_should_be_scalar = self::shouldBeScalar($token);
+
+		// Format the filter, cutting off the trailing ']' if appropriate
+		$filter = $filter_should_be_scalar ? explode(',', substr($filter, strlen($token))) :
+			explode(',', substr($filter, strlen($token), -1));
+
+		if ($filter_should_be_scalar) {
+			if (count($filter) > 1) {
+				return false;
+			}
+
+			// Set to first index if should be scalar
+			$filter = $filter[0];
+		}
+
+		return $filter;
+	}
+
+	/**
+	 * Funnel method to filter queries.
+	 *
+	 * First check for a dot nested string in the place of a filter column and use the appropriate method
+	 * and relation combination.
 	 *
 	 * @param $query
 	 * @param $filters
@@ -86,20 +116,8 @@ class Filter
 			}
 
 			if ($token = self::determineTokenType($filter)) {
-				$filter_should_be_scalar = self::shouldBeScalar($token);
-
-				// Format the filter appropriately, cutting off the trailing ']' if appropriate
-				$filter = $filter_should_be_scalar ? explode(',', substr($filter, strlen($token))) :
-					explode(',', substr($filter, strlen($token), -1));
-
-				// Don't process non-scalar filters if they should be scalar
-				if ($filter_should_be_scalar) {
-					if (count($filter) > 1) {
-						continue;
-					}
-
-					// Set to first index if should be scalar
-					$filter = $filter[0];
+				if (! $filter = self::cleanAndValidateFilter($token, $filter)) {
+					continue;
 				}
 
 				$method = self::$supported_tokens[$token];
@@ -147,6 +165,10 @@ class Filter
 	}
 
 	/**
+	 * Parse a string of dot nested relations, if applicable
+	 *
+	 * Ex: users?filters[posts.comments.rating]=>4
+	 *
 	 * @param $filter_name
 	 * @return array
 	 */
@@ -159,6 +181,10 @@ class Filter
 	}
 
 	/**
+	 * Query for items that begin with a string.
+	 *
+	 * Ex: users?filters[name]=^John
+	 *
 	 * @param $column
 	 * @param $filter
 	 * @param $query
@@ -169,6 +195,10 @@ class Filter
 	}
 
 	/**
+	 * Query for items that end with a string.
+	 *
+	 * Ex: users?filters[name]=$Smith
+	 *
 	 * @param $column
 	 * @param $filter
 	 * @param $query
@@ -179,6 +209,10 @@ class Filter
 	}
 
 	/**
+	 * Query for items that contain a string.
+	 *
+	 * Ex: users?filters[favorite_cheese]=~cheddar
+	 *
 	 * @param $column
 	 * @param $filter
 	 * @param $query
@@ -189,6 +223,10 @@ class Filter
 	}
 
 	/**
+	 * Query for items with a value less than a filter.
+	 *
+	 * Ex: users?filters[lifetime_value]=<50
+	 *
 	 * @param $column
 	 * @param $filter
 	 * @param $query
@@ -199,6 +237,10 @@ class Filter
 	}
 
 	/**
+	 * Query for items with a value greater than a filter.
+	 *
+	 * Ex: users?filters[lifetime_value]=>50
+	 *
 	 * @param $column
 	 * @param $filter
 	 * @param $query
@@ -209,6 +251,10 @@ class Filter
 	}
 
 	/**
+	 * Query for items with a value greater than or equal to a filter.
+	 *
+	 * Ex: users?filters[lifetime_value]=>=50
+	 *
 	 * @param $column
 	 * @param $filter
 	 * @param $query
@@ -219,6 +265,10 @@ class Filter
 	}
 
 	/**
+	 * Query for items with a value less than or equal to a filter.
+	 *
+	 * Ex: users?filters[lifetime_value]=<=50
+	 *
 	 * @param $column
 	 * @param $filter
 	 * @param $query
@@ -229,6 +279,10 @@ class Filter
 	}
 
 	/**
+	 * Query for items with a value equal to a filter.
+	 *
+	 * Ex: users?filters[username]==Specific%20Username
+	 *
 	 * @param $column
 	 * @param $filter
 	 * @param $query
@@ -240,6 +294,10 @@ class Filter
 	}
 
 	/**
+	 * Query for items with a value not equal to a filter.
+	 *
+	 * Ex: users?filters[username]=!=common%20username
+	 *
 	 * @param $column
 	 * @param $filter
 	 * @param $query
@@ -250,6 +308,11 @@ class Filter
 	}
 
 	/**
+	 * Query for items that are either null or not null.
+	 *
+	 * Ex: users?filters[email]=NOT_NULL
+	 * Ex: users?filters[address]=NULL
+	 *
 	 * @param $column
 	 * @param $filter
 	 * @param $query
@@ -264,6 +327,10 @@ class Filter
 	}
 
 	/**
+	 * Query for items that are in a list.
+	 *
+	 * Ex: users?filters[id]=[1,5,10]
+	 *
 	 * @param $column
 	 * @param $filter
 	 * @param $query
@@ -274,6 +341,10 @@ class Filter
 	}
 
 	/**
+	 * Query for items that are not in a list.
+	 *
+	 * Ex: users?filters[id]=![1,5,10]
+	 *
 	 * @param $column
 	 * @param $filter
 	 * @param $query
