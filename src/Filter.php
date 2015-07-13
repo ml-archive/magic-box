@@ -76,16 +76,24 @@ class Filter
 	public static function filterQuery($query, $filters, $model_columns)
 	{
 		foreach ($filters as $column => $filter) {
-			// Not a model attribute
-			if (! in_array($column, $model_columns)) {
-				// Possibly accessed via a mutator - need to handle
-				continue;
-			} elseif ($token = self::determineTokenType($filter)) {
-				// Is a supported method token, run logic
-				$filter = explode(',', substr($filter, strlen($token)));
+			$nested_relations = self::parseRelations($column);
 
-				// If this should be a scalar value but is not, don't process as a filter
-				if (self::shouldBeScalar($token)) {
+			if (is_array($nested_relations)) {
+				// Create a dot nested string of relations
+				$relation = implode('.', array_splice($nested_relations, 0, count($nested_relations) - 1));
+				// Set up the column at the end of the dot nested relation
+				$column = end($nested_relations);
+			}
+
+			if ($token = self::determineTokenType($filter)) {
+				$filter_should_be_scalar = self::shouldBeScalar($token);
+
+				// Format the filter appropriately, cutting off the trailing ']' if appropriate
+				$filter = $filter_should_be_scalar ? explode(',', substr($filter, strlen($token))) :
+					explode(',', substr($filter, strlen($token), -1));
+
+				// Don't process non-scalar filters if they should be scalar
+				if ($filter_should_be_scalar) {
 					if (count($filter) > 1) {
 						continue;
 					}
@@ -96,18 +104,58 @@ class Filter
 
 				$method = self::$supported_tokens[$token];
 
-				self::$method($column, $filter, $query);
+				// Querying a dot nested relation
+				if (is_array($nested_relations)) {
+					$query->whereHas(
+						$relation, function ($query) use ($method, $column, $filter) {
+							self::$method($column, $filter, $query);
+						}
+					);
+				} else {
+					self::$method($column, $filter, $query);
+				}
 			} elseif ($filter === 'true' || $filter === 'false') {
 				// Is a boolean filter, coerce to boolean.
 				$filter = ($filter === 'true');
 				$where  = camel_case('where' . $column);
-				$query->$where($filter);
+
+				// Querying a dot nested relation
+				if (is_array($nested_relations)) {
+					$query->whereHas(
+						$relation, function ($query) use ($where, $filter) {
+							$query->$where($filter);
+						}
+					);
+				} else {
+					$query->$where($filter);
+				}
 			} elseif ($filter === 'NULL' || $filter === 'NOT_NULL') {
-				self::nullMethod($column, $filter, $query);
+				// Querying a dot nested relation
+				if (is_array($nested_relations)) {
+					$query->whereHas(
+						$relation, function ($query) use ($column, $filter) {
+							self::nullMethod($column, $filter, $query);
+						}
+					);
+				} else {
+					self::nullMethod($column, $filter, $query);
+				}
 			} else {
 				// @todo Unsupported type
 			}
 		}
+	}
+
+	/**
+	 * @param $filter_name
+	 * @return array
+	 */
+	protected static function parseRelations($filter_name)
+	{
+		// Determine if we're querying a dot nested relationships of arbitrary depth (ex: user.post.tags.label)
+		$parse_relations = explode('.', $filter_name);
+
+		return count($parse_relations) === 1 ? $parse_relations[0] : $parse_relations;
 	}
 
 	/**

@@ -47,7 +47,8 @@ class FilterTest extends DBTestCase
 	private function getModelColumns($model_class)
 	{
 		$this->getRepository($model_class);
-		$temp_instance    = new $model_class;
+		$temp_instance = new $model_class;
+
 		return $temp_instance->getFields();
 	}
 
@@ -65,11 +66,11 @@ class FilterTest extends DBTestCase
 
 	public function testItModifiesQuery()
 	{
-		$model = 'Fuzz\MagicBox\Tests\Models\User';
-		$query = $this->getQuery($model);
+		$model          = 'Fuzz\MagicBox\Tests\Models\User';
+		$query          = $this->getQuery($model);
 		$original_query = clone $query;
-		$columns = $this->getModelColumns($model);
-		$filters = ['name' => '^Bob'];
+		$columns        = $this->getModelColumns($model);
+		$filters        = ['name' => '^Bob'];
 
 		Filter::filterQuery($query, $filters, $columns);
 
@@ -115,8 +116,18 @@ class FilterTest extends DBTestCase
 	public function testItIsLessThan()
 	{
 		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-		$first_user  = $repository->setInput(['username' => 3, 'height' => 3])->save();
-		$second_user = $repository->setInput(['username' => 5, 'height' => 5])->save();
+		$first_user  = $repository->setInput(
+			[
+				'username' => 3,
+				'height'   => 3
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username' => 5,
+				'height'   => 5
+			]
+		)->save();
 		$this->assertEquals($repository->all()->count(), 2);
 
 		$found_users = $repository->setFilters(['username' => '<5'])->all();
@@ -127,8 +138,18 @@ class FilterTest extends DBTestCase
 	public function testItIsGreaterThan()
 	{
 		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-		$first_user  = $repository->setInput(['username' => 5, 'height' => 5])->save();
-		$second_user = $repository->setInput(['username' => 3, 'height' => 3])->save();
+		$first_user  = $repository->setInput(
+			[
+				'username' => 5,
+				'height'   => 5
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username' => 3,
+				'height'   => 3
+			]
+		)->save();
 		$this->assertEquals($repository->all()->count(), 2);
 
 		$found_users = $repository->setFilters(['username' => '>3'])->all();
@@ -139,8 +160,18 @@ class FilterTest extends DBTestCase
 	public function testItIsLessThanOrEquals()
 	{
 		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-		$first_user  = $repository->setInput(['username' => 3, 'height' => 3])->save();
-		$second_user = $repository->setInput(['username' => 5, 'height' => 5])->save();
+		$first_user  = $repository->setInput(
+			[
+				'username' => 3,
+				'height'   => 3
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username' => 5,
+				'height'   => 5
+			]
+		)->save();
 		$this->assertEquals($repository->all()->count(), 2);
 
 		$found_users = $repository->setFilters(['username' => '<=3'])->all();
@@ -151,8 +182,18 @@ class FilterTest extends DBTestCase
 	public function testItIsGreaterThanOrEquals()
 	{
 		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-		$first_user  = $repository->setInput(['username' => 5, 'height' => 5])->save();
-		$second_user = $repository->setInput(['username' => 3, 'height' => 3])->save();
+		$first_user  = $repository->setInput(
+			[
+				'username' => 5,
+				'height'   => 5
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username' => 3,
+				'height'   => 3
+			]
+		)->save();
 		$this->assertEquals($repository->all()->count(), 2);
 
 		$found_users = $repository->setFilters(['username' => '>=5'])->all();
@@ -207,7 +248,7 @@ class FilterTest extends DBTestCase
 		$this->assertEquals($found_users->count(), 1);
 		$this->assertEquals($found_users->first()->username, null);
 	}
-	
+
 	public function testItIn()
 	{
 		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
@@ -215,7 +256,7 @@ class FilterTest extends DBTestCase
 		$second_user = $repository->setInput(['username' => 'Robby'])->save();
 		$this->assertEquals($repository->all()->count(), 2);
 
-		$found_users = $repository->setFilters(['username' => '[Bobby,Johnny,NotRob]'])->all();
+		$found_users = $repository->setFilters(['username' => '[NotRob,Johnny,Bobby]'])->all();
 		$this->assertEquals($found_users->count(), 1);
 		$this->assertEquals($found_users->first()->username, 'Bobby');
 	}
@@ -228,6 +269,32 @@ class FilterTest extends DBTestCase
 		$this->assertEquals($repository->all()->count(), 2);
 
 		$found_users = $repository->setFilters(['username' => '![Robby,Johnny,NotBob]'])->all();
+		$this->assertEquals($found_users->count(), 1);
+		$this->assertEquals($found_users->first()->username, 'Bobby');
+	}
+
+	public function testItFiltersNestedRelationships()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(
+			[
+				'username'         => 'Bobby',
+				'profile' => [
+					'favorite_cheese' => 'Gouda'
+				]
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username'         => 'Robby',
+				'profile' => [
+					'favorite_cheese' => 'Cheddar'
+				]
+			]
+		)->save();
+		$this->assertEquals($repository->all()->count(), 2);
+
+		$found_users = $repository->setFilters(['profile.favorite_cheese' => '~Gou'])->all();
 		$this->assertEquals($found_users->count(), 1);
 		$this->assertEquals($found_users->first()->username, 'Bobby');
 	}
