@@ -36,6 +36,7 @@ class EloquentRepository implements Repository
 	 * @var array
 	 */
 	private $sortOrder = [];
+	
 	/**
 	 * Storage for eager loads.
 	 *
@@ -204,7 +205,6 @@ class EloquentRepository implements Repository
 		$sortOrder = $this->getSortOrder();
 
 		if (! empty($sortOrder)) {
-			Log::info($sortOrder);
 			foreach ($sortOrder as $orderBy => $direction) {
 				$query->orderBy($orderBy, $direction);
 			}
