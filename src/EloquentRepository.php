@@ -31,6 +31,12 @@ class EloquentRepository implements Repository
 	private $filters = [];
 
 	/**
+	 * Storage for sortOrder.
+	 *
+	 * @var array
+	 */
+	private $sortOrder = [];
+	/**
 	 * Storage for eager loads.
 	 *
 	 * @var array
@@ -141,6 +147,29 @@ class EloquentRepository implements Repository
 	}
 
 	/**
+	 * Set sortOrder manually.
+	 *
+	 * @param array $sortOrders
+	 * @return $this
+	 */
+	public function setSortOrder(array $sortOrder)
+	{
+		$this->sortOrder = $sortOrder;
+
+		return $this;
+	}
+
+	/**
+	 * Get sortOrder.
+	 *
+	 * @return array
+	 */
+	public function getSortOrder()
+	{
+		return $this->sortOrder;
+	}
+
+	/**
 	 * Base query for all behaviors within this repository.
 	 *
 	 * @return \Illuminate\Database\Eloquent\Builder
@@ -170,6 +199,15 @@ class EloquentRepository implements Repository
 
 		if (! empty($eager_loads)) {
 			$query->safeWith($eager_loads);
+		}
+
+		$sortOrder = $this->getSortOrder();
+
+		if (! empty($sortOrder)) {
+			Log::info($sortOrder);
+			foreach ($sortOrder as $orderBy => $direction) {
+				$query->orderBy($orderBy, $direction);
+			}
 		}
 
 		return $query;

@@ -309,4 +309,28 @@ class EloquentRepositoryTest extends DBTestCase
 		$tag = $post->tags->first();
 		$this->assertEquals($tag->pivot->extra, 'Pikachu');
 	}
+
+	public function testItSorts()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(
+			[
+				'username' => 'Bobby'
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username' => 'Robby'
+			]
+		)->save();
+		$this->assertEquals($repository->all()->count(), 2);
+
+		$found_users = $repository->setSortOrder(
+			[
+				'id' => 'desc'
+			]
+		)->all();
+		$this->assertEquals($found_users->count(), 2);
+		$this->assertEquals($found_users->first()->id, 2);
+	}
 }
