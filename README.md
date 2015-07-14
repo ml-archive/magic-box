@@ -96,9 +96,48 @@ The public API methods that return an `\Illuminate\Database\Eloquent\Collection`
 
 1. `all`
 
+### Filtering
+`Fuzz\MagicBox\Filter` handles Eloquent Query Builder modifications based on filter values passed through the `filters` 
+parameter.
+
+Tokens and usage:  
+
+|    Token   |           Description           |                     Example                    |
+|:----------:|:-------------------------------:|:----------------------------------------------:|
+| `^`        | Field starts with               | `users?filters[name]=^John`                    |
+| `$`        | Field ends with                 | `users?filters[name]=$Smith`                   |
+| `~`        | Field contains                  | `users?filters[favorite_cheese]=~cheddar`      |
+| `<`        | Field is less than              | `users?filters[lifetime_value]=<50`            |
+| `>`        | Field is greater than           | `users?filters[lifetime_value]=>50`            |
+| `>=`       | Field is greater than or equals | `users?filters[lifetime_value]=>=50`           |
+| `<=`       | Field is less than or equals    | `users?filters[lifetime_value]=<=50`           |
+| `=`        | Field is equal to               | `users?filters[username]==Specific%20Username` |
+| `!=`       | Field is not equal to           | `users?filters[username]=!=common%20username`  |
+| `[...]`    | Field is one or more of         | `users?filters[id]=[1,5,10]`                   |
+| `![...]`   | Field is not one of             | `users?filters[id]=![1,5,10]`                  |
+| `NULL`     | Field is null                   | `users?filters[address]=NULL`                  |
+| `NOT_NULL` | Field is not null               | `users?filters[email]=NOT_NULL`                |
+
+#### Filtering relations
+Assuming we have users and their related tables resembling the following structure:
+
+```
+    [
+        'username'         => 'Bobby',
+        'profile' => [
+            'hobbies' => [
+                ['name' => 'Hockey'],
+                ['name' => 'Programming'],
+                ['name' => 'Cooking']
+            ]
+        ]
+    ]
+```
+
+We can filter by users' hobbies with `users?filters[profile.hobbies.name]=^Cook`. Relationships can be of arbitrary 
+depth.
+
 ### TODO
 1. Ship granular role-based ACL functionality.
 1. Ship controller middleware.
-1. Document filters functionality.
-1. Make filters support nested relationships.
 1. Support more relationships (esp. polymorphic relations) through cascading saves.

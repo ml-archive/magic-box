@@ -35,9 +35,9 @@ class Filter
 	];
 
 	/**
-	 * Retrieve the token
+	 * Determine the token (if any) to use for the query
 	 *
-	 * @param $filter
+	 * @param string $filter
 	 * @return bool|string
 	 */
 	private static function determineTokenType($filter)
@@ -57,7 +57,7 @@ class Filter
 	/**
 	 * Determine if a token should accept a scalar value
 	 *
-	 * @param $token
+	 * @param string $token
 	 * @return bool
 	 */
 	private static function shouldBeScalar($token)
@@ -67,43 +67,97 @@ class Filter
 	}
 
 	/**
-	 * Funnel method to filter queries
+	 * Parse a filter string and confirm that it has a scalar value if it should.
 	 *
-	 * @param $query
-	 * @param $filters
-	 * @param $model_columns
+	 * @param string $token
+	 * @param string $filter
+	 * @return array|bool
 	 */
-	public static function filterQuery($query, $filters, $model_columns)
+	private static function cleanAndValidateFilter($token, $filter)
+	{
+		$filter_should_be_scalar = self::shouldBeScalar($token);
+
+		// Format the filter, cutting off the trailing ']' if appropriate
+		$filter = $filter_should_be_scalar ? explode(',', substr($filter, strlen($token))) :
+			explode(',', substr($filter, strlen($token), -1));
+
+		if ($filter_should_be_scalar) {
+			if (count($filter) > 1) {
+				return false;
+			}
+
+			// Set to first index if should be scalar
+			$filter = $filter[0];
+		}
+
+		return $filter;
+	}
+
+	/**
+	 * Funnel method to filter queries.
+	 *
+	 * First check for a dot nested string in the place of a filter column and use the appropriate method
+	 * and relation combination.
+	 *
+	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param array                                 $filters
+	 * @return void
+	 */
+	public static function filterQuery($query, $filters)
 	{
 		foreach ($filters as $column => $filter) {
-			// Not a model attribute
-			if (! in_array($column, $model_columns)) {
-				// Possibly accessed via a mutator - need to handle
-				continue;
-			} elseif ($token = self::determineTokenType($filter)) {
-				// Is a supported method token, run logic
-				$filter = explode(',', substr($filter, strlen($token)));
+			$nested_relations = self::parseRelations($column);
 
-				// If this should be a scalar value but is not, don't process as a filter
-				if (self::shouldBeScalar($token)) {
-					if (count($filter) > 1) {
-						continue;
-					}
+			if (is_array($nested_relations)) {
+				// Create a dot nested string of relations
+				$relation = implode('.', array_splice($nested_relations, 0, count($nested_relations) - 1));
+				// Set up the column at the end of the dot nested relation
+				$column = end($nested_relations);
+			}
 
-					// Set to first index if should be scalar
-					$filter = $filter[0];
+			if ($token = self::determineTokenType($filter)) {
+				if (! $filter = self::cleanAndValidateFilter($token, $filter)) {
+					continue;
 				}
 
 				$method = self::$supported_tokens[$token];
 
-				self::$method($column, $filter, $query);
+				// Querying a dot nested relation
+				if (is_array($nested_relations)) {
+					$query->whereHas(
+						$relation, function ($query) use ($method, $column, $filter) {
+						self::$method($column, $filter, $query);
+					}
+					);
+				} else {
+					self::$method($column, $filter, $query);
+				}
 			} elseif ($filter === 'true' || $filter === 'false') {
 				// Is a boolean filter, coerce to boolean.
 				$filter = ($filter === 'true');
 				$where  = camel_case('where' . $column);
-				$query->$where($filter);
+
+				// Querying a dot nested relation
+				if (is_array($nested_relations)) {
+					$query->whereHas(
+						$relation, function ($query) use ($where, $filter) {
+						$query->$where($filter);
+					}
+					);
+				} else {
+					$query->$where($filter);
+				}
 			} elseif ($filter === 'NULL' || $filter === 'NOT_NULL') {
-				self::nullMethod($column, $filter, $query);
+				// Querying a dot nested relation
+				if (is_array($nested_relations)) {
+					$query->whereHas(
+						$relation, function ($query) use ($column, $filter) {
+						self::nullMethod($column, $filter, $query);
+					}
+					);
+				} else {
+					self::nullMethod($column, $filter, $query);
+				}
 			} else {
 				// @todo Unsupported type
 			}
@@ -111,9 +165,29 @@ class Filter
 	}
 
 	/**
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * Parse a string of dot nested relations, if applicable
+	 *
+	 * Ex: users?filters[posts.comments.rating]=>4
+	 *
+	 * @param string $filter_name
+	 * @return array
+	 */
+	protected static function parseRelations($filter_name)
+	{
+		// Determine if we're querying a dot nested relationships of arbitrary depth (ex: user.post.tags.label)
+		$parse_relations = explode('.', $filter_name);
+
+		return count($parse_relations) === 1 ? $parse_relations[0] : $parse_relations;
+	}
+
+	/**
+	 * Query for items that begin with a string.
+	 *
+	 * Ex: users?filters[name]=^John
+	 *
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function startsWith($column, $filter, $query)
 	{
@@ -121,9 +195,13 @@ class Filter
 	}
 
 	/**
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * Query for items that end with a string.
+	 *
+	 * Ex: users?filters[name]=$Smith
+	 *
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function endsWith($column, $filter, $query)
 	{
@@ -131,9 +209,13 @@ class Filter
 	}
 
 	/**
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * Query for items that contain a string.
+	 *
+	 * Ex: users?filters[favorite_cheese]=~cheddar
+	 *
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function contains($column, $filter, $query)
 	{
@@ -141,9 +223,13 @@ class Filter
 	}
 
 	/**
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * Query for items with a value less than a filter.
+	 *
+	 * Ex: users?filters[lifetime_value]=<50
+	 *
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function lessThan($column, $filter, $query)
 	{
@@ -151,9 +237,13 @@ class Filter
 	}
 
 	/**
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * Query for items with a value greater than a filter.
+	 *
+	 * Ex: users?filters[lifetime_value]=>50
+	 *
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function greaterThan($column, $filter, $query)
 	{
@@ -161,9 +251,13 @@ class Filter
 	}
 
 	/**
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * Query for items with a value greater than or equal to a filter.
+	 *
+	 * Ex: users?filters[lifetime_value]=>=50
+	 *
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function greaterThanOrEquals($column, $filter, $query)
 	{
@@ -171,9 +265,13 @@ class Filter
 	}
 
 	/**
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * Query for items with a value less than or equal to a filter.
+	 *
+	 * Ex: users?filters[lifetime_value]=<=50
+	 *
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function lessThanOrEquals($column, $filter, $query)
 	{
@@ -181,9 +279,13 @@ class Filter
 	}
 
 	/**
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * Query for items with a value equal to a filter.
+	 *
+	 * Ex: users?filters[username]==Specific%20Username
+	 *
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function equals($column, $filter, $query)
 	{
@@ -192,9 +294,13 @@ class Filter
 	}
 
 	/**
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * Query for items with a value not equal to a filter.
+	 *
+	 * Ex: users?filters[username]=!=common%20username
+	 *
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function notEquals($column, $filter, $query)
 	{
@@ -202,9 +308,14 @@ class Filter
 	}
 
 	/**
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * Query for items that are either null or not null.
+	 *
+	 * Ex: users?filters[email]=NOT_NULL
+	 * Ex: users?filters[address]=NULL
+	 *
+	 * @param string                                $column
+	 * @param string                                $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function nullMethod($column, $filter, $query)
 	{
@@ -216,9 +327,13 @@ class Filter
 	}
 
 	/**
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * Query for items that are in a list.
+	 *
+	 * Ex: users?filters[id]=[1,5,10]
+	 *
+	 * @param string                                $column
+	 * @param string|array                          $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function in($column, $filter, $query)
 	{
@@ -226,9 +341,13 @@ class Filter
 	}
 
 	/**
-	 * @param $column
-	 * @param $filter
-	 * @param $query
+	 * Query for items that are not in a list.
+	 *
+	 * Ex: users?filters[id]=![1,5,10]
+	 *
+	 * @param string                                $column
+	 * @param string|array                          $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
 	protected static function notIn($column, $filter, $query)
 	{
