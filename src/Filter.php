@@ -2,6 +2,9 @@
 
 namespace Fuzz\MagicBox;
 
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+
 class Filter
 {
 	/**
@@ -68,6 +71,26 @@ class Filter
 	}
 
 	/**
+	 * Parse filter to accept some filter utility keywords
+	 *
+	 * @param string $filter
+	 * @return mixed
+	 */
+	private static function parseFilterKeyWords($filter)
+	{
+		// Include here as we can't include expressions in default field values
+		$keywords = [
+			'NOW()' => function () {
+				return Carbon::now();
+			}
+		];
+
+		Log::info(Carbon::now());
+
+		return array_key_exists($filter, $keywords) ? $keywords[$filter]() : $filter;
+	}
+
+	/**
 	 * Parse a filter string and confirm that it has a scalar value if it should.
 	 *
 	 * @param string $token
@@ -88,7 +111,7 @@ class Filter
 			}
 
 			// Set to first index if should be scalar
-			$filter = $filter[0];
+			$filter = self::parseFilterKeyWords($filter[0]);
 		}
 
 		return $filter;
@@ -234,6 +257,7 @@ class Filter
 	 */
 	protected static function lessThan($column, $filter, $query)
 	{
+		Log::info('less than ' . print_r($filter, true));
 		$query->where($column, '<', $filter);
 	}
 

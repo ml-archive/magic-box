@@ -321,4 +321,26 @@ class FilterTest extends DBTestCase
 		$this->assertEquals($found_users->count(), 1);
 		$this->assertEquals($found_users->first()->username, 'Bobby');
 	}
+
+	public function testItAcceptsNow()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(
+			[
+				'username'         => 'Bobby',
+				'created_at' => '1970-06-19 14:31:20'
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username'         => 'Robby',
+				'created_at' => '3000-06-19 14:31:20'
+			]
+		)->save();
+		$this->assertEquals($repository->all()->count(), 2);
+
+		$found_users = $repository->setFilters(['created_at' => '<NOW()'])->all();
+		$this->assertEquals($found_users->count(), 1);
+		$this->assertEquals($found_users->first()->username, 'Bobby');
+	}
 }
