@@ -3,7 +3,6 @@
 namespace Fuzz\MagicBox;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class Filter
 {
@@ -84,8 +83,6 @@ class Filter
 				return Carbon::now();
 			}
 		];
-
-		Log::info(Carbon::now());
 
 		return array_key_exists($filter, $keywords) ? $keywords[$filter]() : $filter;
 	}
@@ -257,7 +254,6 @@ class Filter
 	 */
 	protected static function lessThan($column, $filter, $query)
 	{
-		Log::info('less than ' . print_r($filter, true));
 		$query->where($column, '<', $filter);
 	}
 
