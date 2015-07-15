@@ -298,4 +298,27 @@ class FilterTest extends DBTestCase
 		$this->assertEquals($found_users->count(), 1);
 		$this->assertEquals($found_users->first()->username, 'Bobby');
 	}
+
+	public function testItDoesntHave()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(
+			[
+				'username'         => 'Bobby',
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username'         => 'Robby',
+				'profile' => [
+					'favorite_cheese' => 'Cheddar'
+				]
+			]
+		)->save();
+		$this->assertEquals($repository->all()->count(), 2);
+
+		$found_users = $repository->setFilters(['' => '!profile'])->all();
+		$this->assertEquals($found_users->count(), 1);
+		$this->assertEquals($found_users->first()->username, 'Bobby');
+	}
 }

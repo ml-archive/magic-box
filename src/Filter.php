@@ -20,7 +20,8 @@ class Filter
 		'='  => 'equals',
 		'!=' => 'notEquals',
 		'![' => 'notIn',
-		'['  => 'in'
+		'['  => 'in',
+		'!'  => 'doesntHave'
 	];
 
 	/**
@@ -352,5 +353,17 @@ class Filter
 	protected static function notIn($column, $filter, $query)
 	{
 		$query->whereNotIn($column, $filter);
+	}
+
+	/**
+	 * Query for items that don't have any of a relationship
+	 *
+	 * @param string|null                           $column
+	 * @param string|array                          $filter
+	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 */
+	protected static function doesntHave($column = null, $filter, $query)
+	{
+		$query->whereDoesntHave($filter);
 	}
 }
