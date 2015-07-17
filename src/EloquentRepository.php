@@ -31,12 +31,12 @@ class EloquentRepository implements Repository
 	private $filters = [];
 
 	/**
-	 * Storage for sortOrder.
+	 * Storage for sort order.
 	 *
 	 * @var array
 	 */
-	private $sortOrder = [];
-	
+	private $sort_order = [];
+
 	/**
 	 * Storage for eager loads.
 	 *
@@ -148,26 +148,26 @@ class EloquentRepository implements Repository
 	}
 
 	/**
-	 * Set sortOrder manually.
+	 * Set sort order manually.
 	 *
-	 * @param array $sortOrders
+	 * @param array $sort_orders
 	 * @return $this
 	 */
-	public function setSortOrder(array $sortOrder)
+	public function setSortOrder(array $sort_order)
 	{
-		$this->sortOrder = $sortOrder;
+		$this->sort_order = $sort_order;
 
 		return $this;
 	}
 
 	/**
-	 * Get sortOrder.
+	 * Get sort order.
 	 *
 	 * @return array
 	 */
 	public function getSortOrder()
 	{
-		return $this->sortOrder;
+		return $this->sort_order;
 	}
 
 	/**
@@ -184,17 +184,7 @@ class EloquentRepository implements Repository
 			]
 		);
 
-		$filters = $this->getFilters();
-
-		if (! empty($filters)) {
-			// Make a mock instance so we can describe its columns
-			$model_class   = $this->getModelClass();
-			$temp_instance = new $model_class;
-			$columns       = $temp_instance->getFields();
-			unset($temp_instance);
-
-			Filter::filterQuery($query, $filters, $columns);
-		}
+		$this->modifyQuery($query);
 
 		$eager_loads = $this->getEagerLoads();
 
@@ -202,15 +192,57 @@ class EloquentRepository implements Repository
 			$query->safeWith($eager_loads);
 		}
 
-		$sortOrder = $this->getSortOrder();
+		$sort_order = $this->getSortOrder();
 
-		if (! empty($sortOrder)) {
-			foreach ($sortOrder as $orderBy => $direction) {
+		if (! empty($sort_order)) {
+			foreach ($sort_order as $orderBy => $direction) {
 				$query->orderBy($orderBy, $direction);
 			}
 		}
 
 		return $query;
+	}
+
+	/**
+	 * Process filter and sort modifications on $query
+	 *
+	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @return void
+	 */
+	protected function modifyQuery($query)
+	{
+		$filters    = $this->getFilters();
+		$sort_order = $this->getSortOrder();
+
+		$filters_exist = empty($filters_exist);
+		$sorts_exist = empty($sort_order);
+
+		// No modifications to apply
+		if (! $filters_exist && ! $sorts_exist) {
+			return;
+		}
+
+		// Make a mock instance so we can describe its columns
+		$model_class   = $this->getModelClass();
+		$temp_instance = new $model_class;
+		$columns       = $temp_instance->getFields();
+		unset($temp_instance);
+
+		if ($filters_exist) {
+			Filter::filterQuery($query, $filters, $columns);
+		}
+
+		if ($sorts_exist) {
+			$allowed_directions = ['ASC', 'DESC'];
+
+			$valid_sorts = array_intersect($sort_order, $columns);
+
+			foreach ($valid_sorts as $order_by => $direction) {
+				if (in_array(strtoupper($direction), $allowed_directions)) {
+					$query->orderBy($order_by, $direction);
+				}
+			}
+		}
 	}
 
 	/**
