@@ -191,7 +191,7 @@ class EloquentRepository implements Repository
 		if (! empty($eager_loads)) {
 			$query->safeWith($eager_loads);
 		}
-		
+
 		return $query;
 	}
 
@@ -204,10 +204,11 @@ class EloquentRepository implements Repository
 	protected function modifyQuery($query)
 	{
 		$filters    = $this->getFilters();
-		$sort_order = $this->getSortOrder();
+		$sort_order_options = $this->getSortOrder();
 
-		$filters_exist = empty($filters_exist);
-		$sorts_exist = empty($sort_order);
+		// Check if filters or sorts are requested
+		$filters_exist = ! empty($filters);
+		$sorts_exist = ! empty($sort_order_options);
 
 		// No modifications to apply
 		if (! $filters_exist && ! $sorts_exist) {
@@ -227,7 +228,7 @@ class EloquentRepository implements Repository
 		if ($sorts_exist) {
 			$allowed_directions = ['ASC', 'DESC'];
 
-			$valid_sorts = array_intersect($sort_order, $columns);
+			$valid_sorts = array_intersect_key($sort_order_options, array_flip($columns));
 
 			foreach ($valid_sorts as $order_by => $direction) {
 				if (in_array(strtoupper($direction), $allowed_directions)) {
