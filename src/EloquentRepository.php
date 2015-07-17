@@ -191,15 +191,7 @@ class EloquentRepository implements Repository
 		if (! empty($eager_loads)) {
 			$query->safeWith($eager_loads);
 		}
-
-		$sort_order = $this->getSortOrder();
-
-		if (! empty($sort_order)) {
-			foreach ($sort_order as $orderBy => $direction) {
-				$query->orderBy($orderBy, $direction);
-			}
-		}
-
+		
 		return $query;
 	}
 
