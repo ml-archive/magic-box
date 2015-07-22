@@ -31,6 +31,13 @@ class EloquentRepository implements Repository
 	private $filters = [];
 
 	/**
+	 * Storage for sort order.
+	 *
+	 * @var array
+	 */
+	private $sort_order = [];
+
+	/**
 	 * Storage for eager loads.
 	 *
 	 * @var array
@@ -141,6 +148,29 @@ class EloquentRepository implements Repository
 	}
 
 	/**
+	 * Set sort order manually.
+	 *
+	 * @param array $sort_orders
+	 * @return $this
+	 */
+	public function setSortOrder(array $sort_order)
+	{
+		$this->sort_order = $sort_order;
+
+		return $this;
+	}
+
+	/**
+	 * Get sort order.
+	 *
+	 * @return array
+	 */
+	public function getSortOrder()
+	{
+		return $this->sort_order;
+	}
+
+	/**
 	 * Base query for all behaviors within this repository.
 	 *
 	 * @return \Illuminate\Database\Eloquent\Builder
@@ -154,17 +184,7 @@ class EloquentRepository implements Repository
 			]
 		);
 
-		$filters = $this->getFilters();
-
-		if (! empty($filters)) {
-			// Make a mock instance so we can describe its columns
-			$model_class   = $this->getModelClass();
-			$temp_instance = new $model_class;
-			$columns       = $temp_instance->getFields();
-			unset($temp_instance);
-
-			Filter::filterQuery($query, $filters);
-		}
+		$this->modifyQuery($query);
 
 		$eager_loads = $this->getEagerLoads();
 
@@ -173,6 +193,49 @@ class EloquentRepository implements Repository
 		}
 
 		return $query;
+	}
+
+	/**
+	 * Process filter and sort modifications on $query
+	 *
+	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @return void
+	 */
+	protected function modifyQuery($query)
+	{
+		$filters    = $this->getFilters();
+		$sort_order_options = $this->getSortOrder();
+
+		// Check if filters or sorts are requested
+		$filters_exist = ! empty($filters);
+		$sorts_exist = ! empty($sort_order_options);
+
+		// No modifications to apply
+		if (! $filters_exist && ! $sorts_exist) {
+			return;
+		}
+
+		// Make a mock instance so we can describe its columns
+		$model_class   = $this->getModelClass();
+		$temp_instance = new $model_class;
+		$columns       = $temp_instance->getFields();
+		unset($temp_instance);
+
+		if ($filters_exist) {
+			Filter::filterQuery($query, $filters, $columns);
+		}
+
+		if ($sorts_exist) {
+			$allowed_directions = ['ASC', 'DESC'];
+
+			$valid_sorts = array_intersect_key($sort_order_options, array_flip($columns));
+
+			foreach ($valid_sorts as $order_by => $direction) {
+				if (in_array(strtoupper($direction), $allowed_directions)) {
+					$query->orderBy($order_by, $direction);
+				}
+			}
+		}
 	}
 
 	/**
