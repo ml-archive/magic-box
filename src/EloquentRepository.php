@@ -44,6 +44,13 @@ class EloquentRepository implements Repository
 	private $eager_loads = [];
 
 	/**
+	 * Storage for query modifiers.
+	 *
+	 * @var array
+	 */
+	private $modifiers = [];
+
+	/**
 	 * The key name used in all queries.
 	 *
 	 * @var int
@@ -170,6 +177,27 @@ class EloquentRepository implements Repository
 	}
 
 	/**
+	 * Set modifiers.
+	 *
+	 * @param array $modifiers
+	 * @return static
+	 */
+	public function setModifiers(array $modifiers)
+	{
+		$this->modifiers = $modifiers;
+	}
+
+	/**
+	 * Get modifiers.
+	 *
+	 * @return array
+	 */
+	public function getModifiers()
+	{
+		return $this->modifiers;
+	}
+
+	/**
 	 * Base query for all behaviors within this repository.
 	 *
 	 * @return \Illuminate\Database\Eloquent\Builder
@@ -189,6 +217,12 @@ class EloquentRepository implements Repository
 
 		if (! empty($eager_loads)) {
 			$query->safeWith($eager_loads);
+		}
+
+		if (! empty($modifiers = $this->getModifiers())) {
+			foreach ($modifiers as $modifier) {
+				$modifier($query);
+			}
 		}
 
 		return $query;

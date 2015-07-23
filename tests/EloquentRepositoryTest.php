@@ -2,10 +2,12 @@
 
 namespace Fuzz\MagicBox\Tests;
 
-use Fuzz\MagicBox\EloquentRepository;
-use Fuzz\MagicBox\Tests\Models\Post;
-use Fuzz\MagicBox\Tests\Models\Profile;
+use Illuminate\Support\Facades\DB;
 use Fuzz\MagicBox\Tests\Models\User;
+use Fuzz\MagicBox\Tests\Models\Post;
+use Fuzz\MagicBox\EloquentRepository;
+use Fuzz\MagicBox\Tests\Models\Profile;
+use Illuminate\Database\Eloquent\Builder;
 
 class EloquentRepositoryTest extends DBTestCase
 {
@@ -332,5 +334,18 @@ class EloquentRepositoryTest extends DBTestCase
 		)->all();
 		$this->assertEquals($found_users->count(), 2);
 		$this->assertEquals($found_users->first()->id, 2);
+	}
+
+	public function testItModifiesQueries()
+	{
+		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User', ['username' => 'Billy']);
+		$repository->save();
+		$this->assertEquals($repository->count(), 1);
+		$repository->setModifiers([
+			function(Builder $query) {
+				$query->whereRaw(DB::raw('0 = 1'));
+			}
+		]);
+		$this->assertEquals($repository->count(), 0);
 	}
 }

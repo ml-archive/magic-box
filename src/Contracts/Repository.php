@@ -65,6 +65,21 @@ interface Repository
 	public function getFilters();
 
 	/**
+	 * Set modifiers.
+	 *
+	 * @param array $modifiers
+	 * @return static
+	 */
+	public function setModifiers(array $modifiers);
+
+	/**
+	 * Get modifiers.
+	 *
+	 * @return array
+	 */
+	public function getModifiers();
+
+	/**
 	 * Find an instance of a model by ID.
 	 *
 	 * @param int $id
