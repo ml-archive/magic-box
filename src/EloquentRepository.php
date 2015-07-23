@@ -4,7 +4,6 @@ namespace Fuzz\MagicBox;
 
 use Fuzz\Data\Eloquent\Model;
 use Fuzz\MagicBox\Contracts\Repository;
-use Fuzz\MagicBox\Filter;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 class EloquentRepository implements Repository
