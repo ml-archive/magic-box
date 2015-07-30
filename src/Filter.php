@@ -124,11 +124,20 @@ class Filter
 
 				// Querying a dot nested relation
 				if (is_array($nested_relations)) {
-					$query->whereHas(
-						$relation, function ($query) use ($method, $column, $filter) {
-						self::$method($column, $filter, $query);
-					}
-					);
+
+                    $query->whereHas($relation, function ($query) use ($method, $column, $filter) {
+
+                        // Check if the column is a primary key of the model
+                        // within the query. If it is, we should use the
+                        // qualified key instead. It's important when this is a
+                        // many to many relationship query.
+                        if ($column === $query->getModel()->getKeyName()) {
+                            $column = $query->getModel()->getQualifiedKeyName();
+                        }
+
+                        self::$method($column, $filter, $query);
+                    });
+
 				} else {
 					self::$method($column, $filter, $query);
 				}
