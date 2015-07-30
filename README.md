@@ -141,3 +141,6 @@ depth.
 1. Ship granular role-based ACL functionality.
 1. Ship controller middleware.
 1. Support more relationships (esp. polymorphic relations) through cascading saves.
+1. Support grouping by column
+1. Support sorting nested relations
+1. Support paginating nested relations
