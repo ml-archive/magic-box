@@ -299,85 +299,85 @@ class FilterTest extends DBTestCase
 		$this->assertEquals($found_users->first()->username, 'Bobby');
 	}
 
-    /**
-     * Check to see if filtering by id works with a many to many relationship.
-     */
-    public function testItFiltersNestedBelongsToManyRelationships()
-    {
-        // Make the users, tags, posts, and associate them.
-        $this->createTagsAndPosts();
-        $repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+	/**
+	 * Check to see if filtering by id works with a many to many relationship.
+	 */
+	public function testItFiltersNestedBelongsToManyRelationships()
+	{
+		// Make the users, tags, posts, and associate them.
+		$this->createTagsAndPosts();
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
 
-        // Sanity check, do we have two users?
-        $this->assertEquals($repository->all()->count(), 2);
+		// Sanity check, do we have two users?
+		$this->assertEquals($repository->all()->count(), 2);
 
-        // Sanity check, can we filter by just a column name in a nested relationship?
-        $this->assertNotEquals(
-            $repository->setFilters(['posts.tags.label' => '=History'])->all()->count(),
-            1
-        );
+		// Sanity check, can we filter by just a column name in a nested relationship?
+		$this->assertNotEquals(
+			$repository->setFilters(['posts.tags.label' => '=History'])->all()->count(),
+			1
+		);
 
-        // The real test, can we filter by the id in a nested many to many relationship?
-        $this->assertEquals(
-            $repository->setFilters(['posts.tags.id' => '=1'])->all()->count(),
-            1
-        );
-    }
+		// The real test, can we filter by the id in a nested many to many relationship?
+		$this->assertEquals(
+			$repository->setFilters(['posts.tags.id' => '=1'])->all()->count(),
+			1
+		);
+	}
 
-    /**
-     * Create a set of users with some profile info.
-     */
-    private function createUsers()
-    {
-        $repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-        $first_user  = $repository->setInput(
-            [
-                'username'         => 'Bobby',
-                'profile' => [
-                    'favorite_cheese' => 'Gouda'
-                ],
-                'posts' => [
-                    [
-                        'title' => 'Gouda Tastes Amazing!'
-                    ]
-                ]
-            ]
-        )->save();
-        $second_user = $repository->setInput(
-            [
-                'username'         => 'Robby',
-                'profile' => [
-                    'favorite_cheese' => 'Cheddar'
-                ]
-            ]
-        )->save();
-    }
+	/**
+	 * Create a set of users with some profile info.
+	 */
+	private function createUsers()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(
+			[
+				'username' => 'Bobby',
+				'profile' => [
+					'favorite_cheese' => 'Gouda'
+				],
+				'posts' => [
+					[
+						'title' => 'Gouda Tastes Amazing!'
+					]
+				]
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username' => 'Robby',
+				'profile' => [
+					'favorite_cheese' => 'Cheddar'
+				]
+			]
+		)->save();
+	}
 
-    /**
-     * Create a set of tags, the first one with a post that relates back to the first user.
-     * The second tag not relating to anything.
-     */
-    private function createTagsAndPosts()
-    {
-        $this->createUsers();
-        $repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\Tag');
+	/**
+	 * Create a set of tags, the first one with a post that relates back to the first user.
+	 * The second tag not relating to anything.
+	 */
+	private function createTagsAndPosts()
+	{
+		$this->createUsers();
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\Tag');
 
-        $first_tag  = $repository->setInput(
-            [
-                'label'         => 'Economics',
-                'posts' => [
-                    [
-                        'title' => 'Gouda',
-                        'user_id' => 1
-                    ]
-                ]
-            ]
-        )->save();
+		$first_tag  = $repository->setInput(
+			[
+				'label' => 'Economics',
+				'posts' => [
+					[
+						'title' => 'Gouda',
+						'user_id' => 1
+					]
+				]
+			]
+		)->save();
 
-        $second_tag = $repository->setInput(
-            [
-                'label'         => 'History',
-            ]
-        )->save();
-    }
+		$second_tag = $repository->setInput(
+			[
+				'label' => 'History',
+			]
+		)->save();
+	}
 }
