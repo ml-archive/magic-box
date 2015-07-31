@@ -374,7 +374,7 @@ class EloquentRepository implements Repository
 		$before_relations = [];
 		$after_relations  = [];
 
-		foreach ($input as $key => $value) {
+		foreach (array_except($input, [$instance->getKeyName()]) as $key => $value) {
 			if (method_exists($instance, $key)) {
 				$relation = $instance->$key();
 				if ($relation instanceof Relation) {
