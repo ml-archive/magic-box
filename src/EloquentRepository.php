@@ -440,7 +440,7 @@ class EloquentRepository implements Repository
 				break;
 			case 'HasMany':
 				// The parent model "owns" child models; any not specified here should be deleted.
-				$current_ids = $relation->lists(self::KEY_NAME);
+				$current_ids = $relation->lists(self::KEY_NAME)->toArray();
 				$new_ids     = array_filter(array_column($input, self::KEY_NAME));
 				$removed_ids = array_diff($current_ids, $new_ids);
 				if (! empty($removed_ids)) {
