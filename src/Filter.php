@@ -103,9 +103,14 @@ class Filter
 	 * @param array                                 $filters
 	 * @return void
 	 */
-	public static function filterQuery($query, $filters)
+	public static function filterQuery($query, $filters, $columns, $or = false)
 	{
 		foreach ($filters as $column => $filter) {
+			if ($column === 'or') {
+				self::filterQuery($query, $filters['or'], $columns, true);
+				continue;
+			}
+
 			$nested_relations = self::parseRelations($column);
 
 			if (is_array($nested_relations)) {
@@ -125,26 +130,28 @@ class Filter
 				// Querying a dot nested relation
 				if (is_array($nested_relations)) {
 
-                    $query->whereHas($relation, function ($query) use ($method, $column, $filter) {
+					$query->whereHas(
+						$relation, function ($query) use ($method, $column, $filter, $or) {
 
-                        // Check if the column is a primary key of the model
-                        // within the query. If it is, we should use the
-                        // qualified key instead. It's important when this is a
-                        // many to many relationship query.
-                        if ($column === $query->getModel()->getKeyName()) {
-                            $column = $query->getModel()->getQualifiedKeyName();
-                        }
+						// Check if the column is a primary key of the model
+						// within the query. If it is, we should use the
+						// qualified key instead. It's important when this is a
+						// many to many relationship query.
+						if ($column === $query->getModel()->getKeyName()) {
+							$column = $query->getModel()->getQualifiedKeyName();
+						}
 
-                        self::$method($column, $filter, $query);
-                    });
-
+						self::$method($column, $filter, $query, $or);
+					}
+					);
 				} else {
-					self::$method($column, $filter, $query);
+					self::$method($column, $filter, $query, $or);
 				}
 			} elseif ($filter === 'true' || $filter === 'false') {
 				// Is a boolean filter, coerce to boolean.
 				$filter = ($filter === 'true');
 				$where  = camel_case('where' . $column);
+				$where  = self::determineMethod($where, $or);
 
 				// Querying a dot nested relation
 				if (is_array($nested_relations)) {
@@ -160,12 +167,12 @@ class Filter
 				// Querying a dot nested relation
 				if (is_array($nested_relations)) {
 					$query->whereHas(
-						$relation, function ($query) use ($column, $filter) {
-						self::nullMethod($column, $filter, $query);
+						$relation, function ($query) use ($column, $filter, $or) {
+						self::nullMethod($column, $filter, $query, $or);
 					}
 					);
 				} else {
-					self::nullMethod($column, $filter, $query);
+					self::nullMethod($column, $filter, $query, $or);
 				}
 			} else {
 				// @todo Unsupported type
@@ -189,6 +196,11 @@ class Filter
 		return count($parse_relations) === 1 ? $parse_relations[0] : $parse_relations;
 	}
 
+	private static function determineMethod($base_name, $or)
+	{
+		return $or ? camel_case('or_' . $base_name) : $base_name;
+	}
+
 	/**
 	 * Query for items that begin with a string.
 	 *
@@ -198,9 +210,10 @@ class Filter
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
-	protected static function startsWith($column, $filter, $query)
+	protected static function startsWith($column, $filter, $query, $or = false)
 	{
-		$query->where($column, 'LIKE', $filter . '%');
+		$method = self::determineMethod('where', $or);
+		$query->$method($column, 'LIKE', $filter . '%');
 	}
 
 	/**
@@ -212,9 +225,10 @@ class Filter
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
-	protected static function endsWith($column, $filter, $query)
+	protected static function endsWith($column, $filter, $query, $or = false)
 	{
-		$query->where($column, 'LIKE', '%' . $filter);
+		$method = self::determineMethod('where', $or);
+		$query->$method($column, 'LIKE', '%' . $filter);
 	}
 
 	/**
@@ -226,9 +240,10 @@ class Filter
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
-	protected static function contains($column, $filter, $query)
+	protected static function contains($column, $filter, $query, $or = false)
 	{
-		$query->where($column, 'LIKE', '%' . $filter . '%');
+		$method = self::determineMethod('where', $or);
+		$query->$method($column, 'LIKE', '%' . $filter . '%');
 	}
 
 	/**
@@ -240,9 +255,10 @@ class Filter
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
-	protected static function lessThan($column, $filter, $query)
+	protected static function lessThan($column, $filter, $query, $or = false)
 	{
-		$query->where($column, '<', $filter);
+		$method = self::determineMethod('where', $or);
+		$query->$method($column, '<', $filter);
 	}
 
 	/**
@@ -254,9 +270,10 @@ class Filter
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
-	protected static function greaterThan($column, $filter, $query)
+	protected static function greaterThan($column, $filter, $query, $or = false)
 	{
-		$query->where($column, '>', $filter);
+		$method = self::determineMethod('where', $or);
+		$query->$method($column, '>', $filter);
 	}
 
 	/**
@@ -268,9 +285,10 @@ class Filter
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
-	protected static function greaterThanOrEquals($column, $filter, $query)
+	protected static function greaterThanOrEquals($column, $filter, $query, $or = false)
 	{
-		$query->where($column, '>=', $filter);
+		$method = self::determineMethod('where', $or);
+		$query->$method($column, '>=', $filter);
 	}
 
 	/**
@@ -282,9 +300,10 @@ class Filter
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
-	protected static function lessThanOrEquals($column, $filter, $query)
+	protected static function lessThanOrEquals($column, $filter, $query, $or = false)
 	{
-		$query->where($column, '<=', $filter);
+		$method = self::determineMethod('where', $or);
+		$query->$method($column, '<=', $filter);
 	}
 
 	/**
@@ -296,10 +315,10 @@ class Filter
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
-	protected static function equals($column, $filter, $query)
+	protected static function equals($column, $filter, $query, $or = false)
 	{
-		$where = camel_case('where' . $column);
-		$query->$where($filter);
+		$method = self::determineMethod('where', $or);
+		$query->$method($column, '=', $filter);
 	}
 
 	/**
@@ -311,9 +330,10 @@ class Filter
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
-	protected static function notEquals($column, $filter, $query)
+	protected static function notEquals($column, $filter, $query, $or = false)
 	{
-		$query->where($column, '!=', $filter);
+		$method = self::determineMethod('where', $or);
+		$query->$method($column, '!=', $filter);
 	}
 
 	/**
@@ -326,12 +346,14 @@ class Filter
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
-	protected static function nullMethod($column, $filter, $query)
+	protected static function nullMethod($column, $filter, $query, $or = false)
 	{
 		if ($filter === 'NULL') {
-			$query->whereNull($column);
+			$method = self::determineMethod('whereNull', $or);
+			$query->$method($column);
 		} else {
-			$query->whereNotNull($column);
+			$method = self::determineMethod('whereNotNull', $or);
+			$query->$method($column);
 		}
 	}
 
@@ -344,9 +366,10 @@ class Filter
 	 * @param string|array                          $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
-	protected static function in($column, $filter, $query)
+	protected static function in($column, $filter, $query, $or = false)
 	{
-		$query->whereIn($column, $filter);
+		$method = self::determineMethod('whereIn', $or);
+		$query->$method($column, $filter);
 	}
 
 	/**
@@ -358,8 +381,9 @@ class Filter
 	 * @param string|array                          $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 */
-	protected static function notIn($column, $filter, $query)
+	protected static function notIn($column, $filter, $query, $or = false)
 	{
-		$query->whereNotIn($column, $filter);
+		$method = self::determineMethod('whereNotIn', $or);
+		$query->$method($column, $filter);
 	}
 }
