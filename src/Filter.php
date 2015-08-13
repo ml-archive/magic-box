@@ -106,8 +106,13 @@ class Filter
 	public static function filterQuery($query, $filters, $columns, $or = false)
 	{
 		foreach ($filters as $column => $filter) {
-			if ($column === 'or') {
-				self::filterQuery($query, $filters['or'], $columns, true);
+			if ($column === 'or' || $column === 'and') {
+				$nextConjunction = $column === 'or';
+				$method = self::determineMethod('where', $nextConjunction);
+
+				$query->$method(function($query) use ($filters, $columns, $column, $nextConjunction) {
+					self::filterQuery($query, $filters[$column], $columns, $nextConjunction);
+				});
 				continue;
 			}
 
