@@ -255,7 +255,9 @@ class EloquentRepository implements Repository
 		unset($temp_instance);
 
 		if ($filters_exist) {
-			Filter::filterQuery($query, $filters, $columns);
+			$query->where(function ($query) use ($filters, $columns) {
+				Filter::filterQuery($query, $filters, $columns);
+			});
 		}
 
 		if ($sorts_exist) {
