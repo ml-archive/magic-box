@@ -597,6 +597,131 @@ class FilterTest extends DBTestCase
 		$this->assertEquals($found_users->first()->username, 'Bobby');
 	}
 
+	public function testItProperlyDeterminesScalarFilters()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(
+			[
+				'username' => 'Bobby',
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username' => 'Robby',
+			]
+		)->save();
+		$this->assertEquals($repository->all()->count(), 2);
+
+		$found_users = $repository->setFilters(['username' => '=Bobby,Robby'])->all();
+		$this->assertEquals($found_users->count(), 2); // It does not filter anything because this is a scalar filter
+	}
+
+	public function testItFiltersFalse()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(
+			[
+				'username' => false,
+				'profile' => [
+					'favorite_cheese' => false
+				]
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username' => true,
+				'profile' => [
+					'favorite_cheese' => true
+				]
+			]
+		)->save();
+		$this->assertEquals($repository->all()->count(), 2);
+
+		$found_users = $repository->setFilters(['username' => 'false'])->all();
+		$this->assertEquals($found_users->count(), 1);
+		$this->assertEquals($found_users->first()->username, '0');
+	}
+
+	public function testItFiltersNestedTrue()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(
+			[
+				'username' => 'Bobby',
+				'profile' => [
+					'favorite_cheese' => true
+				]
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username' => 'Robby',
+				'profile' => [
+					'favorite_cheese' => false
+				]
+			]
+		)->save();
+		$this->assertEquals($repository->all()->count(), 2);
+
+		$found_users = $repository->setFilters(['profile.favorite_cheese' => 'true'])->all();
+		$this->assertEquals($found_users->count(), 1);
+		$this->assertEquals($found_users->first()->username, 'Bobby');
+	}
+
+	public function testItFiltersNestedFalse()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(
+			[
+				'username' => 'Bobby',
+				'profile' => [
+					'favorite_cheese' => false
+				]
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username' => 'Robby',
+				'profile' => [
+					'favorite_cheese' => true
+				]
+			]
+		)->save();
+		$this->assertEquals($repository->all()->count(), 2);
+
+		$found_users = $repository->setFilters(['profile.favorite_cheese' => 'false'])->all();
+		$this->assertEquals($found_users->count(), 1);
+		$this->assertEquals($found_users->first()->username, 'Bobby');
+	}
+
+	public function testItFiltersNestedNull()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(
+			[
+				'username' => 'Bobby',
+				'profile' => [
+					'favorite_cheese' => 'Gouda',
+					'favorite_fruit' => null
+				]
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username' => 'Robby',
+				'profile' => [
+					'favorite_cheese' => 'Cheddar',
+					'favorite_fruit' => 'Apples'
+				]
+			]
+		)->save();
+		$this->assertEquals($repository->all()->count(), 2);
+
+		$found_users = $repository->setFilters(['profile.favorite_fruit' => 'NULL'])->all();
+		$this->assertEquals($found_users->count(), 1);
+		$this->assertEquals($found_users->first()->username, 'Bobby');
+	}
+
 	/**
 	 * Check to see if filtering by id works with a many to many relationship.
 	 */
@@ -665,13 +790,17 @@ class FilterTest extends DBTestCase
 					'and'      => [
 						'profile.favorite_cheese' => '=Cheddar',
 						'username' => '$bby'
+					],
+					'or' => [
+						'username' => '=Gobby'
 					]
 				]
 			]
 		)->all();
-		$this->assertEquals($found_users->count(), 2);
+		$this->assertEquals($found_users->count(), 3);
 		$this->assertEquals($found_users->first()->username, 'Bobby');
-		$this->assertEquals($found_users->last()->username, 'Robby');
+		$this->assertEquals($found_users->get(1)->username, 'Robby');
+		$this->assertEquals($found_users->last()->username, 'Gobby');
 	}
 
 	/**
