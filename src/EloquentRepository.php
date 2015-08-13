@@ -347,17 +347,27 @@ class EloquentRepository implements Repository
 	}
 
 	/**
+	 * Check if the model apparently exists.
+	 *
+	 * @return bool
+	 */
+	final public function exists()
+	{
+		return array_key_exists(self::KEY_NAME, $this->getInput());
+	}
+
+	/**
 	 * Get the primary key from input.
 	 *
 	 * @return mixed
 	 */
 	final public function getInputId()
 	{
-		$input = $this->getInput();
-
-		if (! array_key_exists(self::KEY_NAME, $input)) {
+		if (! $this->exists()) {
 			throw new \LogicException('ID is not specified in input.');
 		}
+
+		$input = $this->getInput();
 
 		return $input[self::KEY_NAME];
 	}
