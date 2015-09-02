@@ -103,13 +103,15 @@ class Filter
 	 * @param array                                 $filters
 	 * @return void
 	 */
-	public static function filterQuery($query, $filters, $columns, $or = false)
+	public static function filterQuery($query, $filters, $columns)
 	{
 		foreach ($filters as $column => $filter) {
-			if ($column === 'or' || $column === 'and') {
+			if (strtolower($column) === 'or' || strtolower($column) === 'and') {
 				$nextConjunction = $column === 'or';
 				$method = self::determineMethod('where', $nextConjunction);
 
+				// orWhere should only occur on conjunctions. We want filters in the same nesting level to attach as
+				// 'AND'. 'OR' should nest.
 				$query->$method(function($query) use ($filters, $columns, $column, $nextConjunction) {
 					self::filterQuery($query, $filters[$column], $columns, $nextConjunction);
 				});
@@ -136,7 +138,7 @@ class Filter
 				if (is_array($nested_relations)) {
 
 					$query->whereHas(
-						$relation, function ($query) use ($method, $column, $filter, $or) {
+						$relation, function ($query) use ($method, $column, $filter) {
 
 						// Check if the column is a primary key of the model
 						// within the query. If it is, we should use the
@@ -146,17 +148,16 @@ class Filter
 							$column = $query->getModel()->getQualifiedKeyName();
 						}
 
-						self::$method($column, $filter, $query, $or);
+						self::$method($column, $filter, $query);
 					}
 					);
 				} else {
-					self::$method($column, $filter, $query, $or);
+					self::$method($column, $filter, $query);
 				}
 			} elseif ($filter === 'true' || $filter === 'false') {
 				// Is a boolean filter, coerce to boolean.
 				$filter = ($filter === 'true');
 				$where  = camel_case('where' . $column);
-				$where  = self::determineMethod($where, $or);
 
 				// Querying a dot nested relation
 				if (is_array($nested_relations)) {
@@ -172,12 +173,12 @@ class Filter
 				// Querying a dot nested relation
 				if (is_array($nested_relations)) {
 					$query->whereHas(
-						$relation, function ($query) use ($column, $filter, $or) {
-						self::nullMethod($column, $filter, $query, $or);
+						$relation, function ($query) use ($column, $filter) {
+						self::nullMethod($column, $filter, $query);
 					}
 					);
 				} else {
-					self::nullMethod($column, $filter, $query, $or);
+					self::nullMethod($column, $filter, $query);
 				}
 			} else {
 				// @todo Unsupported type
