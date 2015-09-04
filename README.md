@@ -96,6 +96,10 @@ The public API methods that return an `\Illuminate\Database\Eloquent\Collection`
 
 1. `all`
 
+### MagicMiddleware
+
+@TODO document...
+
 ### Filtering
 `Fuzz\MagicBox\Filter` handles Eloquent Query Builder modifications based on filter values passed through the `filters` 
 parameter.
@@ -138,8 +142,6 @@ We can filter by users' hobbies with `users?filters[profile.hobbies.name]=^Cook`
 depth.
 
 ### TODO
-1. Ship granular role-based ACL functionality.
-1. Ship controller middleware.
 1. Support more relationships (esp. polymorphic relations) through cascading saves.
 1. Support grouping by column
 1. Support sorting nested relations
