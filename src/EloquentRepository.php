@@ -6,6 +6,11 @@ use Fuzz\Data\Eloquent\Model;
 use Fuzz\MagicBox\Contracts\Repository;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
+/**
+ * Class EloquentRepository
+ *
+ * @package Fuzz\MagicBox
+ */
 class EloquentRepository implements Repository
 {
 	/**
