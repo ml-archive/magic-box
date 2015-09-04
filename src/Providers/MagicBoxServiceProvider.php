@@ -20,6 +20,6 @@ class MagicBoxServiceProvider extends ServiceProvider
 	public function register()
 	{
 		// Publish config
-		$this->publishes([__DIR__ . '../../config/magicbox.php' => config_path('magicbox.php')], 'config');
+		$this->publishes([__DIR__ . '/../../config/magicbox.php' => config_path('magicbox.php')], 'config');
 	}
 }
