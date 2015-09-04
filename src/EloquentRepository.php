@@ -207,7 +207,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Illuminate\Database\Eloquent\Builder
 	 */
-	protected function query()
+	public function query()
 	{
 		$query = forward_static_call(
 			[
