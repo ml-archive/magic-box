@@ -1,6 +1,6 @@
 <?php
 
-namespace Fuzz\Agency\Providers;
+namespace Fuzz\MagicBox\Providers;
 
 
 use Illuminate\Support\ServiceProvider;
@@ -8,7 +8,7 @@ use Illuminate\Support\ServiceProvider;
 /**
  * Class MagicBoxServiceProvider
  *
- * @package Fuzz\Agency\Providers
+ * @package Fuzz\MagicBox\Providers
  */
 class MagicBoxServiceProvider extends ServiceProvider
 {
