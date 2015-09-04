@@ -21,7 +21,5 @@ class MagicBoxServiceProvider extends ServiceProvider
 	{
 		// Publish config
 		$this->publishes([__DIR__ . '/../config/magicbox.php' => config_path('magicbox.php')], 'config');
-
-		parent::register();
 	}
 }
