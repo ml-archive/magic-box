@@ -100,6 +100,36 @@ The public API methods that return an `\Illuminate\Database\Eloquent\Collection`
 
 @TODO document...
 
+### Grouping
+
+You can group results by a field. Example:
+
+```
+        GET /comments?group=user_id
+
+```
+
+@NOTE: as of right now it does not go through relations, it can only group on the top level resource.
+
+
+### Aggregate Functions
+
+The Repository can also perform a variety of aggregate methods, such as `count`, `max`, `min`, `avg`, and `sum`. Only one may be applied at a time, and is done so through the `aggregate` parameter.
+
+Usage:
+        
+```
+        ?aggregate[sum]=points
+        ?aggregate[avg]=points
+        ?aggregate[count]=id
+        ?aggregate[max]=points
+        ?aggregate[min]=points
+```
+
+All these endpoints also work well with grouping.
+
+
+
 ### Filtering
 `Fuzz\MagicBox\Filter` handles Eloquent Query Builder modifications based on filter values passed through the `filters` 
 parameter.
@@ -143,6 +173,5 @@ depth.
 
 ### TODO
 1. Support more relationships (esp. polymorphic relations) through cascading saves.
-1. Support grouping by column
 1. Support sorting nested relations
 1. Support paginating nested relations
