@@ -58,6 +58,30 @@ class EloquentRepositoryTest extends DBTestCase
 		$this->assertFalse($repository->hasAny());
 	}
 
+
+	public function testItCanGroupByFields()
+	{
+		$repository     = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$NY_user_one    = $repository->setInput(['username' => 'bob', 'points' => 100, 'state' => 'NY'])->save();
+		$NY_user_two    = $repository->setInput(['username' => 'joe', 'points' => 400, 'state' => 'NY'])->save();
+		$NY_user_three  = $repository->setInput(['username' => 'sam', 'points' => 300, 'state' => 'NY'])->save();
+		$KY_user_one    = $repository->setInput(['username' => 'will', 'points' => 500, 'state' => 'KY'])->save();
+		$KY_user_two    = $repository->setInput(['username' => 'john', 'points' => 20, 'state' => 'KY'])->save();
+		$CA_user_one    = $repository->setInput(['username' => 'sue', 'points' => 342, 'state' => 'CA'])->save();
+
+		$ungrouped_users = $repository->all();
+		$this->assertEquals($ungrouped_users->count(), 6);
+		$this->assertEquals($ungrouped_users->where('state', 'NY')->count(), 3);
+		$this->assertEquals($ungrouped_users->where('state', 'KY')->count(), 2);
+		$this->assertEquals($ungrouped_users->where('state', 'CA')->count(), 1);
+
+		$grouped_users  = $repository->setGroupBy(['state'])->all();
+		$this->assertEquals($grouped_users->count(), 3);
+		$this->assertEquals($grouped_users->where('state', 'NY')->count(), 1);
+		$this->assertEquals($grouped_users->where('state', 'KY')->count(), 1);
+		$this->assertEquals($grouped_users->where('state', 'CA')->count(), 1);
+	}
+
 	public function testItCanFilterOnFields()
 	{
 		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');

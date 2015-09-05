@@ -35,6 +35,20 @@ class EloquentRepository implements Repository
 	private $filters = [];
 
 	/**
+	 * Storage for group by.
+	 *
+	 * @var array
+	 */
+	private $group_by = [];
+
+	/**
+	 * Storage for aggregate functions.
+	 *
+	 * @var array
+	 */
+	private $aggregate = [];
+
+	/**
 	 * Storage for sort order.
 	 *
 	 * @var array
@@ -159,9 +173,56 @@ class EloquentRepository implements Repository
 	}
 
 	/**
+	 * Get group by.
+	 *
+	 * @return array
+	 */
+	public function getGroupBy()
+	{
+		return $this->group_by;
+	}
+
+	/**
+	 * Set group by manually.
+	 *
+	 * @param array $group_by
+	 *
+	 * @return $this
+	 */
+	public function setGroupBy(array $group_by)
+	{
+		$this->group_by = $group_by;
+
+		return $this;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getAggregate()
+	{
+		return $this->aggregate;
+	}
+
+	/**
+	 * Set aggregate functions.
+	 *
+	 * @param array $aggregate
+	 *
+	 * @return $this
+	 */
+	public function setAggregate(array $aggregate)
+	{
+		$this->aggregate = $aggregate;
+
+		return $this;
+	}
+
+	/**
 	 * Set sort order manually.
 	 *
-	 * @param array $sort_orders
+	 * @param array $sort_order
+	 *
 	 * @return $this
 	 */
 	public function setSortOrder(array $sort_order)
@@ -243,13 +304,17 @@ class EloquentRepository implements Repository
 	{
 		$filters    = $this->getFilters();
 		$sort_order_options = $this->getSortOrder();
+		$group_by   = $this->getGroupBy();
+		$aggregate  = $this->getAggregate();
 
 		// Check if filters or sorts are requested
 		$filters_exist = ! empty($filters);
 		$sorts_exist = ! empty($sort_order_options);
+		$group_exist = ! empty($group_by);
+		$aggregate_exist = ! empty($aggregate);
 
-		// No modifications to apply
-		if (! $filters_exist && ! $sorts_exist) {
+
+		if (! $filters_exist && ! $sorts_exist && ! $group_exist && ! $aggregate_exist) {
 			return;
 		}
 
@@ -265,6 +330,33 @@ class EloquentRepository implements Repository
 			});
 		}
 
+		// Modify the query with a group by condition.
+		if ($group_exist) {
+			$group = explode(',', reset($group_by));
+			$group = array_map('trim', $group);
+			$valid_group = array_intersect($group, $columns);
+
+			$query->groupBy($valid_group);
+		}
+
+		// Run an aggregate function. We will only run one, no matter how many were submitted.
+		if ($aggregate_exist) {
+
+			$allowed_aggregations = ['count', 'min', 'max', 'sum', 'avg'];
+			$allowed_columns = $columns;
+			$column = reset($aggregate);
+			$function = strtolower(key($aggregate));
+
+			if (in_array($function, $allowed_aggregations, true) && in_array($column, $allowed_columns, true)) {
+				$query->addSelect(DB::raw($function.'('.$column.') as aggregate'));
+
+				if ($group_exist) {
+					$query->addSelect($valid_group);
+				}
+			}
+		}
+
+		// If sort conditions exist, we evaluate their validity and run the query.
 		if ($sorts_exist) {
 			$allowed_directions = ['ASC', 'DESC'];
 

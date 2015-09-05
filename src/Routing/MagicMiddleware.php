@@ -62,8 +62,12 @@ class MagicMiddleware
 		$repository = config('magicbox.repository');
 
 		// Instantiate an eloquent repository bound to our standardized route parameter
-		$magicBox = (new $repository)->setModelClass($model_class)->setFilters((array)$request->get('filters'))
-			->setSortOrder((array)$request->get('sort'))->setEagerLoads((array)$request->get('include'))
+		$magicBox = (new $repository)->setModelClass($model_class)
+			->setFilters((array)$request->get('filters'))
+			->setSortOrder((array)$request->get('sort'))
+			->setGroupBy((array)$request->get('group'))
+			->setEagerLoads((array)$request->get('include'))
+			->setAggregate((array)$request->get('aggregate'))
 			->setInput($input);
 
 		return $magicBox;
