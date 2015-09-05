@@ -5,6 +5,7 @@ namespace Fuzz\MagicBox;
 use Fuzz\Data\Eloquent\Model;
 use Fuzz\MagicBox\Contracts\Repository;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class EloquentRepository
@@ -298,6 +299,7 @@ class EloquentRepository implements Repository
 	 * Process filter and sort modifications on $query
 	 *
 	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 *
 	 * @return void
 	 */
 	protected function modifyQuery($query)
