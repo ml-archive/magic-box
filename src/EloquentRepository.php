@@ -328,8 +328,10 @@ class EloquentRepository implements Repository
 		switch (class_basename($related)) {
 			case 'BelongsToMany':
 				$base_table_key = $instance->getKeyName();
+				$relation_primary_key = $relation->getModel()->getKeyName();
+
 				$query->join($related->getTable(), "$base_table.$base_table_key", '=', $foreign_key);
-				$query->join($table, $related->getOtherKey(), '=', "$relation.id"); // @todo get key name dynamically
+				$query->join($table, $related->getOtherKey(), '=', "$relation.$relation_primary_key");
 				break;
 			case 'HasMany':
 				$base_table_key = $instance->getKeyName();
