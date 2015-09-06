@@ -336,16 +336,71 @@ class EloquentRepositoryTest extends DBTestCase
 		$this->assertEquals($found_users->first()->id, 2);
 	}
 
+	public function testItSortsNested()
+	{
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(
+			[
+				'username' => 'Bobby',
+				'posts'    => [
+					[
+						'title' => 'First Post',
+						'tags' => [
+							['label' => 'Tag1']
+						]
+					]
+				]
+			]
+		)->save();
+		$second_user = $repository->setInput(
+			[
+				'username' => 'Robby',
+				'posts'    => [
+					[
+						'title' => 'Zis is the final post alphabetically',
+						'tags' => [
+							['label' => 'Tag2']
+						]
+					]
+				]
+			]
+		)->save();
+		$third_user = $repository->setInput(
+			[
+				'username' => 'Gobby',
+				'posts'    => [
+					[
+						'title' => 'Third Post',
+						'tags' => [
+							['label' => 'Tag3']
+						]
+					]
+				]
+			]
+		)->save();
+		$this->assertEquals($repository->all()->count(), 3);
+
+		$found_users = $repository->setSortOrder(
+			[
+				'posts.title' => 'desc'
+			]
+		)->all();
+		$this->assertEquals($found_users->count(), 3);
+		$this->assertEquals($found_users->first()->username, 'Robby');
+	}
+
 	public function testItModifiesQueries()
 	{
 		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User', ['username' => 'Billy']);
 		$repository->save();
 		$this->assertEquals($repository->count(), 1);
-		$repository->setModifiers([
-			function(Builder $query) {
-				$query->whereRaw(DB::raw('0 = 1'));
-			}
-		]);
+		$repository->setModifiers(
+			[
+				function (Builder $query) {
+					$query->whereRaw(DB::raw('0 = 1'));
+				}
+			]
+		);
 		$this->assertEquals($repository->count(), 0);
 	}
 }
