@@ -275,9 +275,14 @@ class EloquentRepository implements Repository
 					$split = explode('.', $order_by);
 
 					if (count($split) > 1) {
+						// Pull out orderBy field
 						$field      = array_pop($split);
+
+						// Select only the base table fields, don't join relation data. Relations should be
+						// explicitly included
 						$base_table = $temp_instance->getTable();
 						$query->selectRaw("$base_table.*");
+
 						$this->applyNestedJoins($query, $split, $temp_instance, $field, $direction);
 					} elseif (in_array($order_by, $columns)) {
 						$query->orderBy($order_by, $direction);
