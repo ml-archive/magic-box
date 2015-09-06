@@ -2,6 +2,7 @@
 
 namespace Fuzz\MagicBox\Routing;
 
+use Fuzz\Agency\Contracts\Agent;
 use Fuzz\MagicBox\Contracts\Repository;
 use Fuzz\MagicBox\Utility\ModelResolver;
 use Illuminate\Http\Request;
