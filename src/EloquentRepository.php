@@ -273,13 +273,15 @@ class EloquentRepository implements Repository
 			foreach ($sort_order_options as $order_by => $direction) {
 				if (in_array(strtoupper($direction), $allowed_directions)) {
 					$split = explode('.', $order_by);
+					$count = count($split);
 
-					if (count($split) > 1) {
+					// Limit to a nested relationship 5 levels deep
+					if ($count > 1 && $count <= 5) {
 						// Pull out orderBy field
 						$field      = array_pop($split);
 
-						// Select only the base table fields, don't join relation data. Relations should be
-						// explicitly included
+						// Select only the base table fields, don't select relation data. Desired relation data
+						// should be explicitly included
 						$base_table = $temp_instance->getTable();
 						$query->selectRaw("$base_table.*");
 
@@ -349,7 +351,7 @@ class EloquentRepository implements Repository
 				break;
 		}
 
-		// @todo is it necessary to allow nested relationships further than the first degree?
+		// @todo is it necessary to allow nested relationships further than the first/second degrees?
 		array_shift($relations);
 
 		if (count($relations) >= 1) {
