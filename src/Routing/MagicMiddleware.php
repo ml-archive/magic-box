@@ -5,6 +5,7 @@ namespace Fuzz\MagicBox\Routing;
 use Fuzz\Agency\Contracts\Agent;
 use Fuzz\MagicBox\Contracts\Repository;
 use Fuzz\MagicBox\Utility\ModelResolver;
+use Fuzz\User\Models\Group;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -75,7 +76,7 @@ class MagicMiddleware
 		$repository = config('magicbox.repository');
 
 		// Instantiate an eloquent repository bound to our standardized route parameter
-		$magicBox = (new $repository)->setModelClass($model_class)
+		$magic_box = (new $repository)->setModelClass($model_class)
 			->setFilters((array)$request->get('filters'))
 			->setSortOrder((array)$request->get('sort'))
 			->setGroupBy((array)$request->get('group'))
@@ -83,13 +84,13 @@ class MagicMiddleware
 			->setAggregate((array)$request->get('aggregate'))
 			->setInput($input);
 
-		$this->showTrashed($repository, $request, $model_class);
+		$this->showTrashed($magic_box, $request, $model_class);
 
-		return $magicBox;
+		return $magic_box;
 	}
 
 	/**
-	 * Show deleted query. 
+	 * Show deleted query.
 	 *
 	 * @param \Fuzz\MagicBox\Contracts\Repository $repository
 	 * @param \Illuminate\Http\Request            $request
