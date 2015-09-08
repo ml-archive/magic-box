@@ -5,6 +5,8 @@ namespace Fuzz\MagicBox\Routing;
 use Fuzz\Agency\Contracts\Agent;
 use Fuzz\MagicBox\Contracts\Repository;
 use Fuzz\MagicBox\Utility\ModelResolver;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 /**
@@ -81,6 +83,32 @@ class MagicMiddleware
 			->setAggregate((array)$request->get('aggregate'))
 			->setInput($input);
 
+		$this->showTrashed($repository, $request, $model_class);
+
 		return $magicBox;
+	}
+
+	/**
+	 * Show deleted query. 
+	 *
+	 * @param \Fuzz\MagicBox\Contracts\Repository $repository
+	 * @param \Illuminate\Http\Request            $request
+	 * @param                                     $model_class
+	 */
+	private function showTrashed(Repository $repository, Request $request, $model_class)
+	{
+		if ($request->get('show_deleted')) {
+			if (! isset($agent) && app()->resolved(Agent::class)) {
+				$agent = app()->make(Agent::class);
+			}
+
+			if (in_array(SoftDeletes::class, class_uses_recursive($model_class)) && isset($agent) && $agent->is(Group::GROUP_ADMIN)) {
+				$repository->setModifiers([
+					function(Builder $query) {
+						$query->withTrashed();
+					}
+				]);
+			}
+		}
 	}
 }
