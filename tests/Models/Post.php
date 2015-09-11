@@ -6,6 +6,8 @@ use Fuzz\Data\Eloquent\Model;
 
 class Post extends Model
 {
+	protected $table = 'posts';
+
 	public function user()
 	{
 		return $this->belongsTo('Fuzz\MagicBox\Tests\Models\User');

@@ -72,7 +72,7 @@ class FilterTest extends DBTestCase
 		$columns        = $this->getModelColumns($model);
 		$filters        = ['name' => '^Bob'];
 
-		Filter::filterQuery($query, $filters, $columns);
+		Filter::filterQuery($query, $filters, $columns, (new $model)->getTable());
 
 		$this->assertNotSame($original_query, $query);
 	}

@@ -254,12 +254,11 @@ class EloquentRepository implements Repository
 		$model_class   = $this->getModelClass();
 		$temp_instance = new $model_class;
 		$columns       = $temp_instance->getFields();
-		//unset($temp_instance);
 
 		if ($filters_exist) {
 			$query->where(
-				function ($query) use ($filters, $columns) {
-					Filter::filterQuery($query, $filters, $columns);
+				function ($query) use ($filters, $columns, $temp_instance) {
+					Filter::filterQuery($query, $filters, $columns, $temp_instance->getTable());
 				}
 			);
 		}
@@ -278,7 +277,7 @@ class EloquentRepository implements Repository
 					// Limit to a nested relationship 5 levels deep
 					if ($count > 1 && $count <= 5) {
 						// Pull out orderBy field
-						$field      = array_pop($split);
+						$field = array_pop($split);
 
 						// Select only the base table fields, don't select relation data. Desired relation data
 						// should be explicitly included
@@ -292,6 +291,8 @@ class EloquentRepository implements Repository
 				}
 			}
 		}
+
+		unset($temp_instance);
 	}
 
 	/**
@@ -329,7 +330,7 @@ class EloquentRepository implements Repository
 
 		switch (class_basename($related)) {
 			case 'BelongsToMany':
-				$base_table_key = $instance->getKeyName();
+				$base_table_key       = $instance->getKeyName();
 				$relation_primary_key = $relation->getModel()->getKeyName();
 
 				// Join through the pivot table

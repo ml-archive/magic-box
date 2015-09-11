@@ -6,6 +6,8 @@ use Fuzz\Data\Eloquent\Model;
 
 class User extends Model
 {
+	protected $table = 'users';
+
 	public function posts()
 	{
 		return $this->hasMany('Fuzz\MagicBox\Tests\Models\Post');

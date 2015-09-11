@@ -6,6 +6,8 @@ use Fuzz\Data\Eloquent\Model;
 
 class Profile extends Model
 {
+	protected $table = 'profiles';
+
 	public $timestamps = false;
 
 	public function user()

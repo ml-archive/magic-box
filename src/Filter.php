@@ -35,6 +35,13 @@ class Filter
 	];
 
 	/**
+	 * Container for base table prefix. Always specify table.
+	 *
+	 * @var null
+	 */
+	protected static $table_prefix = null;
+
+	/**
 	 * Determine the token (if any) to use for the query
 	 *
 	 * @param string $filter
@@ -94,6 +101,17 @@ class Filter
 	}
 
 	/**
+	 * Determine whether to apply a table prefix to prevent ambiguous columns
+	 *
+	 * @param $column
+	 * @return string
+	 */
+	private static function applyTablePrefix($column)
+	{
+		return is_null(self::$table_prefix) ? $column : self::$table_prefix . '.' . $column;
+	}
+
+	/**
 	 * Funnel method to filter queries.
 	 *
 	 * First check for a dot nested string in the place of a filter column and use the appropriate method
@@ -103,18 +121,24 @@ class Filter
 	 * @param array                                 $filters
 	 * @return void
 	 */
-	public static function filterQuery($query, $filters, $columns)
+	public static function filterQuery($query, $filters, $columns, $table)
 	{
+		if (! is_null($table)) {
+			self::$table_prefix = $table;
+		}
+
 		foreach ($filters as $column => $filter) {
 			if (strtolower($column) === 'or' || strtolower($column) === 'and') {
 				$nextConjunction = $column === 'or';
-				$method = self::determineMethod('where', $nextConjunction);
+				$method          = self::determineMethod('where', $nextConjunction);
 
 				// orWhere should only occur on conjunctions. We want filters in the same nesting level to attach as
 				// 'AND'. 'OR' should nest.
-				$query->$method(function($query) use ($filters, $columns, $column, $nextConjunction) {
-					self::filterQuery($query, $filters[$column], $columns, $nextConjunction);
-				});
+				$query->$method(
+					function ($query) use ($filters, $columns, $column, $table) {
+						self::filterQuery($query, $filters[$column], $columns, $table);
+					}
+				);
 				continue;
 			}
 
@@ -152,21 +176,24 @@ class Filter
 					}
 					);
 				} else {
+					$column = self::applyTablePrefix($column);
 					self::$method($column, $filter, $query);
 				}
 			} elseif ($filter === 'true' || $filter === 'false') {
 				// Is a boolean filter, coerce to boolean.
 				$filter = ($filter === 'true');
-				$where  = camel_case('where' . $column);
 
 				// Querying a dot nested relation
 				if (is_array($nested_relations)) {
 					$query->whereHas(
-						$relation, function ($query) use ($where, $filter) {
+						$relation, function ($query) use ($filter, $column) {
+						$where = camel_case('where' . $column);
 						$query->$where($filter);
 					}
 					);
 				} else {
+					$column = self::applyTablePrefix($column);
+					$where  = camel_case('where' . $column);
 					$query->$where($filter);
 				}
 			} elseif ($filter === 'NULL' || $filter === 'NOT_NULL') {
@@ -178,6 +205,7 @@ class Filter
 					}
 					);
 				} else {
+					$column = self::applyTablePrefix($column);
 					self::nullMethod($column, $filter, $query);
 				}
 			} else {
