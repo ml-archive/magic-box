@@ -126,7 +126,12 @@ class Filter
 			}
 
 			if ($token = self::determineTokenType($filter)) {
-				if (! $filter = self::cleanAndValidateFilter($token, $filter)) {
+				// We check to see if the filter string is a valid filter.
+				$filter = self::cleanAndValidateFilter($token, $filter);
+
+				// If it is not a valid filter we continue to the next
+				// iteration in the array.
+				if ($filter === false) {
 					continue;
 				}
 
