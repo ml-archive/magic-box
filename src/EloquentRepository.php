@@ -623,7 +623,8 @@ class EloquentRepository implements Repository
 		$instance = $this->read();
 		$this->fill($instance);
 
-		return $instance;
+		// Return the updated instance
+		return $this->read();
 	}
 
 	/**
