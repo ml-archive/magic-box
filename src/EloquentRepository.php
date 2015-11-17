@@ -4,11 +4,13 @@ namespace Fuzz\MagicBox;
 
 use Fuzz\Data\Eloquent\Model;
 use Fuzz\MagicBox\Contracts\Repository;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
- * Class EloquentRepository
+ * Class EloquentRepository - WHY
  *
  * @package Fuzz\MagicBox
  */
@@ -269,7 +271,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Illuminate\Database\Eloquent\Builder
 	 */
-	public function query()
+	protected function query()
 	{
 		$query = forward_static_call(
 			[
@@ -324,7 +326,7 @@ class EloquentRepository implements Repository
 		$model_class   = $this->getModelClass();
 		$temp_instance = new $model_class;
 		$columns       = $temp_instance->getFields();
-		unset($temp_instance);
+
 
 		if ($filters_exist) {
 			$query->where(function ($query) use ($filters, $columns) {
@@ -358,17 +360,102 @@ class EloquentRepository implements Repository
 			}
 		}
 
-		// If sort conditions exist, we evaluate their validity and run the query.
 		if ($sorts_exist) {
-			$allowed_directions = ['ASC', 'DESC'];
+			$allowed_directions = [
+				'ASC',
+				'DESC'
+			];
 
-			$valid_sorts = array_intersect_key($sort_order_options, array_flip($columns));
-
-			foreach ($valid_sorts as $order_by => $direction) {
+			foreach ($sort_order_options as $order_by => $direction) {
 				if (in_array(strtoupper($direction), $allowed_directions)) {
-					$query->orderBy($order_by, $direction);
+					$split = explode('.', $order_by);
+					$count = count($split);
+
+					// Limit to a nested relationship 5 levels deep
+					if ($count > 1 && $count <= 5) {
+						// Pull out orderBy field
+						$field = array_pop($split);
+
+						// Select only the base table fields, don't select relation data. Desired relation data
+						// should be explicitly included
+						$base_table = $temp_instance->getTable();
+						$query->selectRaw("$base_table.*");
+
+						$this->applyNestedJoins($query, $split, $temp_instance, $field, $direction);
+					} elseif (in_array($order_by, $columns)) {
+						$query->orderBy($order_by, $direction);
+					}
 				}
 			}
+		}
+		unset($temp_instance);
+	}
+
+
+	/**
+	 * Apply nested joins to allow nested sorting for select relationship combinations
+	 *
+	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param array                                 $relations
+	 * @param \Fuzz\Data\Eloquent\Model             $instance
+	 * @param                                       $field
+	 * @param string                                $direction
+	 * @return void
+	 */
+	public function applyNestedJoins(Builder $query, array $relations, Model $instance, $field, $direction = 'asc')
+	{
+		$base_table = $instance->getTable();
+
+		// The current working relation
+		$relation = $relations[0];
+
+		// Current working table
+		$table    = Str::plural($relation);
+		$singular = Str::singular($relation);
+
+		// If the relation exists, determine which type (singular, multiple)
+		if (method_exists($instance, $singular)) {
+			$related = $instance->$singular();
+		} elseif (method_exists($instance, $relation)) {
+			$related = $instance->$relation();
+		} else {
+			// This relation does not exist
+			return;
+		}
+
+		$foreign_key = $related->getForeignKey();
+
+		switch (class_basename($related)) {
+			case 'BelongsToMany':
+				$base_table_key       = $instance->getKeyName();
+				$relation_primary_key = $relation->getModel()->getKeyName();
+
+				// Join through the pivot table
+				$query->join($related->getTable(), "$base_table.$base_table_key", '=', $foreign_key);
+				$query->join($table, $related->getOtherKey(), '=', "$relation.$relation_primary_key");
+				break;
+			case 'HasMany':
+				$base_table_key = $instance->getKeyName();
+
+				// Join child's table
+				$query->join($table, "$base_table.$base_table_key", '=', $foreign_key);
+				break;
+			case 'BelongsTo':
+			case 'HasOne':
+				$relation_key = $related->getOtherKey();
+
+				// Join related's table on the base table's foreign key
+				$query->join($table, "$base_table.$foreign_key", '=', "$table.$relation_key");
+				break;
+		}
+
+		// @todo is it necessary to allow nested relationships further than the first/second degrees?
+		array_shift($relations);
+
+		if (count($relations) >= 1) {
+			$this->applyNestedJoins($query, $relations, $related->getModel(), $field, $direction);
+		} else {
+			$query->orderBy("$table.$field", $direction);
 		}
 	}
 
