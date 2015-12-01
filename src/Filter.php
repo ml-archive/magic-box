@@ -357,6 +357,11 @@ class Filter
 	protected static function equals($column, $filter, $query, $or = false)
 	{
 		$method = self::determineMethod('where', $or);
+
+		if ($filter === 'true' || $filter === 'false') {
+			$filter = $filter === 'true';
+		}
+
 		$query->$method($column, '=', $filter);
 	}
 
