@@ -324,6 +324,7 @@ class EloquentRepository implements Repository
 		$model_class   = $this->getModelClass();
 		$temp_instance = new $model_class;
 		$columns       = $temp_instance->getFields();
+
 		unset($temp_instance);
 
 		if ($filters_exist) {
@@ -362,7 +363,10 @@ class EloquentRepository implements Repository
 		if ($sorts_exist) {
 			$allowed_directions = ['ASC', 'DESC'];
 
-			$valid_sorts = array_intersect_key($sort_order_options, array_flip($columns));
+            // We add aggregate to columns so that we can sort by this column as well.
+            $columns[] = 'aggregate';
+
+            $valid_sorts = array_intersect_key($sort_order_options, array_flip($columns));
 
 			foreach ($valid_sorts as $order_by => $direction) {
 				if (in_array(strtoupper($direction), $allowed_directions)) {
