@@ -5,6 +5,10 @@ namespace Fuzz\MagicBox;
 use Fuzz\Data\Eloquent\Model;
 use Fuzz\MagicBox\Contracts\Repository;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -572,20 +576,44 @@ class EloquentRepository implements Repository
 		$model_fields     = $instance->getFields();
 		$before_relations = [];
 		$after_relations  = [];
+		$instance_model   = get_class($instance);
+		$safe_instance    = new $instance_model;
 
 		foreach (array_except($input, [$instance->getKeyName()]) as $key => $value) {
 			if (method_exists($instance, $key)) {
-				$relation = $instance->$key();
+				$relation = null;
+				$reflected_method = (new \ReflectionMethod($safe_instance, $key))->__toString();
+
+				$supported_relations = [BelongsTo::class, HasOne::class, HasMany::class, BelongsToMany::class];
+
+				foreach ($supported_relations as $supported_relation) {
+					if (strpos($reflected_method, $supported_relation) !== false) {
+						$relation = $instance->$key();
+						break;
+					}
+				}
+
+				if (is_null($relation) && ($safe_instance->$key() instanceof Relation)) {
+					// If the method returns a Relation, we can safely call it
+					$relation = $instance->$key();
+				}
+
 				if ($relation instanceof Relation) {
-					$relation_type = class_basename($relation);
+					$relation_type = get_class($relation);
 					switch ($relation_type) {
-						case 'BelongsTo':
-							$before_relations[] = compact('relation', 'value');
+						case BelongsTo::class:
+							$before_relations[] = [
+								'relation' => $relation,
+								'value'    => $value
+							];
 							break;
-						case 'HasOne':
-						case 'HasMany':
-						case 'BelongsToMany':
-							$after_relations[] = compact('relation', 'value');
+						case HasOne::class:
+						case HasMany::class:
+						case BelongsToMany::class:
+							$after_relations[] = [
+								'relation' => $relation,
+								'value'    => $value
+							];
 							break;
 					}
 				}
@@ -593,6 +621,8 @@ class EloquentRepository implements Repository
 				$instance->$key = $value;
 			}
 		}
+
+		unset($safe_instance);
 
 		$this->applyRelations($before_relations, $instance);
 		$instance->save();
