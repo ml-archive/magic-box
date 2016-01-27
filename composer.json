@@ -14,16 +14,12 @@
 			"email": "fuzzweb@fuzzproductions.com"
 		}
 	],
-	"repositories": [
-		{
+	"repositories": {
+		"laravel-data": {
 			"type": "vcs",
 			"url": "git@gitlab.fuzzhq.com:web-modules/laravel-data.git"
-		},
-		{
-			"type": "composer",
-			"url": "https://satis.fuzzhq.com"
 		}
-	],
+	},
 	"autoload": {
 		"psr-4": {
 			"Fuzz\\MagicBox\\": "src/",
