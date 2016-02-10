@@ -2,7 +2,9 @@
 
 namespace Fuzz\MagicBox;
 
-class Filter
+use Fuzz\MagicBox\Contracts\FilterInterface;
+
+class Filter implements FilterInterface
 {
 	/**
 	 * Supported filter methods
@@ -109,6 +111,18 @@ class Filter
 	private static function applyTablePrefix($column)
 	{
 		return is_null(self::$table_prefix) ? $column : self::$table_prefix . '.' . $column;
+	}
+
+	/**
+	 * Determine whether this an 'or' method or not
+	 *
+	 * @param string $base_name
+	 * @param bool   $or
+	 * @return string
+	 */
+	private static function determineMethod($base_name, $or)
+	{
+		return $or ? camel_case('or_' . $base_name) : $base_name;
 	}
 
 	/**
@@ -254,11 +268,6 @@ class Filter
 		return count($parse_relations) === 1 ? $parse_relations[0] : $parse_relations;
 	}
 
-	private static function determineMethod($base_name, $or)
-	{
-		return $or ? camel_case('or_' . $base_name) : $base_name;
-	}
-
 	/**
 	 * Query for items that begin with a string.
 	 *
@@ -267,6 +276,7 @@ class Filter
 	 * @param string                                $column
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param bool                                  $or
 	 */
 	protected static function startsWith($column, $filter, $query, $or = false)
 	{
@@ -282,6 +292,7 @@ class Filter
 	 * @param string                                $column
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param bool                                  $or
 	 */
 	protected static function endsWith($column, $filter, $query, $or = false)
 	{
@@ -297,6 +308,7 @@ class Filter
 	 * @param string                                $column
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param bool                                  $or
 	 */
 	protected static function contains($column, $filter, $query, $or = false)
 	{
@@ -312,6 +324,7 @@ class Filter
 	 * @param string                                $column
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param bool                                  $or
 	 */
 	protected static function lessThan($column, $filter, $query, $or = false)
 	{
@@ -327,6 +340,7 @@ class Filter
 	 * @param string                                $column
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param bool                                  $or
 	 */
 	protected static function greaterThan($column, $filter, $query, $or = false)
 	{
@@ -342,6 +356,7 @@ class Filter
 	 * @param string                                $column
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param bool                                  $or
 	 */
 	protected static function greaterThanOrEquals($column, $filter, $query, $or = false)
 	{
@@ -357,6 +372,7 @@ class Filter
 	 * @param string                                $column
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param bool                                  $or
 	 */
 	protected static function lessThanOrEquals($column, $filter, $query, $or = false)
 	{
@@ -372,6 +388,7 @@ class Filter
 	 * @param string                                $column
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param bool                                  $or
 	 */
 	protected static function equals($column, $filter, $query, $or = false)
 	{
@@ -392,6 +409,7 @@ class Filter
 	 * @param string                                $column
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param bool                                  $or
 	 */
 	protected static function notEquals($column, $filter, $query, $or = false)
 	{
@@ -408,6 +426,7 @@ class Filter
 	 * @param string                                $column
 	 * @param string                                $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param bool                                  $or
 	 */
 	protected static function nullMethod($column, $filter, $query, $or = false)
 	{
@@ -428,6 +447,7 @@ class Filter
 	 * @param string                                $column
 	 * @param string|array                          $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param bool                                  $or
 	 */
 	protected static function in($column, $filter, $query, $or = false)
 	{
@@ -443,6 +463,7 @@ class Filter
 	 * @param string                                $column
 	 * @param string|array                          $filter
 	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param bool                                  $or
 	 */
 	protected static function notIn($column, $filter, $query, $or = false)
 	{
