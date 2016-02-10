@@ -112,6 +112,24 @@ class Filter
 	}
 
 	/**
+	 * Funnel for rest of filter methods
+	 *
+	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param array                                 $filters
+	 * @param array                                 $columns
+	 * @param string                                $table
+	 */
+	public static function applyQueryFilters($query, $filters, $columns, $table)
+	{
+		// Wrap in a complex where so we don't break soft delete checks
+		$query->where(
+			function ($query) use ($filters, $columns, $table) {
+				self::filterQuery($query, $filters, $columns, $table);
+			}
+		);
+	}
+
+	/**
 	 * Funnel method to filter queries.
 	 *
 	 * First check for a dot nested string in the place of a filter column and use the appropriate method
@@ -119,7 +137,8 @@ class Filter
 	 *
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 * @param array                                 $filters
-	 * @return void
+	 * @param array                                 $columns
+	 * @param string                                $table
 	 */
 	public static function filterQuery($query, $filters, $columns, $table)
 	{

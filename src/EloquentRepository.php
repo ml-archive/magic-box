@@ -2,7 +2,8 @@
 
 namespace Fuzz\MagicBox;
 
-use Fuzz\Data\Eloquent\Model;
+use Fuzz\Data\Schema\SchemaUtility;
+use Illuminate\Database\Eloquent\Model;
 use Fuzz\MagicBox\Contracts\Repository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -86,8 +87,8 @@ class EloquentRepository implements Repository
 	 */
 	public function setModelClass($model_class)
 	{
-		if (! is_subclass_of($model_class, '\Fuzz\Data\Eloquent\Model')) {
-			throw new \InvalidArgumentException('Specified model class must be an instance of \Fuzz\Data\Eloquent\Model');
+		if (! is_subclass_of($model_class, Model::class)) {
+			throw new \InvalidArgumentException('Specified model class must be an instance of ' . Model::class);
 		}
 
 		$this->model_class = $model_class;
@@ -266,6 +267,17 @@ class EloquentRepository implements Repository
 	}
 
 	/**
+	 * Return this model's fields.
+	 *
+	 * @param \Illuminate\Database\Eloquent\Model $instance
+	 * @return array
+	 */
+	public static function getFields(Model $instance)
+	{
+		return SchemaUtility::describeTable($instance->getTable(), $instance->getConnection());
+	}
+
+	/**
 	 * Base query for all behaviors within this repository.
 	 *
 	 * @return \Illuminate\Database\Eloquent\Builder
@@ -284,7 +296,7 @@ class EloquentRepository implements Repository
 		$eager_loads = $this->getEagerLoads();
 
 		if (! empty($eager_loads)) {
-			$query->safeWith($eager_loads);
+			$this->safeWith($query, $eager_loads);
 		}
 
 		if (! empty($modifiers = $this->getModifiers())) {
@@ -323,14 +335,10 @@ class EloquentRepository implements Repository
 		// Make a mock instance so we can describe its columns
 		$model_class   = $this->getModelClass();
 		$temp_instance = new $model_class;
-		$columns       = $temp_instance->getFields();
+		$columns       = $this->getFields($temp_instance);
 
 		if ($filters_exist) {
-			$query->where(
-				function ($query) use ($filters, $columns, $temp_instance) {
-					Filter::filterQuery($query, $filters, $columns, $temp_instance->getTable());
-				}
-			);
+			Filter::applyQueryFilters($query, $filters, $columns, $temp_instance->getTable());
 		}
 
 		// Modify the query with a group by condition.
@@ -398,11 +406,63 @@ class EloquentRepository implements Repository
 	}
 
 	/**
+	 * "Safe" version of with eager-loading.
+	 *
+	 * Checks if relations exist before loading them.
+	 *
+	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param string|array                          $relations
+	 */
+	public function safeWith(Builder $query, $relations)
+	{
+		if (is_string($relations)) {
+			$relations = func_get_args();
+			array_shift($relations);
+		}
+
+		// Loop through all relations to check for valid relationship signatures
+		foreach ($relations as $name => $constraints) {
+			// Constraints may be passed in either form:
+			// 2 => 'relation.nested'
+			// or
+			// 'relation.nested' => function() { ... }
+			$constraints_are_name = is_numeric($name);
+			$relation_name        = $constraints_are_name ? $constraints : $name;
+
+			// Expand the dot-notation to see all relations
+			$nested_relations = explode('.', $relation_name);
+			$model            = $query->getModel();
+
+			foreach ($nested_relations as $index => $relation) {
+				if (method_exists($model, $relation)) {
+					// Iterate through relations if they actually exist
+					$model = $model->$relation()->getRelated();
+				} elseif ($index > 0) {
+					// If we found any valid relations, pass them through
+					$safe_relation = implode('.', array_slice($nested_relations, 0, $index));
+					if ($constraints_are_name) {
+						$relations[$name] = $safe_relation;
+					} else {
+						unset($relations[$name]);
+						$relations[$safe_relation] = $constraints;
+					}
+				} else {
+					// If we didn't, remove this relation specification
+					unset($relations[$name]);
+					break;
+				}
+			}
+		}
+
+		$query->with($relations);
+	}
+
+	/**
 	 * Apply nested joins to allow nested sorting for select relationship combinations
 	 *
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 * @param array                                 $relations
-	 * @param \Fuzz\Data\Eloquent\Model             $instance
+	 * @param \Illuminate\Database\Eloquent\Model   $instance
 	 * @param                                       $field
 	 * @param string                                $direction
 	 * @return void
@@ -468,7 +528,7 @@ class EloquentRepository implements Repository
 	 * Find an instance of a model by ID.
 	 *
 	 * @param int $id
-	 * @return \Fuzz\Data\Eloquent\Model
+	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	final public function find($id)
 	{
@@ -479,7 +539,7 @@ class EloquentRepository implements Repository
 	 * Find an instance of a model by ID, or fail.
 	 *
 	 * @param int $id
-	 * @return \Fuzz\Data\Eloquent\Model
+	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	final public function findOrFail($id)
 	{
@@ -530,7 +590,7 @@ class EloquentRepository implements Repository
 	/**
 	 * Get a random value.
 	 *
-	 * @return \Fuzz\Data\Eloquent\Model
+	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	public function random()
 	{
@@ -566,14 +626,14 @@ class EloquentRepository implements Repository
 	/**
 	 * Fill an instance of a model with all known fields.
 	 *
-	 * @param \Fuzz\Data\Eloquent\Model $instance
+	 * @param \Illuminate\Database\Eloquent\Model $instance
 	 * @return mixed
 	 * @todo support more relationship types, such as polymorphic ones!
 	 */
 	final protected function fill(Model $instance)
 	{
 		$input            = $this->getInput();
-		$model_fields     = $instance->getFields();
+		$model_fields     = $this->getFields($instance);
 		$before_relations = [];
 		$after_relations  = [];
 		$instance_model   = get_class($instance);
@@ -581,10 +641,15 @@ class EloquentRepository implements Repository
 
 		foreach (array_except($input, [$instance->getKeyName()]) as $key => $value) {
 			if (method_exists($instance, $key)) {
-				$relation = null;
+				$relation         = null;
 				$reflected_method = (new \ReflectionMethod($safe_instance, $key))->__toString();
 
-				$supported_relations = [BelongsTo::class, HasOne::class, HasMany::class, BelongsToMany::class];
+				$supported_relations = [
+					BelongsTo::class,
+					HasOne::class,
+					HasMany::class,
+					BelongsToMany::class
+				];
 
 				foreach ($supported_relations as $supported_relation) {
 					if (strpos($reflected_method, $supported_relation) !== false) {
@@ -634,8 +699,8 @@ class EloquentRepository implements Repository
 	/**
 	 * Apply relations from an array to an instance model.
 	 *
-	 * @param array                     $specs
-	 * @param \Fuzz\Data\Eloquent\Model $instance
+	 * @param array                               $specs
+	 * @param \Illuminate\Database\Eloquent\Model $instance
 	 * @return void
 	 */
 	final protected function applyRelations(array $specs, Model $instance)
@@ -650,7 +715,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @param \Illuminate\Database\Eloquent\Relations\Relation $relation
 	 * @param array                                            $input
-	 * @param \Fuzz\Data\Eloquent\Model                        $parent
+	 * @param \Illuminate\Database\Eloquent\Model              $parent
 	 *
 	 * @return void
 	 */
@@ -720,7 +785,7 @@ class EloquentRepository implements Repository
 	/**
 	 * Create a model.
 	 *
-	 * @return \Fuzz\Data\Eloquent\Model
+	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	final public function create()
 	{
@@ -734,7 +799,7 @@ class EloquentRepository implements Repository
 	/**
 	 * Read a model.
 	 *
-	 * @return \Fuzz\Data\Eloquent\Model
+	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	final public function read()
 	{
@@ -744,7 +809,7 @@ class EloquentRepository implements Repository
 	/**
 	 * Update a model.
 	 *
-	 * @return \Fuzz\Data\Eloquent\Model
+	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	final public function update()
 	{
@@ -770,7 +835,7 @@ class EloquentRepository implements Repository
 	/**
 	 * Save a model, regardless of whether or not it is "new".
 	 *
-	 * @return \Fuzz\Data\Eloquent\Model
+	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	final public function save()
 	{

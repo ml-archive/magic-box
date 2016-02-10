@@ -2,7 +2,7 @@
 
 namespace Fuzz\MagicBox\Tests\Models;
 
-use Fuzz\Data\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class Profile extends Model
 {

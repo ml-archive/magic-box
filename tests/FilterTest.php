@@ -4,9 +4,6 @@ namespace Fuzz\MagicBox\Tests;
 
 use Fuzz\MagicBox\Filter;
 use Fuzz\MagicBox\EloquentRepository;
-use Fuzz\MagicBox\Tests\Models\Post;
-use Fuzz\MagicBox\Tests\Models\Profile;
-use Fuzz\MagicBox\Tests\Models\User;
 
 class FilterTest extends DBTestCase
 {
@@ -29,7 +26,7 @@ class FilterTest extends DBTestCase
 	/**
 	 * Retrieve a sample repository for testing.
 	 *
-	 * @param string $repository
+	 * @param string $model_class
 	 * @return \Illuminate\Database\Eloquent\Builder
 	 */
 	private function getQuery($model_class)
@@ -49,7 +46,7 @@ class FilterTest extends DBTestCase
 		$this->getRepository($model_class);
 		$temp_instance = new $model_class;
 
-		return $temp_instance->getFields();
+		return EloquentRepository::getFields($temp_instance);
 	}
 
 	public function testItCanFilterOnFields()
