@@ -35,6 +35,6 @@ abstract class DBTestCase extends TestCase
 
 	public function tearDown()
 	{
-		$this->artisan->call('migrate:reset');
+		$this->artisan->call('migrate:rollback');
 	}
 }

@@ -2,6 +2,8 @@
 
 namespace Fuzz\MagicBox\Contracts;
 
+use Illuminate\Database\Eloquent\Model;
+
 interface Repository
 {
 	/**
@@ -78,6 +80,14 @@ interface Repository
 	 * @return array
 	 */
 	public function getModifiers();
+
+	/**
+	 * Return a model's fields.
+	 *
+	 * @param \Illuminate\Database\Eloquent\Model $instance
+	 * @return array
+	 */
+	public static function getFields(Model $instance);
 
 	/**
 	 * Find an instance of a model by ID.

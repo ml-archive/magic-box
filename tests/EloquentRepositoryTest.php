@@ -2,6 +2,7 @@
 
 namespace Fuzz\MagicBox\Tests;
 
+use Fuzz\MagicBox\Tests\Seeds\FilterDataSeeder;
 use Illuminate\Support\Facades\DB;
 use Fuzz\MagicBox\Tests\Models\User;
 use Fuzz\MagicBox\Tests\Models\Post;
@@ -56,18 +57,6 @@ class EloquentRepositoryTest extends DBTestCase
 		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
 		$this->assertEquals($repository->count(), 0);
 		$this->assertFalse($repository->hasAny());
-	}
-
-	public function testItCanFilterOnFields()
-	{
-		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-		$first_user  = $repository->setInput(['username' => 'bob'])->save();
-		$second_user = $repository->setInput(['username' => 'sue'])->save();
-		$this->assertEquals($repository->all()->count(), 2);
-
-		$found_users = $repository->setFilters(['username' => '=sue'])->all();
-		$this->assertEquals($found_users->count(), 1);
-		$this->assertEquals($found_users->first()->username, 'sue');
 	}
 
 	public function testItPaginates()
@@ -402,5 +391,22 @@ class EloquentRepositoryTest extends DBTestCase
 			]
 		);
 		$this->assertEquals($repository->count(), 0);
+	}
+
+	public function testItCanFilterOnFields()
+	{
+		$this->artisan->call(
+			'db:seed', [
+				'--class' => FilterDataSeeder::class
+			]
+		);
+
+		// Test that the repository implements filters correctly
+		$repository  = $this->getRepository(User::class);
+		$this->assertEquals($repository->all()->count(), 4);
+
+		$found_users = $repository->setFilters(['username' => '=chewbaclava@galaxyfarfaraway.com'])->all();
+		$this->assertEquals($found_users->count(), 1);
+		$this->assertEquals($found_users->first()->username, 'chewbaclava@galaxyfarfaraway.com');
 	}
 }

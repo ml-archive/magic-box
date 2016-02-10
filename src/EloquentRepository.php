@@ -2,7 +2,6 @@
 
 namespace Fuzz\MagicBox;
 
-use Fuzz\Data\Schema\SchemaUtility;
 use Illuminate\Database\Eloquent\Model;
 use Fuzz\MagicBox\Contracts\Repository;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class EloquentRepository implements Repository
@@ -267,14 +267,14 @@ class EloquentRepository implements Repository
 	}
 
 	/**
-	 * Return this model's fields.
+	 * Return a model's fields.
 	 *
 	 * @param \Illuminate\Database\Eloquent\Model $instance
 	 * @return array
 	 */
 	public static function getFields(Model $instance)
 	{
-		return SchemaUtility::describeTable($instance->getTable(), $instance->getConnection());
+		return Schema::getColumnListing($instance->getTable());
 	}
 
 	/**

@@ -17,6 +17,10 @@ class CreateUsersTable extends Migration
 			'users', function (Blueprint $table) {
 				$table->increments('id');
 				$table->string('username')->nullable();
+				$table->string('name')->nullable();
+				$table->integer('hands')->nullable();
+				$table->integer('times_captured')->nullable();
+				$table->string('occupation')->nullable();
 				$table->timestamps();
 			}
 		);
