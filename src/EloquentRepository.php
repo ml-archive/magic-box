@@ -761,17 +761,23 @@ class EloquentRepository implements Repository
 	final protected function cascadeRelation(Relation $relation, array $input, Model $parent = null)
 	{
 		// Make a child repository for containing the cascaded relationship through saves
-		$target_model_class        = get_class($relation->getQuery()->getModel());
-		$model_resource_controller = (new self)->setModelClass($target_model_class);
+		$target_model_class  = get_class($relation->getQuery()->getModel());
+		$relation_repository = (new self)->setModelClass($target_model_class);
 
-		switch (class_basename($relation)) {
-			case 'BelongsTo':
+		switch (get_class($relation)) {
+			case BelongsTo::class:
+				/**
+				 * @var \Illuminate\Database\Eloquent\Relations\BelongsTo $relation
+				 */
 				// For BelongsTo, simply associate by foreign key.
 				// (We don't have to assume the parent model exists to do this.)
-				$related = $model_resource_controller->setInput($input)->save();
+				$related = $relation_repository->setInput($input)->save();
 				$relation->associate($related);
 				break;
-			case 'HasMany':
+			case HasMany::class:
+				/**
+				 * @var \Illuminate\Database\Eloquent\Relations\HasMany $relation
+				 */
 				// The parent model "owns" child models; any not specified here should be deleted.
 				$current_ids = $relation->lists(self::KEY_NAME)->toArray();
 				$new_ids     = array_filter(array_column($input, self::KEY_NAME));
@@ -783,10 +789,13 @@ class EloquentRepository implements Repository
 				// Set foreign keys on the children from the parent, and save.
 				foreach ($input as $sub_input) {
 					$sub_input[$relation->getPlainForeignKey()] = $parent->{self::KEY_NAME};
-					$model_resource_controller->setInput($sub_input)->save();
+					$relation_repository->setInput($sub_input)->save();
 				}
 				break;
-			case 'HasOne':
+			case HasOne::class:
+				/**
+				 * @var \Illuminate\Database\Eloquent\Relations\HasOne $relation
+				 */
 				// The parent model "owns" the child model; if we have a new and/or different
 				// existing child model, delete the old one.
 				$current = $relation->getResults();
@@ -798,14 +807,17 @@ class EloquentRepository implements Repository
 
 				// Set foreign key on the child from the parent, and save.
 				$input[$relation->getPlainForeignKey()] = $parent->{self::KEY_NAME};
-				$model_resource_controller->setInput($input)->save();
+				$relation_repository->setInput($input)->save();
 				break;
-			case 'BelongsToMany':
+			case BelongsToMany::class:
+				/**
+				 * @var \Illuminate\Database\Eloquent\Relations\BelongsToMany $relation
+				 */
 				// Find all the IDs to sync.
 				$ids = [];
 
 				foreach ($input as $sub_input) {
-					$id = $model_resource_controller->setInput($sub_input)->save()->{self::KEY_NAME};
+					$id = $relation_repository->setInput($sub_input)->save()->{self::KEY_NAME};
 
 					// If we were passed pivot data, pass it through accordingly.
 					if (isset($sub_input['pivot'])) {
