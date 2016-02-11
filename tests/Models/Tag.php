@@ -8,6 +8,8 @@ class Tag extends Model
 {
 	protected $table = 'tags';
 
+	protected $fillable = ['label', 'posts'];
+
 	public $timestamps = false;
 
 	public function posts()

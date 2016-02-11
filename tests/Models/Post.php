@@ -8,6 +8,8 @@ class Post extends Model
 {
 	protected $table = 'posts';
 
+	protected $fillable = ['title', 'user_id', 'user', 'tags'];
+
 	public function user()
 	{
 		return $this->belongsTo('Fuzz\MagicBox\Tests\Models\User');

@@ -352,7 +352,6 @@ class EloquentRepository implements Repository
 
 		// Run an aggregate function. We will only run one, no matter how many were submitted.
 		if ($aggregate_exist) {
-
 			$allowed_aggregations = [
 				'count',
 				'min',
@@ -374,35 +373,48 @@ class EloquentRepository implements Repository
 		}
 
 		if ($sorts_exist) {
-			$allowed_directions = [
-				'ASC',
-				'DESC',
-			];
-
-			foreach ($sort_order_options as $order_by => $direction) {
-				if (in_array(strtoupper($direction), $allowed_directions)) {
-					$split = explode('.', $order_by);
-					$count = count($split);
-
-					// Limit to a nested relationship 5 levels deep
-					if ($count > 1 && $count <= 5) {
-						// Pull out orderBy field
-						$field = array_pop($split);
-
-						// Select only the base table fields, don't select relation data. Desired relation data
-						// should be explicitly included
-						$base_table = $temp_instance->getTable();
-						$query->selectRaw("$base_table.*");
-
-						$this->applyNestedJoins($query, $split, $temp_instance, $field, $direction);
-					} elseif (in_array($order_by, $columns)) {
-						$query->orderBy($order_by, $direction);
-					}
-				}
-			}
+			$this->sortQuery($query, $sort_order_options, $temp_instance, $columns);
 		}
 
 		unset($temp_instance);
+	}
+
+	/**
+	 * Apply a sort to a database query
+	 *
+	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param array                                 $sort_order_options
+	 * @param \Illuminate\Database\Eloquent\Model   $temp_instance
+	 * @param array                                 $columns
+	 */
+	protected function sortQuery(Builder $query, array $sort_order_options, Model $temp_instance, array $columns)
+	{
+		$allowed_directions = [
+			'ASC',
+			'DESC',
+		];
+
+		foreach ($sort_order_options as $order_by => $direction) {
+			if (in_array(strtoupper($direction), $allowed_directions)) {
+				$split = explode('.', $order_by);
+				$count = count($split);
+
+				// Limit to a nested relationship 5 levels deep
+				if ($count > 1 && $count <= 5) {
+					// Pull out orderBy field
+					$field = array_pop($split);
+
+					// Select only the base table fields, don't select relation data. Desired relation data
+					// should be explicitly included
+					$base_table = $temp_instance->getTable();
+					$query->selectRaw("$base_table.*");
+
+					$this->applyNestedJoins($query, $split, $temp_instance, $field, $direction);
+				} elseif (in_array($order_by, $columns)) {
+					$query->orderBy($order_by, $direction);
+				}
+			}
+		}
 	}
 
 	/**
@@ -413,7 +425,7 @@ class EloquentRepository implements Repository
 	 * @param \Illuminate\Database\Eloquent\Builder $query
 	 * @param string|array                          $relations
 	 */
-	public function safeWith(Builder $query, $relations)
+	protected function safeWith(Builder $query, $relations)
 	{
 		if (is_string($relations)) {
 			$relations = func_get_args();
@@ -624,6 +636,52 @@ class EloquentRepository implements Repository
 	}
 
 	/**
+	 * Determine if the specified key name is a relation on the model instance
+	 *
+	 * @param \Illuminate\Database\Eloquent\Model $instance
+	 * @param string                              $key
+	 * @param string                              $model_class
+	 * @return bool|null
+	 */
+	protected function isRelation(Model $instance, $key, $model_class)
+	{
+		// Not a relation method
+		if (! method_exists($instance, $key)) {
+			return false;
+		}
+
+		$relation      = null;
+		$safe_instance = new $model_class;
+
+		// Get method, dirty and imperfect
+		$reflected_method = (new \ReflectionMethod($safe_instance, $key))->__toString();
+
+		$supported_relations = [
+			BelongsTo::class,
+			HasOne::class,
+			HasMany::class,
+			BelongsToMany::class,
+		];
+
+		// Find which, if any, of the supported relations are present in the reflected string
+		foreach ($supported_relations as $supported_relation) {
+			if (strpos($reflected_method, $supported_relation) !== false) {
+				$relation = $instance->$key();
+				break;
+			}
+		}
+
+		// If the ReflectionMethod guess fails, try to guess based on the concrete return type of a safe instance
+		// of the model
+		if (is_null($relation) && ($safe_instance->$key() instanceof Relation)) {
+			// If the method returns a Relation, we can safely call it
+			$relation = $instance->$key();
+		}
+
+		return is_null($relation) ? false : $relation;
+	}
+
+	/**
 	 * Fill an instance of a model with all known fields.
 	 *
 	 * @param \Illuminate\Database\Eloquent\Model $instance
@@ -639,58 +697,38 @@ class EloquentRepository implements Repository
 		$instance_model   = get_class($instance);
 		$safe_instance    = new $instance_model;
 
+		$fill_attributes = [];
+
 		foreach (array_except($input, [$instance->getKeyName()]) as $key => $value) {
-			if (method_exists($instance, $key)) {
-				$relation         = null;
-				$reflected_method = (new \ReflectionMethod($safe_instance, $key))->__toString();
+			if (($relation = $this->isRelation($instance, $key, $instance_model)) && $instance->isFillable($key)) {
+				$relation_type = get_class($relation);
 
-				$supported_relations = [
-					BelongsTo::class,
-					HasOne::class,
-					HasMany::class,
-					BelongsToMany::class,
-				];
-
-				foreach ($supported_relations as $supported_relation) {
-					if (strpos($reflected_method, $supported_relation) !== false) {
-						$relation = $instance->$key();
+				switch ($relation_type) {
+					case BelongsTo::class:
+						$before_relations[] = [
+							'relation' => $relation,
+							'value'    => $value,
+						];
 						break;
-					}
+					case HasOne::class:
+					case HasMany::class:
+					case BelongsToMany::class:
+						$after_relations[] = [
+							'relation' => $relation,
+							'value'    => $value,
+						];
+						break;
 				}
-
-				if (is_null($relation) && ($safe_instance->$key() instanceof Relation)) {
-					// If the method returns a Relation, we can safely call it
-					$relation = $instance->$key();
-				}
-
-				if ($relation instanceof Relation) {
-					$relation_type = get_class($relation);
-					switch ($relation_type) {
-						case BelongsTo::class:
-							$before_relations[] = [
-								'relation' => $relation,
-								'value'    => $value,
-							];
-							break;
-						case HasOne::class:
-						case HasMany::class:
-						case BelongsToMany::class:
-							$after_relations[] = [
-								'relation' => $relation,
-								'value'    => $value,
-							];
-							break;
-					}
-				}
-			} elseif (in_array($key, $model_fields) || $instance->hasSetMutator($key)) {
-				$instance->$key = $value;
+			} elseif ((in_array($key, $model_fields) || $instance->hasSetMutator($key)) && $instance->isFillable($key)) {
+				$fill_attributes[$key] = $value; // @todo are foreign key fields (user_id on posts) fillable?
+				//$instance->$key = $value;
 			}
 		}
 
 		unset($safe_instance);
 
 		$this->applyRelations($before_relations, $instance);
-		$instance->save();
+		$instance->fill($fill_attributes)->save();
 		$this->applyRelations($after_relations, $instance);
 
 		return true;
