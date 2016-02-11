@@ -720,8 +720,7 @@ class EloquentRepository implements Repository
 						break;
 				}
 			} elseif ((in_array($key, $model_fields) || $instance->hasSetMutator($key)) && $instance->isFillable($key)) {
-				$fill_attributes[$key] = $value; // @todo are foreign key fields (user_id on posts) fillable?
-				//$instance->$key = $value;
+				$fill_attributes[$key] = $value;
 			}
 		}
 
