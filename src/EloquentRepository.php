@@ -641,7 +641,7 @@ class EloquentRepository implements Repository
 	 * @param \Illuminate\Database\Eloquent\Model $instance
 	 * @param string                              $key
 	 * @param string                              $model_class
-	 * @return bool|null
+	 * @return \Illuminate\Database\Eloquent\Relations\Relation|bool
 	 */
 	protected function isRelation(Model $instance, $key, $model_class)
 	{
@@ -720,6 +720,8 @@ class EloquentRepository implements Repository
 						break;
 				}
 			} elseif ((in_array($key, $model_fields) || $instance->hasSetMutator($key)) && $instance->isFillable($key)) {
+				// Check for fillability status here so we don't throw a mass assignment exception
+				// Any non-fillable fields simply won't be modified
 				$fill_attributes[$key] = $value;
 			}
 		}
