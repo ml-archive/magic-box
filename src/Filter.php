@@ -22,7 +22,7 @@ class Filter implements FilterInterface
 		'='  => 'equals',
 		'!=' => 'notEquals',
 		'![' => 'notIn',
-		'['  => 'in'
+		'['  => 'in',
 	];
 
 	/**
@@ -33,7 +33,7 @@ class Filter implements FilterInterface
 	 */
 	protected static $non_scalar_tokens = [
 		'![',
-		'['
+		'[',
 	];
 
 	/**

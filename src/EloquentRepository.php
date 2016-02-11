@@ -287,7 +287,7 @@ class EloquentRepository implements Repository
 		$query = forward_static_call(
 			[
 				$this->getModelClass(),
-				'query'
+				'query',
 			]
 		);
 
@@ -358,7 +358,7 @@ class EloquentRepository implements Repository
 				'min',
 				'max',
 				'sum',
-				'avg'
+				'avg',
 			];
 			$allowed_columns      = $columns;
 			$column               = reset($aggregate);
@@ -376,7 +376,7 @@ class EloquentRepository implements Repository
 		if ($sorts_exist) {
 			$allowed_directions = [
 				'ASC',
-				'DESC'
+				'DESC',
 			];
 
 			foreach ($sort_order_options as $order_by => $direction) {
@@ -648,7 +648,7 @@ class EloquentRepository implements Repository
 					BelongsTo::class,
 					HasOne::class,
 					HasMany::class,
-					BelongsToMany::class
+					BelongsToMany::class,
 				];
 
 				foreach ($supported_relations as $supported_relation) {
@@ -669,7 +669,7 @@ class EloquentRepository implements Repository
 						case BelongsTo::class:
 							$before_relations[] = [
 								'relation' => $relation,
-								'value'    => $value
+								'value'    => $value,
 							];
 							break;
 						case HasOne::class:
@@ -677,7 +677,7 @@ class EloquentRepository implements Repository
 						case BelongsToMany::class:
 							$after_relations[] = [
 								'relation' => $relation,
-								'value'    => $value
+								'value'    => $value,
 							];
 							break;
 					}
