@@ -87,6 +87,13 @@ class EloquentRepository implements Repository
 	const KEY_NAME = 'id';
 
 	/**
+	 * The glue for nested strings
+	 * 
+	 * @var string
+	 */
+	const GLUE = '.';
+
+	/**
 	 * Set the model for an instance of this resource controller.
 	 *
 	 * @param string $model_class
@@ -374,7 +381,7 @@ class EloquentRepository implements Repository
 				// Filters deeper than the depth restriction + 1 are not allowed
 				// Depth restriction is offset by 1 because filters terminate with a column
 				// i.e. 'users.posts.title' => '=Great Post' but the depth we expect is 'users.posts'
-				if (count(explode('.', $filter)) > ($this->getDepthRestriction() + 1)) {
+				if (count(explode(self::GLUE, $filter)) > ($this->getDepthRestriction() + 1)) {
 					// Unset the disallowed filter
 					unset($filters[$filter]);
 				}
@@ -438,7 +445,7 @@ class EloquentRepository implements Repository
 
 		foreach ($sort_order_options as $order_by => $direction) {
 			if (in_array(strtoupper($direction), $allowed_directions)) {
-				$split = explode('.', $order_by);
+				$split = explode(self::GLUE, $order_by);
 
 				// Sorts deeper than the depth restriction + 1 are not allowed
 				// Depth restriction is offset by 1 because sorts terminate with a column
@@ -503,14 +510,14 @@ class EloquentRepository implements Repository
 			$relation_name        = $constraints_are_name ? $constraints : $name;
 
 			// Expand the dot-notation to see all relations
-			$nested_relations = explode('.', $relation_name);
+			$nested_relations = explode(self::GLUE, $relation_name);
 			$model            = $query->getModel();
 
 			// Don't allow eager loads beyond the eager load depth
 			$nested_relations = $this->applyDepthRestriction($nested_relations);
 
 			// We want to apply the depth restricted relations to the original relations array
-			$cleaned_relation = join('.', $nested_relations);
+			$cleaned_relation = join(self::GLUE, $nested_relations);
 			if ($cleaned_relation === '') {
 				unset($relations[$name]);
 			} elseif ($constraints_are_name) {
@@ -527,7 +534,7 @@ class EloquentRepository implements Repository
 					$model = $model->$relation()->getRelated();
 				} elseif ($index > 0) {
 					// If we found any valid relations, pass them through
-					$safe_relation = implode('.', array_slice($nested_relations, 0, $index));
+					$safe_relation = implode(self::GLUE, array_slice($nested_relations, 0, $index));
 					if ($constraints_are_name) {
 						$relations[$name] = $safe_relation;
 					} else {
