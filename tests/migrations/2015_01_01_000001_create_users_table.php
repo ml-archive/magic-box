@@ -21,6 +21,8 @@ class CreateUsersTable extends Migration
 				$table->integer('hands')->nullable();
 				$table->integer('times_captured')->nullable();
 				$table->string('occupation')->nullable();
+				$table->string('not_fillable')->nullable();
+				$table->softDeletes();
 				$table->timestamps();
 			}
 		);

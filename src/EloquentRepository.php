@@ -66,6 +66,13 @@ class EloquentRepository implements Repository
 	private $eager_loads = [];
 
 	/**
+	 * How many levels deep relationships can be included.
+	 *
+	 * @var int
+	 */
+	protected $depth_restriction = 0;
+
+	/**
 	 * Storage for query modifiers.
 	 *
 	 * @var array
@@ -153,6 +160,31 @@ class EloquentRepository implements Repository
 	}
 
 	/**
+	 * Get the eager load depth property.
+	 *
+	 * @return int
+	 */
+	public function getDepthRestriction()
+	{
+		return $this->depth_restriction;
+	}
+
+	/**
+	 * Set the eager load depth property.
+	 * This will limit how deep relationships can be included.
+	 *
+	 * @param int $depth
+	 *
+	 * @return $this
+	 */
+	public function setDepthRestriction($depth)
+	{
+		$this->depth_restriction = $depth;
+
+		return $this;
+	}
+
+	/**
 	 * Set filters manually.
 	 *
 	 * @param array $filters
@@ -226,7 +258,6 @@ class EloquentRepository implements Repository
 	 *
 	 * @param array $sort_order
 	 * @return $this
-	 * @internal param array $sort_orders
 	 */
 	public function setSortOrder(array $sort_order)
 	{
@@ -338,6 +369,17 @@ class EloquentRepository implements Repository
 		$columns       = $this->getFields($temp_instance);
 
 		if ($filters_exist) {
+			// Apply depth restrictions to each filter
+			foreach ($filters as $filter => $value) {
+				// Filters deeper than the depth restriction + 1 are not allowed
+				// Depth restriction is offset by 1 because filters terminate with a column
+				// i.e. 'users.posts.title' => '=Great Post' but the depth we expect is 'users.posts'
+				if (count(explode('.', $filter)) > ($this->getDepthRestriction() + 1)) {
+					// Unset the disallowed filter
+					unset($filters[$filter]);
+				}
+			}
+
 			Filter::applyQueryFilters($query, $filters, $columns, $temp_instance->getTable());
 		}
 
@@ -397,10 +439,19 @@ class EloquentRepository implements Repository
 		foreach ($sort_order_options as $order_by => $direction) {
 			if (in_array(strtoupper($direction), $allowed_directions)) {
 				$split = explode('.', $order_by);
-				$count = count($split);
 
-				// Limit to a nested relationship 5 levels deep
-				if ($count > 1 && $count <= 5) {
+				// Sorts deeper than the depth restriction + 1 are not allowed
+				// Depth restriction is offset by 1 because sorts terminate with a column
+				// i.e. 'users.posts.title' => 'asc' but the depth we expect is 'users.posts'
+				if (count($split) > ($this->getDepthRestriction() + 1)) {
+					// Unset the disallowed sort
+					unset($sort_order_options[$order_by]);
+					continue;
+				}
+
+				if (in_array($order_by, $columns)) {
+					$query->orderBy($order_by, $direction);
+				} else {
 					// Pull out orderBy field
 					$field = array_pop($split);
 
@@ -410,11 +461,20 @@ class EloquentRepository implements Repository
 					$query->selectRaw("$base_table.*");
 
 					$this->applyNestedJoins($query, $split, $temp_instance, $field, $direction);
-				} elseif (in_array($order_by, $columns)) {
-					$query->orderBy($order_by, $direction);
 				}
 			}
 		}
+	}
+
+	/**
+	 * Apply a depth restriction to an exploded dot-nested string (eager load, filter, etc)
+	 *
+	 * @param array $array
+	 * @return array
+	 */
+	protected function applyDepthRestriction(array $array, $offset = 0)
+	{
+		return array_slice($array, 0, $this->getDepthRestriction() + $offset);
 	}
 
 	/**
@@ -432,6 +492,7 @@ class EloquentRepository implements Repository
 			array_shift($relations);
 		}
 
+		$safe_relations = [];
 		// Loop through all relations to check for valid relationship signatures
 		foreach ($relations as $name => $constraints) {
 			// Constraints may be passed in either form:
@@ -445,8 +506,23 @@ class EloquentRepository implements Repository
 			$nested_relations = explode('.', $relation_name);
 			$model            = $query->getModel();
 
+			// Don't allow eager loads beyond the eager load depth
+			$nested_relations = $this->applyDepthRestriction($nested_relations);
+
+			// We want to apply the depth restricted relations to the original relations array
+			$cleaned_relation = join('.', $nested_relations);
+			if ($cleaned_relation === '') {
+				unset($relations[$name]);
+			} elseif ($constraints_are_name) {
+				$relations[$name] = $cleaned_relation;
+			} else {
+				$relations[$cleaned_relation] = $constraints;
+				unset($relations[$name]);
+			}
+
 			foreach ($nested_relations as $index => $relation) {
-				if (method_exists($model, $relation)) {
+
+				if ($this->isRelation($model, $relation, get_class($model))) {
 					// Iterate through relations if they actually exist
 					$model = $model->$relation()->getRelated();
 				} elseif ($index > 0) {
@@ -489,11 +565,12 @@ class EloquentRepository implements Repository
 		// Current working table
 		$table    = Str::plural($relation);
 		$singular = Str::singular($relation);
+		$class    = get_class($instance);
 
 		// If the relation exists, determine which type (singular, multiple)
-		if (method_exists($instance, $singular)) {
+		if ($this->isRelation($instance, $singular, $class)) {
 			$related = $instance->$singular();
-		} elseif (method_exists($instance, $relation)) {
+		} elseif ($this->isRelation($instance, $relation, $class)) {
 			$related = $instance->$relation();
 		} else {
 			// This relation does not exist
@@ -502,8 +579,12 @@ class EloquentRepository implements Repository
 
 		$foreign_key = $related->getForeignKey();
 
-		switch (class_basename($related)) {
-			case 'BelongsToMany':
+		// Join tables differently depending on relationship type
+		switch (get_class($related)) {
+			case BelongsToMany::class:
+				/**
+				 * @var \Illuminate\Database\Eloquent\Relations\BelongsToMany $related
+				 */
 				$base_table_key       = $instance->getKeyName();
 				$relation_primary_key = $relation->getModel()->getKeyName();
 
@@ -511,18 +592,32 @@ class EloquentRepository implements Repository
 				$query->join($related->getTable(), "$base_table.$base_table_key", '=', $foreign_key);
 				$query->join($table, $related->getOtherKey(), '=', "$relation.$relation_primary_key");
 				break;
-			case 'HasMany':
+			case HasMany::class:
+				/**
+				 * @var \Illuminate\Database\Eloquent\Relations\HasMany $related
+				 */
 				$base_table_key = $instance->getKeyName();
 
 				// Join child's table
 				$query->join($table, "$base_table.$base_table_key", '=', $foreign_key);
 				break;
-			case 'BelongsTo':
-			case 'HasOne':
+			case BelongsTo::class:
+				/**
+				 * @var \Illuminate\Database\Eloquent\Relations\BelongsTo $related
+				 */
 				$relation_key = $related->getOtherKey();
 
 				// Join related's table on the base table's foreign key
 				$query->join($table, "$base_table.$foreign_key", '=', "$table.$relation_key");
+				break;
+			case HasOne::class:
+				/**
+				 * @var \Illuminate\Database\Eloquent\Relations\HasOne $related
+				 */
+				$parent_key = $instance->getKeyName();
+
+				// Join related's table on the base table's foreign key
+				$query->join($table, "$base_table.$parent_key", '=', "$foreign_key");
 				break;
 		}
 
@@ -636,7 +731,9 @@ class EloquentRepository implements Repository
 	}
 
 	/**
-	 * Determine if the specified key name is a relation on the model instance
+	 * Safely determine if the specified key name is a relation on the model instance
+	 *
+	 * @todo use PHP7 return type reflection solution as well
 	 *
 	 * @param \Illuminate\Database\Eloquent\Model $instance
 	 * @param string                              $key

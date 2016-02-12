@@ -21,6 +21,7 @@ class CreateProfileTable extends Migration
 				$table->enum('favorite_cheese', ['brie', 'pepper jack', 'Gouda', 'Cheddar', 'Provolone']);
 				$table->string('favorite_fruit')->nullable();
 				$table->boolean('is_human')->default(false);
+				$table->string('not_fillable')->nullable();
 			}
 		);
 	}

@@ -22,10 +22,19 @@ class EloquentRepositoryTest extends DBTestCase
 	private function getRepository($model_class = null, array $input = [])
 	{
 		if (! is_null($model_class)) {
-			return (new EloquentRepository)->setModelClass($model_class)->setInput($input);
+			return (new EloquentRepository)->setModelClass($model_class)->setDepthRestriction(3)->setInput($input);
 		}
 
 		return new EloquentRepository;
+	}
+
+	public function seedUsers()
+	{
+		$this->artisan->call(
+			'db:seed', [
+				'--class' => FilterDataSeeder::class
+			]
+		);
 	}
 
 	/**
@@ -395,11 +404,7 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItCanFilterOnFields()
 	{
-		$this->artisan->call(
-			'db:seed', [
-				'--class' => FilterDataSeeder::class
-			]
-		);
+		$this->seedUsers();
 
 		// Test that the repository implements filters correctly
 		$repository  = $this->getRepository(User::class);
@@ -408,5 +413,365 @@ class EloquentRepositoryTest extends DBTestCase
 		$found_users = $repository->setFilters(['username' => '=chewbaclava@galaxyfarfaraway.com'])->all();
 		$this->assertEquals($found_users->count(), 1);
 		$this->assertEquals($found_users->first()->username, 'chewbaclava@galaxyfarfaraway.com');
+	}
+
+	public function testItOnlyUpdatesFillableAttributesOnCreate()
+	{
+		$input = [
+			'username'       => 'javacup@galaxyfarfaraway.com',
+			'name'           => 'Jabba The Hutt',
+			'hands'          => 10,
+			'times_captured' => 0,
+			'not_fillable'   => 'should be null',
+			'occupation'     => 'Being Gross',
+			'profile'        => [
+				'favorite_cheese' => 'Cheddar',
+				'favorite_fruit'  => 'Apples',
+				'is_human'        => false
+			],
+		];
+
+		$user = $this->getRepository(User::class, $input)->save();
+		$this->assertNull($user->not_fillable);
+	}
+
+	public function testItOnlyUpdatesFillableAttributesOnUpdate()
+	{
+		$input = [
+			'username'       => 'javacup@galaxyfarfaraway.com',
+			'name'           => 'Jabba The Hutt',
+			'hands'          => 10,
+			'times_captured' => 0,
+			'not_fillable'   => 'should be null',
+			'occupation'     => 'Being Gross',
+			'profile'        => [
+				'favorite_cheese' => 'Cheddar',
+				'favorite_fruit'  => 'Apples',
+				'is_human'        => false
+			],
+		];
+
+		$user = $this->getRepository(User::class, $input)->save();
+		$this->assertNull($user->not_fillable);
+
+		$input['id'] = $user->id;
+		$user = $this->getRepository(User::class, $input)->update();
+		$this->assertNull($user->not_fillable);
+	}
+
+	public function testItOnlyUpdatesFillableAttributesForRelationsOnCreate()
+	{
+		$input = [
+			'username'       => 'javacup@galaxyfarfaraway.com',
+			'name'           => 'Jabba The Hutt',
+			'hands'          => 10,
+			'times_captured' => 0,
+			'not_fillable'   => 'should be null',
+			'occupation'     => 'Being Gross',
+			'profile'        => [
+				'favorite_cheese' => 'Cheddar',
+				'favorite_fruit'  => 'Apples',
+				'is_human'        => false,
+				'not_fillable'    => 'should be null'
+			],
+		];
+
+		$user = $this->getRepository(User::class, $input)->save();
+		$this->assertNull($user->not_fillable);
+		$this->assertNull($user->profile->not_fillable);
+	}
+
+	public function testItOnlyUpdatesFillableAttributesForRelationsOnUpdate()
+	{
+		$input = [
+			'username'       => 'javacup@galaxyfarfaraway.com',
+			'name'           => 'Jabba The Hutt',
+			'hands'          => 10,
+			'times_captured' => 0,
+			'not_fillable'   => 'should be null',
+			'occupation'     => 'Being Gross',
+			'profile'        => [
+				'favorite_cheese' => 'Cheddar',
+				'favorite_fruit'  => 'Apples',
+				'is_human'        => false,
+				'not_fillable'    => 'should be null'
+			],
+		];
+
+		$user = $this->getRepository(User::class, $input)->save();
+		$this->assertNull($user->not_fillable);
+		$this->assertNull($user->profile->not_fillable);
+
+		$input['id'] = $user->id;
+		$user = $this->getRepository(User::class, $input)->update();
+		$this->assertNull($user->not_fillable);
+		$this->assertNull($user->profile->not_fillable);
+	}
+
+	public function testItDoesNotRunArbitraryMethodsOnActualInstance()
+	{
+		$input = [
+			'username'       => 'javacup@galaxyfarfaraway.com',
+			'name'           => 'Jabba The Hutt',
+			'hands'          => 10,
+			'times_captured' => 0,
+			'not_fillable'   => 'should be null',
+			'occupation'     => 'Being Gross',
+		];
+
+		$user = $this->getRepository(User::class, $input)->save();
+		$this->assertNotNull($user);
+
+		$input['delete'] = 'doesn\'t matter but this should not be run';
+		$input['id'] = $user->id;
+
+		// Since users are soft deletable, if this fails and we run a $user->delete(), magic box will delete the record
+		// but then try to recreate it with the same ID and get a MySQL unique constraint error because the
+		// original ID record exists but is soft deleted
+		$user = $this->getRepository(User::class, $input)->update();
+
+		$database_user = User::find($user->id);
+
+		$this->assertNotNull($database_user);
+		$this->assertNull($user->deleted_at);
+	}
+
+	public function testItCanSetDepthRestriction()
+	{
+		$input = [
+			'username'       => 'javacup@galaxyfarfaraway.com',
+			'name'           => 'Jabba The Hutt',
+			'hands'          => 10,
+			'times_captured' => 0,
+			'not_fillable'   => 'should be null',
+			'occupation'     => 'Being Gross',
+		];
+
+		$repository = $this->getRepository(User::class, $input);
+		$this->assertEquals(3, $repository->getDepthRestriction()); // getRepository sets 3 by default
+		$repository->setDepthRestriction(5);
+		$this->assertEquals(5, $repository->getDepthRestriction());
+	}
+
+	public function testItDepthRestrictsEagerLoads()
+	{
+		$this->seedUsers();
+
+		$users = $this->getRepository(User::class)
+			->setDepthRestriction(0)
+			->setEagerLoads(
+				[
+					'posts.tags',
+				]
+			)->all()->toArray(); // toArray so we don't pull relations
+
+		foreach ($users as $user) {
+			$this->assertTrue(! isset($user['posts']));
+			$this->assertTrue(! isset($user['posts']['tags'])); // We should load neither
+		}
+
+		$users = $this->getRepository(User::class)
+			->setDepthRestriction(1)
+			->setEagerLoads(
+				[
+					'posts.tags',
+				]
+			)->all()->toArray(); // toArray so we don't pull relations
+
+		foreach ($users as $user) {
+			$this->assertTrue(isset($user['posts']));
+			$this->assertTrue(isset($user['posts'][0]));
+			$this->assertTrue(! isset($user['posts'][0]['tags'])); // We should load posts (1 level) but not tags (2 levels)
+		}
+
+		$users = $this->getRepository(User::class)
+			->setDepthRestriction(2)
+			->setEagerLoads(
+				[
+					'posts.tags',
+				]
+			)->all()->toArray(); // toArray so we don't pull relations
+
+		foreach ($users as $user) {
+			$this->assertTrue(isset($user['posts']));
+			$this->assertTrue(isset($user['posts'][0]));
+			$this->assertTrue(isset($user['posts'][0]['tags'])); // We should load both
+		}
+	}
+
+	public function testItDepthRestrictsFilters()
+	{
+		$this->seedUsers();
+
+		/**
+		 * Test with 0 depth, filter too long
+		 */
+		$users = $this->getRepository(User::class)
+			->setDepthRestriction(0)
+			->setFilters(
+				[
+					'posts.tags.label' => '=#mysonistheworst'
+				]
+			)
+			->all();
+
+		// Filter should not apply because depth restriction is 0
+		$this->assertEquals(User::all()->count(), $users->count());
+
+		/**
+		 * Test with 1 depth, filter is allowed
+		 */
+		$users = $this->getRepository(User::class)
+			->setDepthRestriction(1)
+			->setFilters(
+				[
+					'posts.title' => '~10 Easy Ways to Clean'
+				]
+			)
+			->all();
+
+		// Filter should apply because depth restriction is 1
+		$this->assertEquals(1, $users->count());
+		$this->assertEquals('solocup@galaxyfarfaraway.com', $users->first()->username);
+
+		/**
+		 * Test with 1 depth, filter is too long
+		 */
+		$users = $this->getRepository(User::class)
+			->setDepthRestriction(1)
+			->setFilters(
+				[
+					'posts.tags.label' => '=#mysonistheworst'
+				]
+			)
+			->all();
+
+		// Filter should apply because depth restriction is 1
+		$this->assertEquals(User::all()->count(), $users->count());
+
+		/**
+		 * Test with 1 depth, filter is okay
+		 */
+		$users = $this->getRepository(User::class)
+			->setDepthRestriction(2)
+			->setFilters(
+				[
+					'posts.tags.label' => '=#mysonistheworst'
+				]
+			)
+			->all();
+
+		// Filter should not apply because depth restriction is 2
+		$this->assertEquals(2, $users->count());
+
+		foreach ($users as $user) {
+			$this->assertTrue(in_array($user->username, ['solocup@galaxyfarfaraway.com', 'lorgana@galaxyfarfaraway.com']));
+		}
+	}
+
+	public function testItCanSortQueryAscending()
+	{
+		$this->seedUsers();
+
+		$users = $this->getRepository(User::class)
+			->setSortOrder(['times_captured' => 'asc'])
+			->all();
+
+		$previous_user = null;
+		foreach ($users as $index => $user) {
+			if ($index > 0) {
+				$this->assertTrue($user->times_captured > $previous_user->times_captured);
+			}
+
+			$previous_user = $user;
+		}
+	}
+
+	public function testItCanSortQueryDescending()
+	{
+		$this->seedUsers();
+
+		$users = $this->getRepository(User::class)
+			->setSortOrder(['times_captured' => 'desc'])
+			->all();
+
+		$previous_user = null;
+		foreach ($users as $index => $user) {
+			if ($index > 0) {
+				$this->assertTrue($user->times_captured < $previous_user->times_captured);
+			}
+
+			$previous_user = $user;
+		}
+	}
+
+	public function testItDepthRestrictsSorts()
+	{
+		$this->seedUsers();
+
+		/**
+		 * Sort depth zero, expect sorting by top level ID
+		 */
+		$users = $this->getRepository(User::class)
+			->setDepthRestriction(0)
+			->setSortOrder(['profile.favorite_cheese' => 'asc'])
+			->all();
+
+		$previous_user = null;
+		foreach ($users as $index => $user) {
+			if ($index > 0) {
+				$this->assertTrue($user->id > $previous_user->id);
+			}
+
+			$previous_user = $user;
+		}
+
+		/**
+		 * Sort depth 1, expect sorting by favorite cheese, asc alphabetical
+		 */
+		$users = $this->getRepository(User::class)
+			->setDepthRestriction(1)
+			->setSortOrder(['profile.favorite_cheese' => 'asc'])
+			->all();
+
+		$previous_user = null;
+		$order = [];
+		foreach ($users as $index => $user) {
+			$order[] = $user->username;
+			if ($index > 0) {
+				// String 1 (Gouda) should be greater than (comes later alphabetically) than string 2 (Cheddar)
+				$this->assertTrue(strcmp($user->profile->favorite_cheese, $previous_user->profile->favorite_cheese) > 0);
+			}
+
+			$previous_user = $user;
+		}
+
+		/**
+		 * Sort depth 1, expect sorting by favorite cheese, desc alphabetical
+		 */
+		$users = $this->getRepository(User::class)
+			->setDepthRestriction(1)
+			->setSortOrder(['profile.favorite_cheese' => 'desc'])
+			->all();
+
+		$previous_user = null;
+		foreach ($users as $index => $user) {
+			if ($index > 0) {
+				// String 1 (Cheddar) should be less than (comes before alphabetically) than string 2 (Gouda)
+				$this->assertTrue(strcmp($user->profile->favorite_cheese, $previous_user->profile->favorite_cheese) < 0);
+			}
+
+			$previous_user = $user;
+		}
+	}
+
+	public function testItCanAggregateQuery()
+	{
+
+	}
+
+	public function testItCanGroupQuery()
+	{
+
 	}
 }
