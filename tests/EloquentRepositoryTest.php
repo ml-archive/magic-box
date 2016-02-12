@@ -2,6 +2,7 @@
 
 namespace Fuzz\MagicBox\Tests;
 
+use Fuzz\MagicBox\Tests\Models\Tag;
 use Fuzz\MagicBox\Tests\Seeds\FilterDataSeeder;
 use Illuminate\Support\Facades\DB;
 use Fuzz\MagicBox\Tests\Models\User;
@@ -677,6 +678,8 @@ class EloquentRepositoryTest extends DBTestCase
 			->setSortOrder(['times_captured' => 'asc'])
 			->all();
 
+		$this->assertEquals(User::all()->count(), $users->count());
+
 		$previous_user = null;
 		foreach ($users as $index => $user) {
 			if ($index > 0) {
@@ -694,6 +697,8 @@ class EloquentRepositoryTest extends DBTestCase
 		$users = $this->getRepository(User::class)
 			->setSortOrder(['times_captured' => 'desc'])
 			->all();
+
+		$this->assertEquals(User::all()->count(), $users->count());
 
 		$previous_user = null;
 		foreach ($users as $index => $user) {
@@ -717,6 +722,8 @@ class EloquentRepositoryTest extends DBTestCase
 			->setSortOrder(['profile.favorite_cheese' => 'asc'])
 			->all();
 
+		$this->assertEquals(User::all()->count(), $users->count());
+
 		$previous_user = null;
 		foreach ($users as $index => $user) {
 			if ($index > 0) {
@@ -733,6 +740,8 @@ class EloquentRepositoryTest extends DBTestCase
 			->setDepthRestriction(1)
 			->setSortOrder(['profile.favorite_cheese' => 'asc'])
 			->all();
+
+		$this->assertEquals(User::all()->count(), $users->count());
 
 		$previous_user = null;
 		$order = [];
@@ -754,6 +763,8 @@ class EloquentRepositoryTest extends DBTestCase
 			->setSortOrder(['profile.favorite_cheese' => 'desc'])
 			->all();
 
+		$this->assertEquals(User::all()->count(), $users->count());
+
 		$previous_user = null;
 		foreach ($users as $index => $user) {
 			if ($index > 0) {
@@ -765,9 +776,64 @@ class EloquentRepositoryTest extends DBTestCase
 		}
 	}
 
+	public function testItCanSortBelongsToRelation()
+	{
+		$this->seedUsers();
+		/**
+		 * Sort depth 1, expect sorting by favorite cheese, asc alphabetical
+		 */
+		$profiles = $this->getRepository(Profile::class)
+			->setSortOrder(['users.username' => 'asc'])
+			->setEagerLoads(['user'])
+			->all()->toArray();
+
+		$this->assertEquals(Profile::all()->count(), count($profiles));
+
+		$previous_profile = null;
+		$order = [];
+		foreach ($profiles as $index => $profile) {
+			$order[] = $profile['user']['username'];
+			if ($index > 0) {
+				// String 1 (Gouda) should be greater than (comes later alphabetically) than string 2 (Cheddar)
+				$this->assertTrue(strcmp($profile['user']['username'], $previous_profile['user']['username']) > 0);
+			}
+
+			$previous_profile = $profile;
+		}
+	}
+
+	public function testItCanSortBelongsToManyRelation()
+	{
+		$this->seedUsers();
+
+		/**
+		 * Sort depth 1, expect sorting by favorite cheese, asc alphabetical
+		 */
+		$tags = $this->getRepository(Tag::class)
+			->setSortOrder(['posts.title' => 'asc'])
+			->setEagerLoads(['posts'])
+			->all()->toArray();
+
+		$this->assertEquals(Tag::all()->count(), count($tags));
+
+		foreach ($tags as $index => $tag) {
+			$previous_post = null;
+			$order = [];
+			foreach ($tag['posts'] as $post) {
+				$order[] = $post['title'];
+				if ($index > 0) {
+					// String 1 (Gouda) should be greater than (comes later alphabetically) than string 2 (Cheddar)
+					$this->assertTrue(strcmp($post['title'], $previous_post['title']) > 0);
+				}
+
+				$previous_post = $post;
+			}
+		}
+	}
+
 	public function testItCanAggregateQueryCount()
 	{
-		
+
 	}
 
 	public function testItCanAggregateQueryMin()

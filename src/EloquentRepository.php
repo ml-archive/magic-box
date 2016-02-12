@@ -586,7 +586,7 @@ class EloquentRepository implements Repository
 				 * @var \Illuminate\Database\Eloquent\Relations\BelongsToMany $related
 				 */
 				$base_table_key       = $instance->getKeyName();
-				$relation_primary_key = $relation->getModel()->getKeyName();
+				$relation_primary_key = $related->getModel()->getKeyName();
 
 				// Join through the pivot table
 				$query->join($related->getTable(), "$base_table.$base_table_key", '=', $foreign_key);
