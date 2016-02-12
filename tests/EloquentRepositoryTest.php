@@ -765,7 +765,27 @@ class EloquentRepositoryTest extends DBTestCase
 		}
 	}
 
-	public function testItCanAggregateQuery()
+	public function testItCanAggregateQueryCount()
+	{
+		
+	}
+
+	public function testItCanAggregateQueryMin()
+	{
+
+	}
+
+	public function testItCanAggregateQueryMax()
+	{
+
+	}
+
+	public function testItCanAggregateQuerySum()
+	{
+
+	}
+
+	public function testItCanAggregateQueryAverage()
 	{
 
 	}
