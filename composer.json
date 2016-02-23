@@ -5,7 +5,7 @@
 		"illuminate/database": "5.2.x"
 	},
 	"require-dev": {
-		"orchestra/testbench": "3.1.*"
+		"orchestra/testbench": "3.2.*"
 	},
 	"authors": [
 		{
