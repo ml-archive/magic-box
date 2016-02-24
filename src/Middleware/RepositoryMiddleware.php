@@ -9,7 +9,7 @@ use Fuzz\MagicBox\EloquentRepository;
 use Fuzz\MagicBox\Contracts\Repository;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
-class MagicMiddleware
+class RepositoryMiddleware
 {
 	/**
 	 * Handle an incoming request.
