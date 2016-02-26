@@ -6,20 +6,54 @@ masked resource respositories. The goal of Magic Box is to create a two-way inte
 the JSON representations of models broadcast by APIs can be re-applied back to their originating models
 for updating existing resources and creating new resources.
 
-### Installation
-1. Register the custom Fuzz Composer repository: ```composer config repositories.fuzz composer https://satis.fuzzhq.com``` 
-1. Register the composer package: ```composer require fuzz/magic-box```
+## Installation/Setup
+1. Require the package in composer
+1. Extend `Fuzz\MagicBox\Middleware\RepositoryMiddleware` and register your class under the `$routeMiddleware` array in `app/Http/Kernel.php`. `RepositoryMiddleware` contains a variety of configuration options that can be overridden
+1. In `app/Providers/RouteServiceProvider.php`, update `RouteServiceProvider@map` to include:
 
-### Testing
+	```
+	 	/**
+	     * Define the routes for the application.
+	     *
+	     * @param  \Illuminate\Routing\Router $router
+	     * @return void
+	     */
+	    public function map(Router $router)
+	    {
+	        // Register a handy macro for registering resource routes
+	        $router->macro('restful', function ($model_name, $resource_controller = 'ResourceController') use ($router) {
+	            $alias = Str::lower(Str::snake(Str::plural(class_basename($model_name)), '-'));
+	
+	            $router->resource($alias, $resource_controller, [
+	                'only' => [
+	                    'index',
+	                    'store',
+	                    'show',
+	                    'update',
+	                    'destroy',
+	                ],
+	            ]);
+	        });
+	
+	        $router->group(['namespace' => $this->namespace], function ($router) {
+	            require app_path('Http/routes.php');
+	        });
+	    }
+	```
+1. Set up your MagicBox resource routes under the above middleware key
+1. Set up models according to `Model Setup` section
+
+## Testing
 Just run `phpunit` after you `composer install`.
 
-### Eloquent Repository
+## Eloquent Repository
 `Fuzz\MagicBox\EloquentRepository` implements a CRUD repository that cascades through relationships,
 whether or not related models have been created yet.
 
 Consider a simple model where a User has many Posts. EloquentRepository's basic usage is as follows:
 
 Create a User with the username Steve who has a single Post with the title Stuff.
+
 ```
     $repository = (new EloquentRepository)
         ->setModelClass('User')
@@ -96,7 +130,7 @@ The public API methods that return an `\Illuminate\Database\Eloquent\Collection`
 
 1. `all`
 
-### Filtering
+## Filtering
 `Fuzz\MagicBox\Filter` handles Eloquent Query Builder modifications based on filter values passed through the `filters` 
 parameter.
 
@@ -118,7 +152,7 @@ Tokens and usage:
 | `NULL`     | Field is null                   | `users?filters[address]=NULL`                  |
 | `NOT_NULL` | Field is not null               | `users?filters[email]=NOT_NULL`                |
 
-#### Filtering relations
+### Filtering relations
 Assuming we have users and their related tables resembling the following structure:
 
 ```
@@ -137,10 +171,35 @@ Assuming we have users and their related tables resembling the following structu
 We can filter by users' hobbies with `users?filters[profile.hobbies.name]=^Cook`. Relationships can be of arbitrary 
 depth.
 
+### Filter conjuctions
+We can use `AND` and `OR` statements to build filters such as `users?filters[username]==Bobby&filters[or][username]==Johnny&filters[and][profile.favorite_cheese]==Gouda`. The PHP array that's built from this filter is:
+
+```
+    [
+        'username' => '=Bobby',
+        'or'       => [
+		      'username' => '=Johnny',
+		      'and'      => [
+		          'profile.favorite_cheese' => '=Gouda',
+		      ]	
+        ]
+    ]
+```
+
+and this filter can be read as `select users with username Bobby OR users with username Johnny who's profile.favorite_cheese attribute is Gouda`.
+
+## Model Setup
+Models need to implement `Fuzz\MagicBox\Contracts\MagicBoxResource` before MagicBox will allow them to be exposed as a MagicBox resource. This is done so exposure is an explicit process and no more is exposed than is needed.
+
+Models also need to define their own `$fillable` array including attributes and relations that can be filled through this model. For example, if a User has many posts and has many comments but an API consumer should only be able to update comments through a user, the `$fillable` array would look like:
+
+```
+protected $fillable = ['username', 'password', 'name', 'comments'];
+```
+
+MagicBox will only modify attributes/relations that are explicitly defined.
+
 ### TODO
-1. Ship granular role-based ACL functionality.
-1. Ship controller middleware.
+1. Route service provider should be pre-setup
 1. Support more relationships (esp. polymorphic relations) through cascading saves.
-1. Support grouping by column
-1. Support sorting nested relations
 1. Support paginating nested relations
