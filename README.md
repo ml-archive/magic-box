@@ -1,15 +1,16 @@
 Laravel Magic Box
 ==================
 
-Magic Box modularizes Fuzz's magical implementation of Laravel's Eloquent models as injectable,
-masked resource respositories. The goal of Magic Box is to create a two-way interchange format, so that
-the JSON representations of models broadcast by APIs can be re-applied back to their originating models
-for updating existing resources and creating new resources.
+Magic Box modularizes Fuzz's magical implementation of Laravel's Eloquent models as injectable, masked resource repositories.
+
+Magic Box has two goals:
+1. To create a two-way interchange format, so that the JSON representations of models broadcast by APIs can be re-applied back to their originating models for updating existing resources and creating new resources.
+1. Provide an interface for API clients to request exactly the data they want in the way they want.
 
 ## Installation/Setup
-1. Require the package in composer
-1. Extend `Fuzz\MagicBox\Middleware\RepositoryMiddleware` and register your class under the `$routeMiddleware` array in `app/Http/Kernel.php`. `RepositoryMiddleware` contains a variety of configuration options that can be overridden
-1. In `app/Providers/RouteServiceProvider.php`, update `RouteServiceProvider@map` to include:
+1. Require the package in `composer.json`
+1. Use or extend `Fuzz\MagicBox\Middleware\RepositoryMiddleware` into your project and register your class under the `$routeMiddleware` array in `app/Http/Kernel.php`. `RepositoryMiddleware` contains a variety of configuration options that can be overridden
+1. If you're using `fuzz/api-server`, you can use magical routing by updating `app/Providers/RouteServiceProvider.php`, `RouteServiceProvider@map`, to include:
 
 	```
 	 	/**
@@ -40,7 +41,7 @@ for updating existing resources and creating new resources.
 	        });
 	    }
 	```
-1. Set up your MagicBox resource routes under the above middleware key
+1. Set up your MagicBox resource routes under the middleware key you assign to your chosen `RepositoryMiddleware` class
 1. Set up models according to `Model Setup` section
 
 ## Testing
@@ -138,19 +139,19 @@ Tokens and usage:
 
 |    Token   |           Description           |                     Example                    |
 |:----------:|:-------------------------------:|:----------------------------------------------:|
-| `^`        | Field starts with               | `users?filters[name]=^John`                    |
-| `$`        | Field ends with                 | `users?filters[name]=$Smith`                   |
-| `~`        | Field contains                  | `users?filters[favorite_cheese]=~cheddar`      |
-| `<`        | Field is less than              | `users?filters[lifetime_value]=<50`            |
-| `>`        | Field is greater than           | `users?filters[lifetime_value]=>50`            |
-| `>=`       | Field is greater than or equals | `users?filters[lifetime_value]=>=50`           |
-| `<=`       | Field is less than or equals    | `users?filters[lifetime_value]=<=50`           |
-| `=`        | Field is equal to               | `users?filters[username]==Specific%20Username` |
-| `!=`       | Field is not equal to           | `users?filters[username]=!=common%20username`  |
-| `[...]`    | Field is one or more of         | `users?filters[id]=[1,5,10]`                   |
-| `![...]`   | Field is not one of             | `users?filters[id]=![1,5,10]`                  |
-| `NULL`     | Field is null                   | `users?filters[address]=NULL`                  |
-| `NOT_NULL` | Field is not null               | `users?filters[email]=NOT_NULL`                |
+| `^`        | Field starts with               | `https://api.yourdomain.com/1.0/users?filters[name]=^John`                    |
+| `$`        | Field ends with                 | `https://api.yourdomain.com/1.0/users?filters[name]=$Smith`                   |
+| `~`        | Field contains                  | `https://api.yourdomain.com/1.0/users?filters[favorite_cheese]=~cheddar`      |
+| `<`        | Field is less than              | `https://api.yourdomain.com/1.0/users?filters[lifetime_value]=<50`            |
+| `>`        | Field is greater than           | `https://api.yourdomain.com/1.0/users?filters[lifetime_value]=>50`            |
+| `>=`       | Field is greater than or equals | `https://api.yourdomain.com/1.0/users?filters[lifetime_value]=>=50`           |
+| `<=`       | Field is less than or equals    | `https://api.yourdomain.com/1.0/users?filters[lifetime_value]=<=50`           |
+| `=`        | Field is equal to               | `https://api.yourdomain.com/1.0/users?filters[username]==Specific%20Username` |
+| `!=`       | Field is not equal to           | `https://api.yourdomain.com/1.0/users?filters[username]=!=common%20username`  |
+| `[...]`    | Field is one or more of         | `https://api.yourdomain.com/1.0/users?filters[id]=[1,5,10]`                   |
+| `![...]`   | Field is not one of             | `https://api.yourdomain.com/1.0/users?filters[id]=![1,5,10]`                  |
+| `NULL`     | Field is null                   | `https://api.yourdomain.com/1.0/users?filters[address]=NULL`                  |
+| `NOT_NULL` | Field is not null               | `https://api.yourdomain.com/1.0/users?filters[email]=NOT_NULL`                |
 
 ### Filtering relations
 Assuming we have users and their related tables resembling the following structure:
@@ -186,7 +187,7 @@ We can use `AND` and `OR` statements to build filters such as `users?filters[use
     ]
 ```
 
-and this filter can be read as `select users with username Bobby OR users with username Johnny who's profile.favorite_cheese attribute is Gouda`.
+and this filter can be read as `select (users with username Bobby) OR (users with username Johnny who's profile.favorite_cheese attribute is Gouda)`.
 
 ## Model Setup
 Models need to implement `Fuzz\MagicBox\Contracts\MagicBoxResource` before MagicBox will allow them to be exposed as a MagicBox resource. This is done so exposure is an explicit process and no more is exposed than is needed.
