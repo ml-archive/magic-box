@@ -12,34 +12,34 @@ Magic Box has two goals:
 1. Use or extend `Fuzz\MagicBox\Middleware\RepositoryMiddleware` into your project and register your class under the `$routeMiddleware` array in `app/Http/Kernel.php`. `RepositoryMiddleware` contains a variety of configuration options that can be overridden
 1. If you're using `fuzz/api-server`, you can use magical routing by updating `app/Providers/RouteServiceProvider.php`, `RouteServiceProvider@map`, to include:
 
-	```
-	 	/**
-	     * Define the routes for the application.
-	     *
-	     * @param  \Illuminate\Routing\Router $router
-	     * @return void
-	     */
-	    public function map(Router $router)
-	    {
-	        // Register a handy macro for registering resource routes
-	        $router->macro('restful', function ($model_name, $resource_controller = 'ResourceController') use ($router) {
-	            $alias = Str::lower(Str::snake(Str::plural(class_basename($model_name)), '-'));
-	
-	            $router->resource($alias, $resource_controller, [
-	                'only' => [
-	                    'index',
-	                    'store',
-	                    'show',
-	                    'update',
-	                    'destroy',
-	                ],
-	            ]);
-	        });
-	
-	        $router->group(['namespace' => $this->namespace], function ($router) {
-	            require app_path('Http/routes.php');
-	        });
-	    }
+	```php
+    /**
+     * Define the routes for the application.
+     *
+     * @param  \Illuminate\Routing\Router $router
+     * @return void
+     */
+    public function map(Router $router)
+    {
+        // Register a handy macro for registering resource routes
+        $router->macro('restful', function ($model_name, $resource_controller = 'ResourceController') use ($router) {
+            $alias = Str::lower(Str::snake(Str::plural(class_basename($model_name)), '-'));
+
+            $router->resource($alias, $resource_controller, [
+                'only' => [
+                    'index',
+                    'store',
+                    'show',
+                    'update',
+                    'destroy',
+                ],
+            ]);
+        });
+
+        $router->group(['namespace' => $this->namespace], function ($router) {
+            require app_path('Http/routes.php');
+        });
+    }
 	```
 1. Set up your MagicBox resource routes under the middleware key you assign to your chosen `RepositoryMiddleware` class
 1. Set up models according to `Model Setup` section
@@ -55,18 +55,18 @@ Consider a simple model where a User has many Posts. EloquentRepository's basic 
 
 Create a User with the username Steve who has a single Post with the title Stuff.
 
-```
-    $repository = (new EloquentRepository)
-        ->setModelClass('User')
-        ->setInput([
-            'username' => 'steve',
-            'nonsense' => 'tomfoolery',
-            'posts'    => [
-                'title' => 'Stuff',
-            ],
-        ]);
+```php
+$repository = (new EloquentRepository)
+    ->setModelClass('User')
+    ->setInput([
+        'username' => 'steve',
+        'nonsense' => 'tomfoolery',
+        'posts'    => [
+            'title' => 'Stuff',
+        ],
+    ]);
 
-    $user = $repository->save();
+$user = $repository->save();
 ```
 
 When `$repository->save()` is invoked, a User will be created with the username "Steve", and a Post will
@@ -77,42 +77,42 @@ By itself, EloquentRepository is a blunt weapon with no access controls that sho
 public APIs. It will clobber every relationship it touches without prejudice. For example, the following
 is a BAD way to add a new Post for the user we just created.
 
-```
-    $repository
-        ->setInput([
-            'id' => $user->id,
-            'posts'    => [
-                ['title' => 'More Stuff'],
-            ],
-        ])
-        ->save();
+```php
+$repository
+    ->setInput([
+        'id' => $user->id,
+        'posts'    => [
+            ['title' => 'More Stuff'],
+        ],
+    ])
+    ->save();
 ```
 
 This will delete poor Steve's first post—not the intended effect. The safe(r) way to append a Post
 would be either of the following:
 
-```
-    $repository
-        ->setInput([
-            'id' => $user->id,
-            'posts'    => [
-                ['id' => $user->posts->first()->id],
-                ['title' => 'More Stuff'],
-            ],
-        ])
-        ->save();
+```php
+$repository
+    ->setInput([
+        'id' => $user->id,
+        'posts'    => [
+            ['id' => $user->posts->first()->id],
+            ['title' => 'More Stuff'],
+        ],
+    ])
+    ->save();
 ```
 
-```
-    $post = $repository
-        ->setModelClass('Post')
-        ->setInput([
-            'title' => 'More Stuff',
-            'user' => [
-                'id' => $user->id,
-            ],
-        ])
-        ->save();
+```php
+$post = $repository
+    ->setModelClass('Post')
+    ->setInput([
+        'title' => 'More Stuff',
+        'user' => [
+            'id' => $user->id,
+        ],
+    ])
+    ->save();
 ```
 
 Generally speaking, the latter is preferred and is less likely to explode in your face.
@@ -156,17 +156,17 @@ Tokens and usage:
 ### Filtering relations
 Assuming we have users and their related tables resembling the following structure:
 
-```
-    [
-        'username'         => 'Bobby',
-        'profile' => [
-            'hobbies' => [
-                ['name' => 'Hockey'],
-                ['name' => 'Programming'],
-                ['name' => 'Cooking']
-            ]
+```php
+[
+    'username'         => 'Bobby',
+    'profile' => [
+        'hobbies' => [
+            ['name' => 'Hockey'],
+            ['name' => 'Programming'],
+            ['name' => 'Cooking']
         ]
     ]
+]
 ```
 
 We can filter by users' hobbies with `users?filters[profile.hobbies.name]=^Cook`. Relationships can be of arbitrary 
@@ -175,16 +175,16 @@ depth.
 ### Filter conjuctions
 We can use `AND` and `OR` statements to build filters such as `users?filters[username]==Bobby&filters[or][username]==Johnny&filters[and][profile.favorite_cheese]==Gouda`. The PHP array that's built from this filter is:
 
-```
-    [
-        'username' => '=Bobby',
-        'or'       => [
-		      'username' => '=Johnny',
-		      'and'      => [
-		          'profile.favorite_cheese' => '=Gouda',
-		      ]	
-        ]
+```php
+[
+    'username' => '=Bobby',
+    'or'       => [
+          'username' => '=Johnny',
+          'and'      => [
+              'profile.favorite_cheese' => '=Gouda',
+          ]	
     ]
+]
 ```
 
 and this filter can be read as `select (users with username Bobby) OR (users with username Johnny who's profile.favorite_cheese attribute is Gouda)`.
