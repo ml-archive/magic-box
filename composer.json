@@ -1,6 +1,6 @@
 {
 	"name": "fuzz/magic-box",
-	"description": "A magical implementation of Laravel's Eloquent models as injectable, masked resource respositories.",
+	"description": "A magical implementation of Laravel's Eloquent models as injectable, masked resource repositories.",
 	"require": {
 		"illuminate/database": "5.2.x"
 	},
