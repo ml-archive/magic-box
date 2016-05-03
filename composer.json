@@ -1,6 +1,8 @@
 {
 	"name": "fuzz/magic-box",
 	"description": "A magical implementation of Laravel's Eloquent models as injectable, masked resource repositories.",
+	"license": "MIT",
+	"homepage": "https://fuzzproductions.com/",
 	"require": {
 		"illuminate/database": "5.2.x"
 	},
