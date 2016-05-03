@@ -8,7 +8,7 @@ Magic Box has two goals:
 1. Provide an interface for API clients to request exactly the data they want in the way they want.
 
 ## Installation/Setup
-1. Require the package in `composer.json`
+1. `composer require fuzz/magic-box`
 1. Use or extend `Fuzz\MagicBox\Middleware\RepositoryMiddleware` into your project and register your class under the `$routeMiddleware` array in `app/Http/Kernel.php`. `RepositoryMiddleware` contains a variety of configuration options that can be overridden
 1. If you're using `fuzz/api-server`, you can use magical routing by updating `app/Providers/RouteServiceProvider.php`, `RouteServiceProvider@map`, to include:
 
