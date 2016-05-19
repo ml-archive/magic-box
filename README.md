@@ -7,6 +7,8 @@ Magic Box modularizes Fuzz's magical implementation of Laravel's Eloquent models
 1. To create a two-way interchange format, so that the JSON representations of models broadcast by APIs can be re-applied back to their originating models for updating existing resources and creating new resources.
 2. Provide an interface for API clients to request exactly the data they want in the way they want.
 
+Play with the [demo](http://explorer.magic-box.fuzzproductions.com/)!
+
 ## Installation/Setup
 1. `composer require fuzz/magic-box`
 1. Use or extend `Fuzz\MagicBox\Middleware\RepositoryMiddleware` into your project and register your class under the `$routeMiddleware` array in `app/Http/Kernel.php`. `RepositoryMiddleware` contains a variety of configuration options that can be overridden
