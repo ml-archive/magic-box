@@ -200,6 +200,14 @@ protected $fillable = ['username', 'password', 'name', 'comments'];
 
 MagicBox will only modify attributes/relations that are explicitly defined.
 
+## Resolving models
+Magic Box is great and all, but we don't want to resolve model classes ourselves before we can instantiate a repository...
+
+If you've configured a RESTful URI structure with pluralized resources (i.e. `https://api.mydowmain.com/1.0/users` maps to the User model), you can use `Fuzz\MagicBox\Utility\Modeler` to resolve a model class name from a route name.
+
+## Testing
+`phpunit` :)
+
 ### TODO
 1. Route service provider should be pre-setup
 1. Support more relationships (esp. polymorphic relations) through cascading saves.
