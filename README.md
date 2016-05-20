@@ -44,6 +44,7 @@ Play with the [demo](http://explorer.magic-box.fuzzproductions.com/)!
     }
 	```
 1. Set up your MagicBox resource routes under the middleware key you assign to your chosen `RepositoryMiddleware` class
+1. Set up a `YourAppNamespace\Http\Controllers\ResourceController`, [here is what a ResourceController might look like](https://gist.github.com/SimantovYousoufov/dea19adb1dfd8f05c1fcad9db976c247) .
 1. Set up models according to `Model Setup` section
 
 ## Testing
