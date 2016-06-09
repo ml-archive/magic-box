@@ -3,9 +3,11 @@ Laravel Magic Box [![Build Status](https://img.shields.io/travis/fuzz-production
 
 Magic Box modularizes Fuzz's magical implementation of Laravel's Eloquent models as injectable, masked resource repositories.
 
-Magic Box has two goals:
+##### Magic Box has two goals:
 1. To create a two-way interchange format, so that the JSON representations of models broadcast by APIs can be re-applied back to their originating models for updating existing resources and creating new resources.
-1. Provide an interface for API clients to request exactly the data they want in the way they want.
+2. Provide an interface for API clients to request exactly the data they want in the way they want.
+
+Play with the [demo](http://explorer.magic-box.fuzzproductions.com/)!
 
 ## Installation/Setup
 1. `composer require fuzz/magic-box`
@@ -42,6 +44,7 @@ Magic Box has two goals:
     }
 	```
 1. Set up your MagicBox resource routes under the middleware key you assign to your chosen `RepositoryMiddleware` class
+1. Set up a `YourAppNamespace\Http\Controllers\ResourceController`, [here is what a ResourceController might look like](https://gist.github.com/SimantovYousoufov/dea19adb1dfd8f05c1fcad9db976c247) .
 1. Set up models according to `Model Setup` section
 
 ## Testing
@@ -199,6 +202,14 @@ protected $fillable = ['username', 'password', 'name', 'comments'];
 ```
 
 MagicBox will only modify attributes/relations that are explicitly defined.
+
+## Resolving models
+Magic Box is great and all, but we don't want to resolve model classes ourselves before we can instantiate a repository...
+
+If you've configured a RESTful URI structure with pluralized resources (i.e. `https://api.mydowmain.com/1.0/users` maps to the User model), you can use `Fuzz\MagicBox\Utility\Modeler` to resolve a model class name from a route name.
+
+## Testing
+`phpunit` :)
 
 ### TODO
 1. Route service provider should be pre-setup
