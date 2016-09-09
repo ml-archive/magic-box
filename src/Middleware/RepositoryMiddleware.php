@@ -32,7 +32,7 @@ class RepositoryMiddleware
 	 * @param \Illuminate\Http\Request $request
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	private function buildRepository(Request $request)
+	public function buildRepository(Request $request)
 	{
 		$input = [];
 		/** @var \Illuminate\Routing\Route $route */
