@@ -1,4 +1,4 @@
-Laravel Magic Box [![Build Status](https://img.shields.io/travis/fuzz-productions/magic-box/master.svg?style=flat)](https://travis-ci.org/fuzz-productions/magic-box)
+Laravel Magic Box [![Build Status](https://img.shields.io/travis/fuzz-productions/magic-box/master.svg?style=flat)](https://travis-ci.org/fuzz-productions/magic-box) [![Slack Status](https://fuzz-opensource.herokuapp.com/badge.svg)](https://fuzz-opensource.herokuapp.com/)
 ==================
 
 Magic Box modularizes Fuzz's magical implementation of Laravel's Eloquent models as injectable, masked resource repositories.
