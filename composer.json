@@ -4,10 +4,10 @@
 	"license": "MIT",
 	"homepage": "https://fuzzproductions.com/",
 	"require": {
-		"illuminate/database": "5.2.x"
+		"illuminate/database": "5.3.x"
 	},
 	"require-dev": {
-		"orchestra/testbench": "3.2.*"
+		"orchestra/testbench": "3.3.*"
 	},
 	"authors": [
 		{
