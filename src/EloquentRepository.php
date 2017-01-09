@@ -91,7 +91,7 @@ class EloquentRepository implements Repository
 
 	/**
 	 * The glue for nested strings
-	 * 
+	 *
 	 * @var string
 	 */
 	const GLUE = '.';
@@ -216,6 +216,19 @@ class EloquentRepository implements Repository
 	{
 		return $this->filters;
 	}
+
+    /**
+     * Add a filter to already existing filters without overwriting them.
+     *
+     * @param array $filters
+     * @return static
+     */
+    public function addFilters(array $filters)
+    {
+        $this->filters = array_merge($this->filters, $filters);
+
+        return $this;
+    }
 
 	/**
 	 * Get group by.
