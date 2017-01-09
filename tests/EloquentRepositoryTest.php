@@ -831,6 +831,31 @@ class EloquentRepositoryTest extends DBTestCase
 		}
 	}
 
+	public function testItCanAddAdditionalFilters()
+	{
+        $this->seedUsers();
+
+        $repository  = $this->getRepository(User::class);
+        $this->assertEquals($repository->all()->count(), 4);
+
+        $found_users = $repository->setFilters(['username' => '~galaxyfarfaraway.com'])->all();
+        $this->assertEquals($found_users->count(), 4);
+
+        $additional_filters = [
+          'profile.is_human' => '=true'
+        ];
+
+        $found_users = $repository->addFilters($additional_filters)->all();
+        $this->assertEquals($found_users->count(), 3);
+
+        $filters = $repository->getFilters();
+        $this->assertArrayHasKey('username', $filters);
+        $this->assertEquals('~galaxyfarfaraway.com', $filters['username']);
+        $this->assertArrayHasKey('profile.is_human', $filters);
+        $this->assertEquals('=true', $filters['profile.is_human']);
+
+	}
+
 	public function testItCanAggregateQueryCount()
 	{
 
