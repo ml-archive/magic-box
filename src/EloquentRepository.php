@@ -218,7 +218,7 @@ class EloquentRepository implements Repository
     }
 
     /**
-     * Add a filter to already existing filters without overwriting them.
+     * Add filters to already existing filters without overwriting them.
      *
      * @param array $filters
      * @return static
@@ -229,6 +229,21 @@ class EloquentRepository implements Repository
 
         return $this;
     }
+
+    /**
+     * Add a single filter to already existing filters without overwriting them.
+     *
+     * @param string $key
+     * @param string $value
+     * @return static
+     */
+    public function addFilter(string $key, string $value)
+    {
+        $this->filters[$key] = $value;
+
+        return $this;
+    }
+
 
     /**
      * Get group by.
