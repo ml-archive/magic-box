@@ -1,6 +1,7 @@
 /vendor
 /components
 /coverage
+/tests/coverage
 composer.phar
-composer.lock
+/tests/coverage
 .DS_Store

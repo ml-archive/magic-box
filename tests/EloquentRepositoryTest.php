@@ -179,7 +179,7 @@ class EloquentRepositoryTest extends DBTestCase
 		)->save();
 
 		$this->assertEquals(
-			$user->posts->lists('id')->toArray(), [
+			$user->posts->pluck('id')->toArray(), [
 				1,
 				2
 			]
@@ -204,7 +204,7 @@ class EloquentRepositoryTest extends DBTestCase
 		$user->load('posts');
 
 		$this->assertEquals(
-			$user->posts->lists('id')->toArray(), [
+			$user->posts->pluck('id')->toArray(), [
 				1,
 			]
 		);
