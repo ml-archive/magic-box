@@ -831,30 +831,51 @@ class EloquentRepositoryTest extends DBTestCase
 		}
 	}
 
-	public function testItCanAddAdditionalFilters()
-	{
+    public function testItCanAddMultipleAdditionalFilters()
+    {
         $this->seedUsers();
 
-        $repository  = $this->getRepository(User::class);
+        $repository = $this->getRepository(User::class);
         $this->assertEquals($repository->all()->count(), 4);
 
         $found_users = $repository->setFilters(['username' => '~galaxyfarfaraway.com'])->all();
         $this->assertEquals($found_users->count(), 4);
 
         $additional_filters = [
-          'profile.is_human' => '=true'
+            'profile.is_human' => '=true',
+            'times_captured' => '>2'
         ];
 
         $found_users = $repository->addFilters($additional_filters)->all();
+        $this->assertEquals($found_users->count(), 2);
+
+        $filters = $repository->getFilters();
+        $this->assertEquals([
+            'username' => '~galaxyfarfaraway.com',
+            'profile.is_human' => '=true',
+            'times_captured' => '>2'
+        ], $filters);
+    }
+
+    public function testItCanAddOneAdditionalFilter()
+    {
+        $this->seedUsers();
+
+        $repository = $this->getRepository(User::class);
+        $this->assertEquals($repository->all()->count(), 4);
+
+        $found_users = $repository->setFilters(['username' => '~galaxyfarfaraway.com'])->all();
+        $this->assertEquals($found_users->count(), 4);
+
+        $found_users = $repository->addFilter('profile.is_human', '=true')->all();
         $this->assertEquals($found_users->count(), 3);
 
         $filters = $repository->getFilters();
-        $this->assertArrayHasKey('username', $filters);
-        $this->assertEquals('~galaxyfarfaraway.com', $filters['username']);
-        $this->assertArrayHasKey('profile.is_human', $filters);
-        $this->assertEquals('=true', $filters['profile.is_human']);
-
-	}
+        $this->assertEquals([
+            'username' => '~galaxyfarfaraway.com',
+            'profile.is_human' => '=true',
+        ], $filters);
+    }
 
 	public function testItCanAggregateQueryCount()
 	{
