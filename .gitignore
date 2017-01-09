@@ -3,4 +3,5 @@
 /coverage
 /tests/coverage
 composer.phar
+/tests/coverage
 .DS_Store

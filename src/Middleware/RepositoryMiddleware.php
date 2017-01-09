@@ -7,7 +7,7 @@ use Fuzz\MagicBox\Utility\Modeler;
 use Illuminate\Support\Facades\Auth;
 use Fuzz\MagicBox\EloquentRepository;
 use Fuzz\MagicBox\Contracts\Repository;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Fuzz\HttpException\AccessDeniedHttpException;
 
 class RepositoryMiddleware
 {

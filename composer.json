@@ -4,11 +4,12 @@
 	"license": "MIT",
 	"homepage": "https://fuzzproductions.com/",
 	"require": {
-		"illuminate/database": "5.2.x"
+		"illuminate/database": "5.3.x"
 	},
 	"require-dev": {
-		"orchestra/testbench": "3.2.*",
-        "phpunit/phpunit": "~5.6"
+		"phpunit/phpunit": "~5.6",
+		"orchestra/testbench": "3.3.*",
+		"fuzz/http-exception": "1.0.*"
 	},
 	"authors": [
 		{
