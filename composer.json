@@ -7,7 +7,8 @@
 		"illuminate/database": "5.2.x"
 	},
 	"require-dev": {
-		"orchestra/testbench": "3.2.*"
+		"orchestra/testbench": "3.2.*",
+        "phpunit/phpunit": "~5.6"
 	},
 	"authors": [
 		{
