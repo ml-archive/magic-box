@@ -225,7 +225,9 @@ class EloquentRepository implements Repository
 	 */
 	public function addFilters(array $filters)
 	{
-		$this->filters = array_merge($this->filters, $filters);
+		foreach ($filters as $key => $value) {
+			$this->addFilter($key, $value);
+		}
 
 		return $this;
 	}
