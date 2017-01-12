@@ -104,7 +104,7 @@ class EloquentRepository implements Repository
 	 */
 	public function setModelClass($model_class)
 	{
-		if (!is_subclass_of($model_class, Model::class)) {
+		if ( !is_subclass_of($model_class, Model::class)) {
 			throw new \InvalidArgumentException('Specified model class must be an instance of ' . Model::class);
 		}
 
@@ -364,11 +364,11 @@ class EloquentRepository implements Repository
 
 		$eager_loads = $this->getEagerLoads();
 
-		if (!empty($eager_loads)) {
+		if ( !empty($eager_loads)) {
 			$this->safeWith($query, $eager_loads);
 		}
 
-		if (!empty($modifiers = $this->getModifiers())) {
+		if ( !empty($modifiers = $this->getModifiers())) {
 			foreach ($modifiers as $modifier) {
 				$modifier($query);
 			}
@@ -397,7 +397,7 @@ class EloquentRepository implements Repository
 		$aggregate_exist = !empty($aggregate);
 
 		// No modifications to apply
-		if (!$filters_exist && !$sorts_exist && !$group_exist && !$aggregate_exist) {
+		if ( !$filters_exist && !$sorts_exist && !$group_exist && !$aggregate_exist) {
 			return;
 		}
 
@@ -759,7 +759,7 @@ class EloquentRepository implements Repository
 	 */
 	final public function getInputId()
 	{
-		if (!$this->exists()) {
+		if ( !$this->exists()) {
 			throw new \LogicException('ID is not specified in input.');
 		}
 
@@ -867,9 +867,9 @@ class EloquentRepository implements Repository
 				 */
 				// The parent model "owns" child models; any not specified here should be deleted.
 				$current_ids = $relation->pluck(self::KEY_NAME)->toArray();
-				$new_ids     = array_filter(array_column($input, self::KEY_NAME));
+				$new_ids = array_filter(array_column($input, self::KEY_NAME));
 				$removed_ids = array_diff($current_ids, $new_ids);
-				if (!empty($removed_ids)) {
+				if ( !empty($removed_ids)) {
 					$relation->whereIn(self::KEY_NAME, $removed_ids)->delete();
 				}
 
@@ -886,8 +886,8 @@ class EloquentRepository implements Repository
 				// The parent model "owns" the child model; if we have a new and/or different
 				// existing child model, delete the old one.
 				$current = $relation->getResults();
-				if (!is_null($current)
-					&& (!isset($input[self::KEY_NAME]) || $current->{self::KEY_NAME} !== intval($input[self::KEY_NAME]))
+				if ( !is_null($current)
+					&& ( !isset($input[self::KEY_NAME]) || $current->{self::KEY_NAME} !== intval($input[self::KEY_NAME]))
 				) {
 					$relation->delete();
 				}
