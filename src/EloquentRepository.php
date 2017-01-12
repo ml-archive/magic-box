@@ -91,7 +91,7 @@ class EloquentRepository implements Repository
 
 	/**
 	 * The glue for nested strings
-	 * 
+	 *
 	 * @var string
 	 */
 	const GLUE = '.';
@@ -104,7 +104,7 @@ class EloquentRepository implements Repository
 	 */
 	public function setModelClass($model_class)
 	{
-		if (! is_subclass_of($model_class, Model::class)) {
+		if ( !is_subclass_of($model_class, Model::class)) {
 			throw new \InvalidArgumentException('Specified model class must be an instance of ' . Model::class);
 		}
 
@@ -216,6 +216,36 @@ class EloquentRepository implements Repository
 	{
 		return $this->filters;
 	}
+
+	/**
+	 * Add filters to already existing filters without overwriting them.
+	 *
+	 * @param array $filters
+	 * @return static
+	 */
+	public function addFilters(array $filters)
+	{
+		foreach ($filters as $key => $value) {
+			$this->addFilter($key, $value);
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Add a single filter to already existing filters without overwriting them.
+	 *
+	 * @param string $key
+	 * @param string $value
+	 * @return static
+	 */
+	public function addFilter(string $key, string $value)
+	{
+		$this->filters[$key] = $value;
+
+		return $this;
+	}
+
 
 	/**
 	 * Get group by.
@@ -336,11 +366,11 @@ class EloquentRepository implements Repository
 
 		$eager_loads = $this->getEagerLoads();
 
-		if (! empty($eager_loads)) {
+		if ( !empty($eager_loads)) {
 			$this->safeWith($query, $eager_loads);
 		}
 
-		if (! empty($modifiers = $this->getModifiers())) {
+		if ( !empty($modifiers = $this->getModifiers())) {
 			foreach ($modifiers as $modifier) {
 				$modifier($query);
 			}
@@ -357,26 +387,26 @@ class EloquentRepository implements Repository
 	 */
 	protected function modifyQuery($query)
 	{
-		$filters            = $this->getFilters();
+		$filters = $this->getFilters();
 		$sort_order_options = $this->getSortOrder();
-		$group_by           = $this->getGroupBy();
-		$aggregate          = $this->getAggregate();
+		$group_by = $this->getGroupBy();
+		$aggregate = $this->getAggregate();
 
 		// Check if filters or sorts are requested
-		$filters_exist   = ! empty($filters);
-		$sorts_exist     = ! empty($sort_order_options);
-		$group_exist     = ! empty($group_by);
-		$aggregate_exist = ! empty($aggregate);
+		$filters_exist = !empty($filters);
+		$sorts_exist = !empty($sort_order_options);
+		$group_exist = !empty($group_by);
+		$aggregate_exist = !empty($aggregate);
 
 		// No modifications to apply
-		if (! $filters_exist && ! $sorts_exist && ! $group_exist && ! $aggregate_exist) {
+		if ( !$filters_exist && !$sorts_exist && !$group_exist && !$aggregate_exist) {
 			return;
 		}
 
 		// Make a mock instance so we can describe its columns
-		$model_class   = $this->getModelClass();
+		$model_class = $this->getModelClass();
 		$temp_instance = new $model_class;
-		$columns       = $this->getFields($temp_instance);
+		$columns = $this->getFields($temp_instance);
 
 		if ($filters_exist) {
 			// Apply depth restrictions to each filter
@@ -395,8 +425,8 @@ class EloquentRepository implements Repository
 
 		// Modify the query with a group by condition.
 		if ($group_exist) {
-			$group       = explode(',', reset($group_by));
-			$group       = array_map('trim', $group);
+			$group = explode(',', reset($group_by));
+			$group = array_map('trim', $group);
 			$valid_group = array_intersect($group, $columns);
 
 			$query->groupBy($valid_group);
@@ -411,9 +441,9 @@ class EloquentRepository implements Repository
 				'sum',
 				'avg',
 			];
-			$allowed_columns      = $columns;
-			$column               = reset($aggregate);
-			$function             = strtolower(key($aggregate));
+			$allowed_columns = $columns;
+			$column = reset($aggregate);
+			$function = strtolower(key($aggregate));
 
 			if (in_array($function, $allowed_aggregations, true) && in_array($column, $allowed_columns, true)) {
 				$query->addSelect(DB::raw($function . '(' . $column . ') as aggregate'));
@@ -435,9 +465,9 @@ class EloquentRepository implements Repository
 	 * Apply a sort to a database query
 	 *
 	 * @param \Illuminate\Database\Eloquent\Builder $query
-	 * @param array                                 $sort_order_options
-	 * @param \Illuminate\Database\Eloquent\Model   $temp_instance
-	 * @param array                                 $columns
+	 * @param array $sort_order_options
+	 * @param \Illuminate\Database\Eloquent\Model $temp_instance
+	 * @param array $columns
 	 */
 	protected function sortQuery(Builder $query, array $sort_order_options, Model $temp_instance, array $columns)
 	{
@@ -493,7 +523,7 @@ class EloquentRepository implements Repository
 	 * Checks if relations exist before loading them.
 	 *
 	 * @param \Illuminate\Database\Eloquent\Builder $query
-	 * @param string|array                          $relations
+	 * @param string|array $relations
 	 */
 	protected function safeWith(Builder $query, $relations)
 	{
@@ -510,11 +540,11 @@ class EloquentRepository implements Repository
 			// or
 			// 'relation.nested' => function() { ... }
 			$constraints_are_name = is_numeric($name);
-			$relation_name        = $constraints_are_name ? $constraints : $name;
+			$relation_name = $constraints_are_name ? $constraints : $name;
 
 			// Expand the dot-notation to see all relations
 			$nested_relations = explode(self::GLUE, $relation_name);
-			$model            = $query->getModel();
+			$model = $query->getModel();
 
 			// Don't allow eager loads beyond the eager load depth
 			$nested_relations = $this->applyDepthRestriction($nested_relations);
@@ -559,10 +589,10 @@ class EloquentRepository implements Repository
 	 * Apply nested joins to allow nested sorting for select relationship combinations
 	 *
 	 * @param \Illuminate\Database\Eloquent\Builder $query
-	 * @param array                                 $relations
-	 * @param \Illuminate\Database\Eloquent\Model   $instance
+	 * @param array $relations
+	 * @param \Illuminate\Database\Eloquent\Model $instance
 	 * @param                                       $field
-	 * @param string                                $direction
+	 * @param string $direction
 	 * @return void
 	 */
 	public function applyNestedJoins(Builder $query, array $relations, Model $instance, $field, $direction = 'asc')
@@ -573,9 +603,9 @@ class EloquentRepository implements Repository
 		$relation = $relations[0];
 
 		// Current working table
-		$table    = Str::plural($relation);
+		$table = Str::plural($relation);
 		$singular = Str::singular($relation);
-		$class    = get_class($instance);
+		$class = get_class($instance);
 
 		// If the relation exists, determine which type (singular, multiple)
 		if ($this->isRelation($instance, $singular, $class)) {
@@ -595,7 +625,7 @@ class EloquentRepository implements Repository
 				/**
 				 * @var \Illuminate\Database\Eloquent\Relations\BelongsToMany $related
 				 */
-				$base_table_key       = $instance->getKeyName();
+				$base_table_key = $instance->getKeyName();
 				$relation_primary_key = $related->getModel()->getKeyName();
 
 				// Join through the pivot table
@@ -731,7 +761,7 @@ class EloquentRepository implements Repository
 	 */
 	final public function getInputId()
 	{
-		if (! $this->exists()) {
+		if ( !$this->exists()) {
 			throw new \LogicException('ID is not specified in input.');
 		}
 
@@ -749,12 +779,12 @@ class EloquentRepository implements Repository
 	 */
 	final protected function fill(Model $instance)
 	{
-		$input            = $this->getInput();
-		$model_fields     = $this->getFields($instance);
+		$input = $this->getInput();
+		$model_fields = $this->getFields($instance);
 		$before_relations = [];
-		$after_relations  = [];
-		$instance_model   = get_class($instance);
-		$safe_instance    = new $instance_model;
+		$after_relations = [];
+		$instance_model = get_class($instance);
+		$safe_instance = new $instance_model;
 
 		$fill_attributes = [];
 
@@ -766,7 +796,7 @@ class EloquentRepository implements Repository
 					case BelongsTo::class:
 						$before_relations[] = [
 							'relation' => $relation,
-							'value'    => $value,
+							'value' => $value,
 						];
 						break;
 					case HasOne::class:
@@ -774,7 +804,7 @@ class EloquentRepository implements Repository
 					case BelongsToMany::class:
 						$after_relations[] = [
 							'relation' => $relation,
-							'value'    => $value,
+							'value' => $value,
 						];
 						break;
 				}
@@ -797,7 +827,7 @@ class EloquentRepository implements Repository
 	/**
 	 * Apply relations from an array to an instance model.
 	 *
-	 * @param array                               $specs
+	 * @param array $specs
 	 * @param \Illuminate\Database\Eloquent\Model $instance
 	 * @return void
 	 */
@@ -812,15 +842,15 @@ class EloquentRepository implements Repository
 	 * Cascade relations through saves on a model.
 	 *
 	 * @param \Illuminate\Database\Eloquent\Relations\Relation $relation
-	 * @param array                                            $input
-	 * @param \Illuminate\Database\Eloquent\Model              $parent
+	 * @param array $input
+	 * @param \Illuminate\Database\Eloquent\Model $parent
 	 *
 	 * @return void
 	 */
 	final protected function cascadeRelation(Relation $relation, array $input, Model $parent = null)
 	{
 		// Make a child repository for containing the cascaded relationship through saves
-		$target_model_class  = get_class($relation->getQuery()->getModel());
+		$target_model_class = get_class($relation->getQuery()->getModel());
 		$relation_repository = (new self)->setModelClass($target_model_class);
 
 		switch (get_class($relation)) {
@@ -839,9 +869,9 @@ class EloquentRepository implements Repository
 				 */
 				// The parent model "owns" child models; any not specified here should be deleted.
 				$current_ids = $relation->pluck(self::KEY_NAME)->toArray();
-				$new_ids     = array_filter(array_column($input, self::KEY_NAME));
+				$new_ids = array_filter(array_column($input, self::KEY_NAME));
 				$removed_ids = array_diff($current_ids, $new_ids);
-				if (! empty($removed_ids)) {
+				if ( !empty($removed_ids)) {
 					$relation->whereIn(self::KEY_NAME, $removed_ids)->delete();
 				}
 
@@ -858,8 +888,8 @@ class EloquentRepository implements Repository
 				// The parent model "owns" the child model; if we have a new and/or different
 				// existing child model, delete the old one.
 				$current = $relation->getResults();
-				if (! is_null($current)
-					&& (! isset($input[self::KEY_NAME]) || $current->{self::KEY_NAME} !== intval($input[self::KEY_NAME]))
+				if ( !is_null($current)
+					&& ( !isset($input[self::KEY_NAME]) || $current->{self::KEY_NAME} !== intval($input[self::KEY_NAME]))
 				) {
 					$relation->delete();
 				}
@@ -880,7 +910,7 @@ class EloquentRepository implements Repository
 
 					// If we were passed pivot data, pass it through accordingly.
 					if (isset($sub_input['pivot'])) {
-						$ids[$id] = (array) $sub_input['pivot'];
+						$ids[$id] = (array)$sub_input['pivot'];
 					} else {
 						$ids[] = $id;
 					}
@@ -900,7 +930,7 @@ class EloquentRepository implements Repository
 	final public function create()
 	{
 		$model_class = $this->getModelClass();
-		$instance    = new $model_class;
+		$instance = new $model_class;
 		$this->fill($instance);
 
 		return $instance;

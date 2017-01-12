@@ -17,12 +17,12 @@ class EloquentRepositoryTest extends DBTestCase
 	 * Retrieve a sample repository for testing.
 	 *
 	 * @param string|null $model_class
-	 * @param array       $input
+	 * @param array $input
 	 * @return \Fuzz\MagicBox\EloquentRepository|static
 	 */
 	private function getRepository($model_class = null, array $input = [])
 	{
-		if (! is_null($model_class)) {
+		if (!is_null($model_class)) {
 			return (new EloquentRepository)->setModelClass($model_class)->setDepthRestriction(3)->setInput($input);
 		}
 
@@ -55,8 +55,8 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItCanFindASimpleModel()
 	{
-		$repo       = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-		$user       = $repo->save();
+		$repo = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$user = $repo->save();
 		$found_user = $repo->find($user->id);
 		$this->assertNotNull($found_user);
 		$this->assertEquals($user->id, $found_user->id);
@@ -71,8 +71,8 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItPaginates()
 	{
-		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-		$first_user  = $repository->setInput(['username' => 'bob'])->save();
+		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user = $repository->setInput(['username' => 'bob'])->save();
 		$second_user = $repository->setInput(['username' => 'sue'])->save();
 
 		$paginator = $repository->paginate(1);
@@ -85,7 +85,7 @@ class EloquentRepositoryTest extends DBTestCase
 		$this->getRepository(
 			'Fuzz\MagicBox\Tests\Models\User', [
 				'username' => 'joe',
-				'posts'    => [
+				'posts' => [
 					[
 						'title' => 'Some Great Post',
 					],
@@ -121,7 +121,7 @@ class EloquentRepositoryTest extends DBTestCase
 
 		$user = $this->getRepository(
 			'Fuzz\MagicBox\Tests\Models\User', [
-				'id'       => 1,
+				'id' => 1,
 				'username' => 'sue'
 			]
 		)->save();
@@ -152,7 +152,7 @@ class EloquentRepositoryTest extends DBTestCase
 		$post = $this->getRepository(
 			'Fuzz\MagicBox\Tests\Models\Post', [
 				'title' => 'Some Great Post',
-				'user'  => [
+				'user' => [
 					'username' => 'jimmy',
 				],
 			]
@@ -167,7 +167,7 @@ class EloquentRepositoryTest extends DBTestCase
 		$user = $this->getRepository(
 			'Fuzz\MagicBox\Tests\Models\User', [
 				'username' => 'joe',
-				'posts'    => [
+				'posts' => [
 					[
 						'title' => 'Some Great Post',
 					],
@@ -192,7 +192,7 @@ class EloquentRepositoryTest extends DBTestCase
 
 		$this->getRepository(
 			'Fuzz\MagicBox\Tests\Models\User', [
-				'id'    => $user->id,
+				'id' => $user->id,
 				'posts' => [
 					[
 						'id' => 1,
@@ -218,7 +218,7 @@ class EloquentRepositoryTest extends DBTestCase
 		$user = $this->getRepository(
 			'Fuzz\MagicBox\Tests\Models\User', [
 				'username' => 'joe',
-				'profile'  => [
+				'profile' => [
 					'favorite_cheese' => 'brie',
 				],
 			]
@@ -230,7 +230,7 @@ class EloquentRepositoryTest extends DBTestCase
 
 		$user = $this->getRepository(
 			'Fuzz\MagicBox\Tests\Models\User', [
-				'id'      => $user->id,
+				'id' => $user->id,
 				'profile' => [
 					'favorite_cheese' => 'pepper jack',
 				],
@@ -249,13 +249,13 @@ class EloquentRepositoryTest extends DBTestCase
 		$post = $this->getRepository(
 			'Fuzz\MagicBox\Tests\Models\Post', [
 				'title' => 'All the Tags',
-				'user'  => [
+				'user' => [
 					'username' => 'simon',
-					'profile'  => [
+					'profile' => [
 						'favorite_cheese' => 'brie',
 					],
 				],
-				'tags'  => [
+				'tags' => [
 					[
 						'label' => 'Important Stuff',
 					],
@@ -276,10 +276,10 @@ class EloquentRepositoryTest extends DBTestCase
 		$post = $this->getRepository(
 			'Fuzz\MagicBox\Tests\Models\Post', [
 				'title' => 'All the Tags',
-				'user'  => [
+				'user' => [
 					'username' => 'josh',
 				],
-				'tags'  => [
+				'tags' => [
 					[
 						'label' => 'Has Extra',
 						'pivot' => [
@@ -295,10 +295,10 @@ class EloquentRepositoryTest extends DBTestCase
 
 		$post = $this->getRepository(
 			'Fuzz\MagicBox\Tests\Models\Post', [
-				'id'   => $post->id,
+				'id' => $post->id,
 				'tags' => [
 					[
-						'id'    => $tag->id,
+						'id' => $tag->id,
 						'pivot' => [
 							'extra' => 'Pikachu',
 						],
@@ -313,8 +313,8 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItSorts()
 	{
-		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-		$first_user  = $repository->setInput(
+		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user = $repository->setInput(
 			[
 				'username' => 'Bobby'
 			]
@@ -337,11 +337,11 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItSortsNested()
 	{
-		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-		$first_user  = $repository->setInput(
+		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user = $repository->setInput(
 			[
 				'username' => 'Bobby',
-				'posts'    => [
+				'posts' => [
 					[
 						'title' => 'First Post',
 						'tags' => [
@@ -354,7 +354,7 @@ class EloquentRepositoryTest extends DBTestCase
 		$second_user = $repository->setInput(
 			[
 				'username' => 'Robby',
-				'posts'    => [
+				'posts' => [
 					[
 						'title' => 'Zis is the final post alphabetically',
 						'tags' => [
@@ -367,7 +367,7 @@ class EloquentRepositoryTest extends DBTestCase
 		$third_user = $repository->setInput(
 			[
 				'username' => 'Gobby',
-				'posts'    => [
+				'posts' => [
 					[
 						'title' => 'Third Post',
 						'tags' => [
@@ -408,7 +408,7 @@ class EloquentRepositoryTest extends DBTestCase
 		$this->seedUsers();
 
 		// Test that the repository implements filters correctly
-		$repository  = $this->getRepository(User::class);
+		$repository = $this->getRepository(User::class);
 		$this->assertEquals($repository->all()->count(), 4);
 
 		$found_users = $repository->setFilters(['username' => '=chewbaclava@galaxyfarfaraway.com'])->all();
@@ -419,16 +419,16 @@ class EloquentRepositoryTest extends DBTestCase
 	public function testItOnlyUpdatesFillableAttributesOnCreate()
 	{
 		$input = [
-			'username'       => 'javacup@galaxyfarfaraway.com',
-			'name'           => 'Jabba The Hutt',
-			'hands'          => 10,
+			'username' => 'javacup@galaxyfarfaraway.com',
+			'name' => 'Jabba The Hutt',
+			'hands' => 10,
 			'times_captured' => 0,
-			'not_fillable'   => 'should be null',
-			'occupation'     => 'Being Gross',
-			'profile'        => [
+			'not_fillable' => 'should be null',
+			'occupation' => 'Being Gross',
+			'profile' => [
 				'favorite_cheese' => 'Cheddar',
-				'favorite_fruit'  => 'Apples',
-				'is_human'        => false
+				'favorite_fruit' => 'Apples',
+				'is_human' => false
 			],
 		];
 
@@ -439,16 +439,16 @@ class EloquentRepositoryTest extends DBTestCase
 	public function testItOnlyUpdatesFillableAttributesOnUpdate()
 	{
 		$input = [
-			'username'       => 'javacup@galaxyfarfaraway.com',
-			'name'           => 'Jabba The Hutt',
-			'hands'          => 10,
+			'username' => 'javacup@galaxyfarfaraway.com',
+			'name' => 'Jabba The Hutt',
+			'hands' => 10,
 			'times_captured' => 0,
-			'not_fillable'   => 'should be null',
-			'occupation'     => 'Being Gross',
-			'profile'        => [
+			'not_fillable' => 'should be null',
+			'occupation' => 'Being Gross',
+			'profile' => [
 				'favorite_cheese' => 'Cheddar',
-				'favorite_fruit'  => 'Apples',
-				'is_human'        => false
+				'favorite_fruit' => 'Apples',
+				'is_human' => false
 			],
 		];
 
@@ -463,17 +463,17 @@ class EloquentRepositoryTest extends DBTestCase
 	public function testItOnlyUpdatesFillableAttributesForRelationsOnCreate()
 	{
 		$input = [
-			'username'       => 'javacup@galaxyfarfaraway.com',
-			'name'           => 'Jabba The Hutt',
-			'hands'          => 10,
+			'username' => 'javacup@galaxyfarfaraway.com',
+			'name' => 'Jabba The Hutt',
+			'hands' => 10,
 			'times_captured' => 0,
-			'not_fillable'   => 'should be null',
-			'occupation'     => 'Being Gross',
-			'profile'        => [
+			'not_fillable' => 'should be null',
+			'occupation' => 'Being Gross',
+			'profile' => [
 				'favorite_cheese' => 'Cheddar',
-				'favorite_fruit'  => 'Apples',
-				'is_human'        => false,
-				'not_fillable'    => 'should be null'
+				'favorite_fruit' => 'Apples',
+				'is_human' => false,
+				'not_fillable' => 'should be null'
 			],
 		];
 
@@ -485,17 +485,17 @@ class EloquentRepositoryTest extends DBTestCase
 	public function testItOnlyUpdatesFillableAttributesForRelationsOnUpdate()
 	{
 		$input = [
-			'username'       => 'javacup@galaxyfarfaraway.com',
-			'name'           => 'Jabba The Hutt',
-			'hands'          => 10,
+			'username' => 'javacup@galaxyfarfaraway.com',
+			'name' => 'Jabba The Hutt',
+			'hands' => 10,
 			'times_captured' => 0,
-			'not_fillable'   => 'should be null',
-			'occupation'     => 'Being Gross',
-			'profile'        => [
+			'not_fillable' => 'should be null',
+			'occupation' => 'Being Gross',
+			'profile' => [
 				'favorite_cheese' => 'Cheddar',
-				'favorite_fruit'  => 'Apples',
-				'is_human'        => false,
-				'not_fillable'    => 'should be null'
+				'favorite_fruit' => 'Apples',
+				'is_human' => false,
+				'not_fillable' => 'should be null'
 			],
 		];
 
@@ -512,12 +512,12 @@ class EloquentRepositoryTest extends DBTestCase
 	public function testItDoesNotRunArbitraryMethodsOnActualInstance()
 	{
 		$input = [
-			'username'       => 'javacup@galaxyfarfaraway.com',
-			'name'           => 'Jabba The Hutt',
-			'hands'          => 10,
+			'username' => 'javacup@galaxyfarfaraway.com',
+			'name' => 'Jabba The Hutt',
+			'hands' => 10,
 			'times_captured' => 0,
-			'not_fillable'   => 'should be null',
-			'occupation'     => 'Being Gross',
+			'not_fillable' => 'should be null',
+			'occupation' => 'Being Gross',
 		];
 
 		$user = $this->getRepository(User::class, $input)->save();
@@ -540,12 +540,12 @@ class EloquentRepositoryTest extends DBTestCase
 	public function testItCanSetDepthRestriction()
 	{
 		$input = [
-			'username'       => 'javacup@galaxyfarfaraway.com',
-			'name'           => 'Jabba The Hutt',
-			'hands'          => 10,
+			'username' => 'javacup@galaxyfarfaraway.com',
+			'name' => 'Jabba The Hutt',
+			'hands' => 10,
 			'times_captured' => 0,
-			'not_fillable'   => 'should be null',
-			'occupation'     => 'Being Gross',
+			'not_fillable' => 'should be null',
+			'occupation' => 'Being Gross',
 		];
 
 		$repository = $this->getRepository(User::class, $input);
@@ -567,8 +567,8 @@ class EloquentRepositoryTest extends DBTestCase
 			)->all()->toArray(); // toArray so we don't pull relations
 
 		foreach ($users as $user) {
-			$this->assertTrue(! isset($user['posts']));
-			$this->assertTrue(! isset($user['posts']['tags'])); // We should load neither
+			$this->assertTrue(!isset($user['posts']));
+			$this->assertTrue(!isset($user['posts']['tags'])); // We should load neither
 		}
 
 		$users = $this->getRepository(User::class)
@@ -582,7 +582,7 @@ class EloquentRepositoryTest extends DBTestCase
 		foreach ($users as $user) {
 			$this->assertTrue(isset($user['posts']));
 			$this->assertTrue(isset($user['posts'][0]));
-			$this->assertTrue(! isset($user['posts'][0]['tags'])); // We should load posts (1 level) but not tags (2 levels)
+			$this->assertTrue(!isset($user['posts'][0]['tags'])); // We should load posts (1 level) but not tags (2 levels)
 		}
 
 		$users = $this->getRepository(User::class)
@@ -829,6 +829,52 @@ class EloquentRepositoryTest extends DBTestCase
 				$previous_post = $post;
 			}
 		}
+	}
+
+	public function testItCanAddMultipleAdditionalFilters()
+	{
+		$this->seedUsers();
+
+		$repository = $this->getRepository(User::class);
+		$this->assertEquals($repository->all()->count(), 4);
+
+		$found_users = $repository->setFilters(['username' => '~galaxyfarfaraway.com'])->all();
+		$this->assertEquals($found_users->count(), 4);
+
+		$additional_filters = [
+			'profile.is_human' => '=true',
+			'times_captured' => '>2'
+		];
+
+		$found_users = $repository->addFilters($additional_filters)->all();
+		$this->assertEquals($found_users->count(), 2);
+
+		$filters = $repository->getFilters();
+		$this->assertEquals([
+			'username' => '~galaxyfarfaraway.com',
+			'profile.is_human' => '=true',
+			'times_captured' => '>2'
+		], $filters);
+	}
+
+	public function testItCanAddOneAdditionalFilter()
+	{
+		$this->seedUsers();
+
+		$repository = $this->getRepository(User::class);
+		$this->assertEquals($repository->all()->count(), 4);
+
+		$found_users = $repository->setFilters(['username' => '~galaxyfarfaraway.com'])->all();
+		$this->assertEquals($found_users->count(), 4);
+
+		$found_users = $repository->addFilter('profile.is_human', '=true')->all();
+		$this->assertEquals($found_users->count(), 3);
+
+		$filters = $repository->getFilters();
+		$this->assertEquals([
+			'username' => '~galaxyfarfaraway.com',
+			'profile.is_human' => '=true',
+		], $filters);
 	}
 
 	public function testItCanAggregateQueryCount()
