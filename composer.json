@@ -24,5 +24,13 @@
 			"Fuzz\\MagicBox\\Tests\\Seeds\\": "tests/seeds"
 		}
 	},
+	"scripts": {
+		"test": [
+			"vendor/bin/phpunit"
+		],
+		"test-coverage": [
+			"vendor/bin/phpunit --coverage-html tests/coverage"
+		]
+	},
 	"minimum-stability": "dev"
 }
