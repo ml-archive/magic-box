@@ -4,6 +4,7 @@ namespace Fuzz\MagicBox\Tests;
 
 use Fuzz\MagicBox\Tests\Models\Tag;
 use Fuzz\MagicBox\Tests\Seeds\FilterDataSeeder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Fuzz\MagicBox\Tests\Models\User;
 use Fuzz\MagicBox\Tests\Models\Post;
@@ -18,7 +19,7 @@ class EloquentRepositoryTest extends DBTestCase
 	 *
 	 * @param string|null $model_class
 	 * @param array $input
-	 * @return \Fuzz\MagicBox\EloquentRepository|static
+	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
 	private function getRepository($model_class = null, array $input = [])
 	{
@@ -575,6 +576,7 @@ class EloquentRepositoryTest extends DBTestCase
 			->setDepthRestriction(1)
 			->setEagerLoads(
 				[
+					'posts',
 					'posts.tags',
 				]
 			)->all()->toArray(); // toArray so we don't pull relations
@@ -589,14 +591,15 @@ class EloquentRepositoryTest extends DBTestCase
 			->setDepthRestriction(2)
 			->setEagerLoads(
 				[
-					'posts.tags',
+					'posts',
+					'posts.user',
 				]
 			)->all()->toArray(); // toArray so we don't pull relations
 
 		foreach ($users as $user) {
 			$this->assertTrue(isset($user['posts']));
 			$this->assertTrue(isset($user['posts'][0]));
-			$this->assertTrue(isset($user['posts'][0]['tags'])); // We should load both
+			$this->assertTrue(isset($user['posts'][0]['user'])); // We should load both
 		}
 	}
 
@@ -875,6 +878,424 @@ class EloquentRepositoryTest extends DBTestCase
 			'username' => '~galaxyfarfaraway.com',
 			'profile.is_human' => '=true',
 		], $filters);
+	}
+
+	public function testItCanSetFillable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILLABLE, $repository->getFillable());
+
+		$repository->setFillable(['foo']);
+
+		$this->assertSame(['foo'], $repository->getFillable());
+	}
+
+	public function testItCanAddFillable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILLABLE, $repository->getFillable());
+
+		$repository->addFillable('foo');
+
+		$expect = User::FILLABLE;
+		$expect[] = 'foo';
+
+		$this->assertSame($expect, $repository->getFillable());
+	}
+
+	public function testItCanAddManyFillable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILLABLE, $repository->getFillable());
+
+		$repository->addManyFillable(['foo', 'bar', 'baz']);
+
+		$expect = User::FILLABLE;
+		$expect[] = 'foo';
+		$expect[] = 'bar';
+		$expect[] = 'baz';
+
+		$this->assertSame($expect, $repository->getFillable());
+	}
+
+	public function testItCanRemoveFillable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILLABLE, $repository->getFillable());
+
+		$repository->setFillable([
+			'foo',
+			'baz',
+			'bag',
+		]);
+
+		$this->assertSame([
+			'foo',
+			'baz',
+			'bag',
+		], $repository->getFillable());
+
+		$repository->removeFillable('baz');
+
+		$this->assertSame(['foo', 'bag'], $repository->getFillable());
+	}
+
+	public function testItCanRemoveManyFillable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILLABLE, $repository->getFillable());
+
+		$repository->setFillable([
+			'foo',
+			'baz',
+			'bag',
+		]);
+
+		$this->assertSame([
+			'foo',
+			'baz',
+			'bag',
+		], $repository->getFillable());
+
+		$repository->removeManyFillable(['baz', 'bag']);
+
+		$this->assertSame(['foo',], $repository->getFillable());
+	}
+
+	public function testItCanDetermineIfIsFillable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILLABLE, $repository->getFillable());
+
+		$repository->setFillable([
+			'*' // allow all
+		]);
+
+		$this->assertTrue($repository->isFillable('foobar'));
+
+		$repository->setFillable([
+			'foo',
+			'baz',
+			'bag',
+		]);
+
+		$this->assertFalse($repository->isFillable('foobar'));
+		$this->assertTrue($repository->isFillable('foo'));
+	}
+
+	public function testItCanSetIncludable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+
+		$repository->setIncludable([
+			'foo',
+			'bar',
+			'baz'
+		]);
+
+		$this->assertSame(['foo', 'bar', 'baz'], $repository->getIncludable());
+	}
+
+	public function testItCanAddIncludable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+
+		$repository->setIncludable([
+			'foo',
+			'bar',
+			'baz'
+		]);
+
+		$repository->addIncludable('foobar');
+
+		$this->assertSame(['foo', 'bar', 'baz', 'foobar'], $repository->getIncludable());
+	}
+
+	public function testItCanAddManyIncludable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+
+		$repository->setIncludable([
+			'foo',
+			'bar',
+			'baz'
+		]);
+
+		$repository->addManyIncludable(['foobar', 'bazbat']);
+
+		$this->assertSame(['foo', 'bar', 'baz', 'foobar', 'bazbat'], $repository->getIncludable());
+	}
+
+	public function testItCanRemoveIncludable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+
+		$repository->setIncludable([
+			'foo',
+			'bar',
+			'baz'
+		]);
+
+		$repository->removeIncludable('foo');
+
+		$this->assertSame(['bar', 'baz'], $repository->getIncludable());
+	}
+
+	public function testItCanRemoveManyIncludable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+
+		$repository->setIncludable([
+			'foo',
+			'bar',
+			'baz'
+		]);
+
+		$repository->removeManyIncludable(['foo', 'bar']);
+
+		$this->assertSame(['baz'], $repository->getIncludable());
+	}
+
+	public function testItCanDetermineIsIncludable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+
+		$repository->setIncludable([
+			'*' // Allow all
+		]);
+
+		$this->assertTrue($repository->isIncludable('foobar'));
+
+		$repository->setIncludable([
+			'foo',
+			'bar',
+			'baz'
+		]);
+
+		$this->assertFalse($repository->isIncludable('foobar'));
+		$this->assertTrue($repository->isIncludable('foo'));
+	}
+
+	public function testItCanSetFilterable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+
+		$repository->setFilterable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$this->assertSame([
+			'foo',
+			'bar',
+			'baz',
+		], $repository->getFilterable());
+	}
+
+	public function testItCanAddFilterable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+
+		$repository->setFilterable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$repository->addFilterable('foobar');
+
+		$this->assertSame([
+			'foo',
+			'bar',
+			'baz',
+			'foobar',
+		], $repository->getFilterable());
+	}
+
+	public function testItCanAddManyFilterable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+
+		$repository->setFilterable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$repository->addManyFilterable(['foobar', 'bazbat']);
+
+		$this->assertSame([
+			'foo',
+			'bar',
+			'baz',
+			'foobar',
+			'bazbat',
+		], $repository->getFilterable());
+	}
+
+	public function testItCanRemoveFilterable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+
+		$repository->setFilterable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$repository->removeFilterable('bar');
+
+		$this->assertSame(['foo', 'baz',], $repository->getFilterable());
+	}
+
+	public function testItCanRemoveManyFilterable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+
+		$repository->setFilterable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$repository->removeManyFilterable(['foo', 'baz']);
+
+		$this->assertSame(['bar',], $repository->getFilterable());
+	}
+
+	public function testItCanDetermineIsFilterable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+
+		$repository->setFilterable([
+			'*'
+		]);
+
+		$this->assertTrue($repository->isFilterable('foobar'));
+
+		$repository->setFilterable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$this->assertFalse($repository->isFilterable('foobar'));
+		$this->assertTrue($repository->isFilterable('foo'));
+	}
+
+	public function testItDoesNotFillFieldThatIsNotFillable()
+	{
+		$post = $this->getRepository(
+				Post::class, [
+				'title' => 'All the Tags',
+				'not_fillable' => 'should not be set',
+				'user' => [
+					'username' => 'simon',
+					'not_fillable' => 'should not be set',
+					'profile' => [
+						'favorite_cheese' => 'brie',
+					],
+				],
+				'tags' => [
+					[
+						'label' => 'Important Stuff',
+						'not_fillable' => 'should not be set',
+					],
+					[
+						'label' => 'Less Important Stuff',
+						'not_fillable' => 'should not be set',
+					],
+				],
+			]
+		)->save();
+
+		$this->assertEquals($post->tags()->count(), 2);
+		$this->assertNotNull($post->user->profile);
+		$this->assertNotNull($post->user->profile->favorite_cheese, 'brie');
+
+		$this->assertNull($post->not_fillable);
+		$this->assertNull($post->user->not_fillable);
+		$this->assertNull($post->tags->get(0)->not_fillable);
+		$this->assertNull($post->tags->get(1)->not_fillable);
+	}
+
+	public function testItDoesNotIncludeRelationThatIsNotIncludable()
+	{
+		$this->getRepository(
+			User::class, [
+				'username' => 'joe',
+				'posts' => [
+					[
+						'title' => 'Some Great Post',
+					],
+				]
+			]
+		)->save();
+
+		$user = $this->getRepository(User::class)->setFilters(['username' => 'joe'])
+			->setEagerLoads(
+				[
+					'posts.nothing',
+					'not_exists',
+					'not_includable'
+				]
+			)->all()->first();
+
+		$this->assertNotNull($user);
+		$this->assertInstanceOf(Collection::class, $user->posts);
+		$this->assertInstanceOf(Post::class, $user->posts->first());
+
+		$user = $user->toArray();
+
+		$this->assertTrue(! isset($user['posts'][0]['nothing']));
+		$this->assertTrue(! isset($user['not_exists']));
+		$this->assertTrue(! isset($user['not_includable']));
+	}
+
+	public function testItDoesNotFilterOnWhatIsNotFilterable()
+	{
+		$this->seedUsers();
+
+		// Test that the repository implements filters correctly
+		$repository = $this->getRepository(User::class);
+		$this->assertEquals($repository->all()->count(), 4);
+
+		$found_users = $repository->setFilters([
+			'not_filterable' => '=foo', // Should not be applied
+			'posts.not_filterable' => '=foo', // Should not be applied
+		])->all();
+		$this->assertEquals($found_users->count(), 4); // No filters applied, expect to get all 4 users
 	}
 
 	public function testItCanAggregateQueryCount()
