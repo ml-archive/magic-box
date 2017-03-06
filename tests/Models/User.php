@@ -33,6 +33,21 @@ class User extends Model implements MagicBoxResource
 	];
 
 	/**
+	 * @const array
+	 */
+	const FILTERABLE = [
+		'username',
+		'name',
+		'hands',
+		'occupation',
+		'times_captured',
+		'posts.title',
+		'posts.tags',
+		'posts.tags.label',
+		'profile.is_human',
+	];
+
+	/**
 	 * @var string
 	 */
 	protected $table = 'users';
@@ -95,5 +110,15 @@ class User extends Model implements MagicBoxResource
 	public function getRepositoryIncludable(): array
 	{
 		return self::INCLUDABLE;
+	}
+
+	/**
+	 * Get the list of fields filterable by the repository
+	 *
+	 * @return array
+	 */
+	public function getRepositoryFilterable(): array
+	{
+		return self::FILTERABLE;
 	}
 }

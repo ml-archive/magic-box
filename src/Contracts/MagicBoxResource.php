@@ -22,4 +22,12 @@ interface MagicBoxResource
 	 * @return array
 	 */
 	public function getRepositoryIncludable(): array;
+
+	/**
+	 * Get the list of fields filterable by the repository
+	 *
+	 * @return array
+	 */
+	public function getRepositoryFilterable(): array;
+
 }

@@ -21,6 +21,13 @@ class EloquentRepository implements Repository
 	use ChecksRelations;
 
 	/**
+	 * Value that defines allowing all fields/relationships in includable/filterable/fillable
+	 *
+	 * @const array
+	 */
+	const ALLOW_ALL = ['*'];
+
+	/**
 	 * An instance variable specifying the model handled by this repository.
 	 *
 	 * @var string
@@ -98,6 +105,13 @@ class EloquentRepository implements Repository
 	private $includable = [];
 
 	/**
+	 * Fields that can be filtered on the repository
+	 *
+	 * @var array
+	 */
+	private $filterable = [];
+
+	/**
 	 * The key name used in all queries.
 	 *
 	 * @var int
@@ -126,8 +140,11 @@ class EloquentRepository implements Repository
 		$this->model_class = $model_class;
 
 		$instance = new $model_class;
-		$this->fillable = $instance->getRepositoryFillable();
-		$this->includable = $instance->getRepositoryIncludable();
+
+		// @todo use set methods
+		$this->setFillable($instance->getRepositoryFillable());
+		$this->setIncludable($instance->getRepositoryIncludable());
+		$this->setFilterable($instance->getRepositoryFilterable());
 
 		return $this;
 	}
@@ -451,6 +468,10 @@ class EloquentRepository implements Repository
 	 */
 	public function isFillable(string $key): bool
 	{
+		if ($this->fillable === self::ALLOW_ALL) {
+			return true;
+		}
+
 		return in_array($key, $this->fillable);
 	}
 
@@ -485,7 +506,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function addIncludeable($includable): EloquentRepository
+	public function addIncludable($includable): EloquentRepository
 	{
 		$this->includable[] = $includable;
 
@@ -493,7 +514,7 @@ class EloquentRepository implements Repository
 	}
 
 	/**
-	 * Add many fillable fields
+	 * Add many includable fields
 	 *
 	 * @param array $includable
 	 *
@@ -547,7 +568,111 @@ class EloquentRepository implements Repository
 	 */
 	public function isIncludable(string $key): bool
 	{
+		if ($this->includable === self::ALLOW_ALL) {
+			return true;
+		}
+
 		return in_array($key, $this->includable);
+	}
+
+	/**
+	 * Set the fields which can be filtered on the model
+	 *
+	 * @param array $filterable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function setFilterable(array $filterable): EloquentRepository
+	{
+		$this->filterable = $filterable;
+
+		return $this;
+	}
+
+	/**
+	 * Get the filterable fields
+	 *
+	 * @return array
+	 */
+	public function getFilterable(): array
+	{
+		return $this->filterable;
+	}
+
+	/**
+	 * Add a filterable field
+	 *
+	 * @param string $filterable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function addFilterable($filterable): EloquentRepository
+	{
+		$this->filterable[] = $filterable;
+
+		return $this;
+	}
+
+	/**
+	 * Add many filterable fields
+	 *
+	 * @param array $filterable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function addManyFilterable(array $filterable): EloquentRepository
+	{
+		$this->filterable = array_merge($this->filterable, $filterable);
+
+		return $this;
+	}
+
+	/**
+	 * Remove a filterable field
+	 *
+	 * @param $filterable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function removeFilterable($filterable): EloquentRepository
+	{
+		foreach ($this->filterable as $i => $value) {
+			if ($value === $filterable) {
+				unset($this->filterable[$i]);
+			}
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Remove many filterable fields
+	 *
+	 * @param array $filterable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function removeManyFilterable(array $filterable): EloquentRepository
+	{
+		$this->filterable = array_unique($this->filterable, $filterable);
+
+		return $this;
+	}
+
+	/**
+	 * Determine whether a given key is filterable
+	 *
+	 * @param string $key
+	 *
+	 * @return bool
+	 */
+	public function isFilterable(string $key): bool
+	{
+		if ($this->filterable === self::ALLOW_ALL) {
+			return true;
+		}
+
+		return in_array($key, $this->filterable);
 	}
 
 	/**
@@ -600,7 +725,10 @@ class EloquentRepository implements Repository
 	 */
 	protected function modifyQuery($query)
 	{
-		$filters = $this->getFilters();
+		// Only include filters which have been whitelisted in $this->filterable
+		$filters = array_filter($this->getFilters(), function ($filter_key) {
+			return $this->isFilterable($filter_key);
+		}, ARRAY_FILTER_USE_KEY);
 		$sort_order_options = $this->getSortOrder();
 		$group_by = $this->getGroupBy();
 		$aggregate = $this->getAggregate();

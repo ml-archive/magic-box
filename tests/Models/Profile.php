@@ -24,6 +24,16 @@ class Profile extends Model implements MagicBoxResource
 	const INCLUDABLE = ['user',];
 
 	/**
+	 * @const array
+	 */
+	const FILTERABLE = [
+		'user_id',
+		'favorite_cheese',
+		'favorite_fruit',
+		'is_human',
+	];
+
+	/**
 	 * @var string
 	 */
 	protected $table = 'profiles';
@@ -59,5 +69,15 @@ class Profile extends Model implements MagicBoxResource
 	public function getRepositoryIncludable(): array
 	{
 		return self::INCLUDABLE;
+	}
+
+	/**
+	 * Get the list of fields filterable by the repository
+	 *
+	 * @return array
+	 */
+	public function getRepositoryFilterable(): array
+	{
+		return self::FILTERABLE;
 	}
 }
