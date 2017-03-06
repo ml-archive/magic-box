@@ -442,6 +442,9 @@ class EloquentRepository implements Repository
 			}
 		}
 
+		// Rebase array keys numerically
+		$this->setFillable(array_values($this->fillable));
+
 		return $this;
 	}
 
@@ -454,7 +457,8 @@ class EloquentRepository implements Repository
 	 */
 	public function removeManyFillable(array $fillable): EloquentRepository
 	{
-		$this->fillable = array_unique($this->fillable, $fillable);
+		// Diff then rebase keys numerically
+		$this->fillable = array_values(array_diff($this->fillable, $fillable));
 
 		return $this;
 	}
@@ -542,6 +546,9 @@ class EloquentRepository implements Repository
 			}
 		}
 
+		// Rebase array keys numerically
+		$this->setIncludable(array_values($this->includable));
+
 		return $this;
 	}
 
@@ -554,7 +561,8 @@ class EloquentRepository implements Repository
 	 */
 	public function removeManyIncludable(array $includable): EloquentRepository
 	{
-		$this->includable = array_unique($this->includable, $includable);
+		// Diff then rebase keys numerically
+		$this->includable = array_values(array_diff($this->includable, $includable));
 
 		return $this;
 	}
@@ -642,6 +650,9 @@ class EloquentRepository implements Repository
 			}
 		}
 
+		// Rebase array keys numerically
+		$this->setFilterable(array_values($this->filterable));
+
 		return $this;
 	}
 
@@ -654,7 +665,8 @@ class EloquentRepository implements Repository
 	 */
 	public function removeManyFilterable(array $filterable): EloquentRepository
 	{
-		$this->filterable = array_unique($this->filterable, $filterable);
+		// Diff then rebase keys numerically
+		$this->filterable = array_values(array_diff($this->filterable, $filterable));
 
 		return $this;
 	}

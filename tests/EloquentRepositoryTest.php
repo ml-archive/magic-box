@@ -18,7 +18,7 @@ class EloquentRepositoryTest extends DBTestCase
 	 *
 	 * @param string|null $model_class
 	 * @param array $input
-	 * @return \Fuzz\MagicBox\EloquentRepository|static
+	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
 	private function getRepository($model_class = null, array $input = [])
 	{
@@ -877,6 +877,340 @@ class EloquentRepositoryTest extends DBTestCase
 			'username' => '~galaxyfarfaraway.com',
 			'profile.is_human' => '=true',
 		], $filters);
+	}
+
+	public function testItCanSetFillable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILLABLE, $repository->getFillable());
+
+		$repository->setFillable(['foo']);
+
+		$this->assertSame(['foo'], $repository->getFillable());
+	}
+
+	public function testItCanAddFillable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILLABLE, $repository->getFillable());
+
+		$repository->addFillable('foo');
+
+		$expect = User::FILLABLE;
+		$expect[] = 'foo';
+
+		$this->assertSame($expect, $repository->getFillable());
+	}
+
+	public function testItCanAddManyFillable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILLABLE, $repository->getFillable());
+
+		$repository->addManyFillable(['foo', 'bar', 'baz']);
+
+		$expect = User::FILLABLE;
+		$expect[] = 'foo';
+		$expect[] = 'bar';
+		$expect[] = 'baz';
+
+		$this->assertSame($expect, $repository->getFillable());
+	}
+
+	public function testItCanRemoveFillable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILLABLE, $repository->getFillable());
+
+		$repository->setFillable([
+			'foo',
+			'baz',
+			'bag',
+		]);
+
+		$this->assertSame([
+			'foo',
+			'baz',
+			'bag',
+		], $repository->getFillable());
+
+		$repository->removeFillable('baz');
+
+		$this->assertSame(['foo', 'bag'], $repository->getFillable());
+	}
+
+	public function testItCanRemoveManyFillable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILLABLE, $repository->getFillable());
+
+		$repository->setFillable([
+			'foo',
+			'baz',
+			'bag',
+		]);
+
+		$this->assertSame([
+			'foo',
+			'baz',
+			'bag',
+		], $repository->getFillable());
+
+		$repository->removeManyFillable(['baz', 'bag']);
+
+		$this->assertSame(['foo',], $repository->getFillable());
+	}
+
+	public function testItCanDetermineIfIsFillable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILLABLE, $repository->getFillable());
+
+		$repository->setFillable([
+			'*' // allow all
+		]);
+
+		$this->assertTrue($repository->isFillable('foobar'));
+
+		$repository->setFillable([
+			'foo',
+			'baz',
+			'bag',
+		]);
+
+		$this->assertFalse($repository->isFillable('foobar'));
+		$this->assertTrue($repository->isFillable('foo'));
+	}
+
+	public function testItCanSetIncludable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+
+		$repository->setIncludable([
+			'foo',
+			'bar',
+			'baz'
+		]);
+
+		$this->assertSame(['foo', 'bar', 'baz'], $repository->getIncludable());
+	}
+
+	public function testItCanAddIncludable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+
+		$repository->setIncludable([
+			'foo',
+			'bar',
+			'baz'
+		]);
+
+		$repository->addIncludable('foobar');
+
+		$this->assertSame(['foo', 'bar', 'baz', 'foobar'], $repository->getIncludable());
+	}
+
+	public function testItCanAddManyIncludable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+
+		$repository->setIncludable([
+			'foo',
+			'bar',
+			'baz'
+		]);
+
+		$repository->addManyIncludable(['foobar', 'bazbat']);
+
+		$this->assertSame(['foo', 'bar', 'baz', 'foobar', 'bazbat'], $repository->getIncludable());
+	}
+
+	public function testItCanRemoveIncludable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+
+		$repository->setIncludable([
+			'foo',
+			'bar',
+			'baz'
+		]);
+
+		$repository->removeIncludable('foo');
+
+		$this->assertSame(['bar', 'baz'], $repository->getIncludable());
+	}
+
+	public function testItCanRemoveManyIncludable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+
+		$repository->setIncludable([
+			'foo',
+			'bar',
+			'baz'
+		]);
+
+		$repository->removeManyIncludable(['foo', 'bar']);
+
+		$this->assertSame(['baz'], $repository->getIncludable());
+	}
+
+	public function testItCanDetermineIsIncludable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+
+		$repository->setIncludable([
+			'*' // Allow all
+		]);
+
+		$this->assertTrue($repository->isIncludable('foobar'));
+
+		$repository->setIncludable([
+			'foo',
+			'bar',
+			'baz'
+		]);
+
+		$this->assertFalse($repository->isIncludable('foobar'));
+		$this->assertTrue($repository->isIncludable('foo'));
+	}
+
+	public function testItCanSetFilterable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+
+		$repository->setFilterable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$this->assertSame([
+			'foo',
+			'bar',
+			'baz',
+		], $repository->getFilterable());
+	}
+
+	public function testItCanAddFilterable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+
+		$repository->setFilterable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$repository->addFilterable('foobar');
+
+		$this->assertSame([
+			'foo',
+			'bar',
+			'baz',
+			'foobar',
+		], $repository->getFilterable());
+	}
+
+	public function testItCanAddManyFilterable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+
+		$repository->setFilterable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$repository->addManyFilterable(['foobar', 'bazbat']);
+
+		$this->assertSame([
+			'foo',
+			'bar',
+			'baz',
+			'foobar',
+			'bazbat',
+		], $repository->getFilterable());
+	}
+
+	public function testItCanRemoveFilterable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+
+		$repository->setFilterable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$repository->removeFilterable('bar');
+
+		$this->assertSame(['foo', 'baz',], $repository->getFilterable());
+	}
+
+	public function testItCanRemoveManyFilterable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+
+		$repository->setFilterable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$repository->removeManyFilterable(['foo', 'baz']);
+
+		$this->assertSame(['bar',], $repository->getFilterable());
+	}
+
+	public function testItCanDetermineIsFilterable()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+
+		$repository->setFilterable([
+			'*'
+		]);
+
+		$this->assertTrue($repository->isFilterable('foobar'));
+
+		$repository->setFilterable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$this->assertFalse($repository->isFilterable('foobar'));
+		$this->assertTrue($repository->isFilterable('foo'));
 	}
 
 	public function testItCanAggregateQueryCount()
