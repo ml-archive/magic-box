@@ -2,6 +2,7 @@
 
 namespace Fuzz\MagicBox\Contracts;
 
+use Fuzz\MagicBox\EloquentRepository;
 use Illuminate\Database\Eloquent\Model;
 
 interface Repository
@@ -93,7 +94,7 @@ interface Repository
 	 * Find an instance of a model by ID.
 	 *
 	 * @param int $id
-	 * @return \Fuzz\Data\Eloquent\Model
+	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	public function find($id);
 
@@ -101,7 +102,7 @@ interface Repository
 	 * Find an instance of a model by ID, or fail.
 	 *
 	 * @param int $id
-	 * @return \Fuzz\Data\Eloquent\Model
+	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	public function findOrFail($id);
 
@@ -137,7 +138,7 @@ interface Repository
 	/**
 	 * Get a random value.
 	 *
-	 * @return \Fuzz\Data\Eloquent\Model
+	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	public function random();
 
@@ -158,21 +159,21 @@ interface Repository
 	/**
 	 * Create a model.
 	 *
-	 * @return \Fuzz\Data\Eloquent\Model
+	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	public function create();
 
 	/**
 	 * Read a model.
 	 *
-	 * @return \Fuzz\Data\Eloquent\Model
+	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	public function read();
 
 	/**
 	 * Update a model.
 	 *
-	 * @return \Fuzz\Data\Eloquent\Model
+	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	public function update();
 
@@ -186,7 +187,190 @@ interface Repository
 	/**
 	 * Save a model, regardless of whether or not it is "new".
 	 *
-	 * @return \Fuzz\Data\Eloquent\Model
+	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	public function save();
+
+	/**
+	 * Set the fillable array
+	 *
+	 * @param array $fillable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function setFillable(array $fillable): EloquentRepository;
+
+	/**
+	 * Get the fillable attributes
+	 *
+	 * @return array
+	 */
+	public function getFillable(): array;
+
+	/**
+	 * Add a fillable attribute
+	 *
+	 * @param string $fillable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function addFillable(string $fillable): EloquentRepository;
+
+	/**
+	 * Add many fillable fields
+	 *
+	 * @param array $fillable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function addManyFillable(array $fillable): EloquentRepository;
+
+	/**
+	 * Remove a fillable attribute
+	 *
+	 * @param string $fillable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function removeFillable($fillable): EloquentRepository;
+
+	/**
+	 * Remove many fillable fields
+	 *
+	 * @param array $fillable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function removeManyFillable(array $fillable): EloquentRepository;
+
+	/**
+	 * Determine whether a given key is fillable
+	 *
+	 * @param string $key
+	 *
+	 * @return bool
+	 */
+	public function isFillable(string $key): bool;
+
+	/**
+	 * Set the relationships which can be included by the model
+	 *
+	 * @param array $includable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function setIncludable(array $includable): EloquentRepository;
+
+	/**
+	 * Get the includable relationships
+	 *
+	 * @return array
+	 */
+	public function getIncludable(): array;
+
+	/**
+	 * Add an includable relationship
+	 *
+	 * @param string $includable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function addIncludable($includable): EloquentRepository;
+
+	/**
+	 * Add many includable fields
+	 *
+	 * @param array $includable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function addManyIncludable(array $includable): EloquentRepository;
+
+	/**
+	 * Remove an includable relationship
+	 *
+	 * @param $includable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function removeIncludable($includable): EloquentRepository;
+
+	/**
+	 * Remove many includable relationships
+	 *
+	 * @param array $includable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function removeManyIncludable(array $includable): EloquentRepository;
+
+	/**
+	 * Determine whether a given key is includable
+	 *
+	 * @param string $key
+	 *
+	 * @return bool
+	 */
+	public function isIncludable(string $key): bool;
+
+	/**
+	 * Set the fields which can be filtered on the model
+	 *
+	 * @param array $filterable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function setFilterable(array $filterable): EloquentRepository;
+
+	/**
+	 * Get the filterable fields
+	 *
+	 * @return array
+	 */
+	public function getFilterable(): array;
+
+	/**
+	 * Add a filterable field
+	 *
+	 * @param string $filterable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function addFilterable($filterable): EloquentRepository;
+
+	/**
+	 * Add many filterable fields
+	 *
+	 * @param array $filterable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function addManyFilterable(array $filterable): EloquentRepository;
+
+	/**
+	 * Remove a filterable field
+	 *
+	 * @param $filterable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function removeFilterable($filterable): EloquentRepository;
+
+	/**
+	 * Remove many filterable fields
+	 *
+	 * @param array $filterable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function removeManyFilterable(array $filterable): EloquentRepository;
+
+	/**
+	 * Determine whether a given key is filterable
+	 *
+	 * @param string $key
+	 *
+	 * @return bool
+	 */
+	public function isFilterable(string $key): bool;
 }
