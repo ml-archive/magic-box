@@ -20,8 +20,7 @@ class RepositoryMiddleware
 	 */
 	public function handle(Request $request, \Closure $next)
 	{
-		// Bind the repository contract to this concrete instance so it can be injected in resource routes
-		app()->instance(Repository::class, $this->buildRepository($request));
+		$this->buildRepository($request);
 
 		return $next($request);
 	}
@@ -65,8 +64,9 @@ class RepositoryMiddleware
 			$input += $request->all();
 		}
 
-		// Instantiate an eloquent repository bound to our standardized route parameter
-		$repository = (new EloquentRepository)->setModelClass($model_class)
+		// Resolve an eloquent repository bound to our standardized route parameter
+		$repository = resolve(Repository::class);
+		$repository->setModelClass($model_class)
 			->setFilters((array) $request->get('filters'))
 			->setSortOrder((array) $request->get('sort'))
 			->setEagerLoads((array) $request->get('include'))
