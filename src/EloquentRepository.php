@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class EloquentRepository implements Repository
 {
@@ -83,6 +84,20 @@ class EloquentRepository implements Repository
 	private $modifiers = [];
 
 	/**
+	 * Attributes on the model which can be modified by the repository
+	 *
+	 * @var array
+	 */
+	private $fillable = [];
+
+	/**
+	 * Relationships that can be included with the repository
+	 *
+	 * @var array
+	 */
+	private $includable = [];
+
+	/**
 	 * The key name used in all queries.
 	 *
 	 * @var int
@@ -105,10 +120,14 @@ class EloquentRepository implements Repository
 	public function setModelClass($model_class)
 	{
 		if ( !is_subclass_of($model_class, Model::class)) {
-			throw new \InvalidArgumentException('Specified model class must be an instance of ' . Model::class);
+			throw new InvalidArgumentException('Specified model class must be an instance of ' . Model::class);
 		}
 
 		$this->model_class = $model_class;
+
+		$instance = new $model_class;
+		$this->fillable = $instance->getRepositoryFillable();
+		$this->includable = $instance->getRepositoryIncludable();
 
 		return $this;
 	}
@@ -325,6 +344,8 @@ class EloquentRepository implements Repository
 	public function setModifiers(array $modifiers)
 	{
 		$this->modifiers = $modifiers;
+
+		return $this;
 	}
 
 	/**
@@ -335,6 +356,198 @@ class EloquentRepository implements Repository
 	public function getModifiers()
 	{
 		return $this->modifiers;
+	}
+
+	/**
+	 * Set the fillable array
+	 *
+	 * @param array $fillable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function setFillable(array $fillable): EloquentRepository
+	{
+		$this->fillable = $fillable;
+
+		return $this;
+	}
+
+	/**
+	 * Get the fillable attributes
+	 *
+	 * @return array
+	 */
+	public function getFillable(): array
+	{
+		return $this->fillable;
+	}
+
+	/**
+	 * Add a fillable attribute
+	 *
+	 * @param string $fillable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function addFillable(string $fillable): EloquentRepository
+	{
+		$this->fillable[] = $fillable;
+
+		return $this;
+	}
+
+	/**
+	 * Add many fillable fields
+	 *
+	 * @param array $fillable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function addManyFillable(array $fillable): EloquentRepository
+	{
+		$this->fillable = array_merge($this->fillable, $fillable);
+
+		return $this;
+	}
+
+	/**
+	 * Remove a fillable attribute
+	 *
+	 * @param string $fillable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function removeFillable($fillable): EloquentRepository
+	{
+		foreach ($this->fillable as $i => $value) {
+			if ($value === $fillable) {
+				unset($this->fillable[$i]);
+			}
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Remove many fillable fields
+	 *
+	 * @param array $fillable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function removeManyFillable(array $fillable): EloquentRepository
+	{
+		$this->fillable = array_unique($this->fillable, $fillable);
+
+		return $this;
+	}
+
+	/**
+	 * Determine whether a given key is fillable
+	 *
+	 * @param string $key
+	 *
+	 * @return bool
+	 */
+	public function isFillable(string $key): bool
+	{
+		return in_array($key, $this->fillable);
+	}
+
+	/**
+	 * Set the relationships which can be included by the model
+	 *
+	 * @param array $includable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function setIncludable(array $includable): EloquentRepository
+	{
+		$this->includable = $includable;
+
+		return $this;
+	}
+
+	/**
+	 * Get the includable relationships
+	 *
+	 * @return array
+	 */
+	public function getIncludable(): array
+	{
+		return $this->includable;
+	}
+
+	/**
+	 * Add an includable relationship
+	 *
+	 * @param string $includable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function addIncludeable($includable): EloquentRepository
+	{
+		$this->includable[] = $includable;
+
+		return $this;
+	}
+
+	/**
+	 * Add many fillable fields
+	 *
+	 * @param array $includable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function addManyIncludable(array $includable): EloquentRepository
+	{
+		$this->includable = array_merge($this->includable, $includable);
+
+		return $this;
+	}
+
+	/**
+	 * Remove an includable relationship
+	 *
+	 * @param $includable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function removeIncludable($includable): EloquentRepository
+	{
+		foreach ($this->includable as $i => $value) {
+			if ($value === $includable) {
+				unset($this->includable[$i]);
+			}
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Remove many includable relationships
+	 *
+	 * @param array $includable
+	 *
+	 * @return \Fuzz\MagicBox\EloquentRepository
+	 */
+	public function removeManyIncludable(array $includable): EloquentRepository
+	{
+		$this->includable = array_unique($this->includable, $includable);
+
+		return $this;
+	}
+
+	/**
+	 * Determine whether a given key is includable
+	 *
+	 * @param string $key
+	 *
+	 * @return bool
+	 */
+	public function isIncludable(string $key): bool
+	{
+		return in_array($key, $this->includable);
 	}
 
 	/**
@@ -532,7 +745,6 @@ class EloquentRepository implements Repository
 			array_shift($relations);
 		}
 
-		$safe_relations = [];
 		// Loop through all relations to check for valid relationship signatures
 		foreach ($relations as $name => $constraints) {
 			// Constraints may be passed in either form:
@@ -541,6 +753,13 @@ class EloquentRepository implements Repository
 			// 'relation.nested' => function() { ... }
 			$constraints_are_name = is_numeric($name);
 			$relation_name = $constraints_are_name ? $constraints : $name;
+
+			// If this relation is not includable, skip
+			// We expect to see foo.nested.relation in includable if the 3 level nested relationship is includable
+			if (! $this->isIncludable($relation_name)) {
+				unset($relations[$name]);
+				continue;
+			}
 
 			// Expand the dot-notation to see all relations
 			$nested_relations = explode(self::GLUE, $relation_name);
@@ -786,10 +1005,8 @@ class EloquentRepository implements Repository
 		$instance_model = get_class($instance);
 		$safe_instance = new $instance_model;
 
-		$fill_attributes = [];
-
 		foreach (array_except($input, [$instance->getKeyName()]) as $key => $value) {
-			if (($relation = $this->isRelation($instance, $key, $instance_model)) && $instance->isFillable($key)) {
+			if (($relation = $this->isRelation($instance, $key, $instance_model)) && $this->isFillable($key)) {
 				$relation_type = get_class($relation);
 
 				switch ($relation_type) {
@@ -808,17 +1025,15 @@ class EloquentRepository implements Repository
 						];
 						break;
 				}
-			} elseif ((in_array($key, $model_fields) || $instance->hasSetMutator($key)) && $instance->isFillable($key)) {
-				// Check for fillability status here so we don't throw a mass assignment exception
-				// Any non-fillable fields simply won't be modified
-				$fill_attributes[$key] = $value;
+			} elseif ((in_array($key, $model_fields) || $instance->hasSetMutator($key)) && $this->isFillable($key)) {
+				$instance->{$key} = $value;
 			}
 		}
 
 		unset($safe_instance);
 
 		$this->applyRelations($before_relations, $instance);
-		$instance->fill($fill_attributes)->save();
+		$instance->save();
 		$this->applyRelations($after_relations, $instance);
 
 		return true;
@@ -963,7 +1178,8 @@ class EloquentRepository implements Repository
 	/**
 	 * Update a model.
 	 *
-	 * @return boolean
+	 * @return bool
+	 * @throws \Exception
 	 */
 	final public function delete()
 	{

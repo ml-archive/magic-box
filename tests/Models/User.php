@@ -2,22 +2,40 @@
 
 namespace Fuzz\MagicBox\Tests\Models;
 
+use Fuzz\MagicBox\Contracts\MagicBoxResource;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class User extends Model
+class User extends Model implements MagicBoxResource
 {
 	use SoftDeletes;
+
+	/**
+	 * @const array
+	 */
+	const FILLABLE = [
+		'username',
+		'name',
+		'hands',
+		'occupation',
+		'times_captured',
+		'posts',
+		'profile',
+	];
+
+	/**
+	 * @const array
+	 */
+	const INCLUDABLE = [
+		'posts',
+		'posts.user',
+		'profile',
+	];
 
 	/**
 	 * @var string
 	 */
 	protected $table = 'users';
-
-	/**
-	 * @var array
-	 */
-	protected $fillable = ['username', 'name', 'hands', 'occupation', 'times_captured', 'posts', 'profile'];
 
 	/**
 	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
@@ -49,6 +67,7 @@ class User extends Model
 	 * For unit testing purposes
 	 *
 	 * @param array $fillable
+	 *
 	 * @return $this
 	 */
 	public function setFillable(array $fillable)
@@ -56,5 +75,25 @@ class User extends Model
 		$this->fillable = $fillable;
 
 		return $this;
+	}
+
+	/**
+	 * Get the list of fields fillable by the repository
+	 *
+	 * @return array
+	 */
+	public function getRepositoryFillable(): array
+	{
+		return self::FILLABLE;
+	}
+
+	/**
+	 * Get the list of relationships fillable by the repository
+	 *
+	 * @return array
+	 */
+	public function getRepositoryIncludable(): array
+	{
+		return self::INCLUDABLE;
 	}
 }

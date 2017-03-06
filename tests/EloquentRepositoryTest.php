@@ -575,6 +575,7 @@ class EloquentRepositoryTest extends DBTestCase
 			->setDepthRestriction(1)
 			->setEagerLoads(
 				[
+					'posts',
 					'posts.tags',
 				]
 			)->all()->toArray(); // toArray so we don't pull relations
@@ -589,14 +590,15 @@ class EloquentRepositoryTest extends DBTestCase
 			->setDepthRestriction(2)
 			->setEagerLoads(
 				[
-					'posts.tags',
+					'posts',
+					'posts.user',
 				]
 			)->all()->toArray(); // toArray so we don't pull relations
 
 		foreach ($users as $user) {
 			$this->assertTrue(isset($user['posts']));
 			$this->assertTrue(isset($user['posts'][0]));
-			$this->assertTrue(isset($user['posts'][0]['tags'])); // We should load both
+			$this->assertTrue(isset($user['posts'][0]['user'])); // We should load both
 		}
 	}
 

@@ -2,19 +2,33 @@
 
 namespace Fuzz\MagicBox\Tests\Models;
 
+use Fuzz\MagicBox\Contracts\MagicBoxResource;
 use Illuminate\Database\Eloquent\Model;
 
-class Post extends Model
+class Post extends Model implements MagicBoxResource
 {
+	/**
+	 * @const array
+	 */
+	const FILLABLE = [
+		'title',
+		'user_id',
+		'user',
+		'tags',
+	];
+
+	/**
+	 * @const array
+	 */
+	const INCLUDABLE = [
+		'user',
+		'tags',
+	];
+
 	/**
 	 * @var string
 	 */
 	protected $table = 'posts';
-
-	/**
-	 * @var array
-	 */
-	protected $fillable = ['title', 'user_id', 'user', 'tags'];
 
 	/**
 	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -25,10 +39,30 @@ class Post extends Model
 	}
 
 	/**
-	 * @return $this
+	 * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
 	 */
 	public function tags()
 	{
 		return $this->belongsToMany('Fuzz\MagicBox\Tests\Models\Tag')->withPivot('extra');
+	}
+
+	/**
+	 * Get the list of fields fillable by the repository
+	 *
+	 * @return array
+	 */
+	public function getRepositoryFillable(): array
+	{
+		return self::FILLABLE;
+	}
+
+	/**
+	 * Get the list of relationships fillable by the repository
+	 *
+	 * @return array
+	 */
+	public function getRepositoryIncludable(): array
+	{
+		return self::INCLUDABLE;
 	}
 }

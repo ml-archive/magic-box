@@ -9,5 +9,17 @@ namespace Fuzz\MagicBox\Contracts;
  */
 interface MagicBoxResource
 {
-	// Define a model as a MagicBox resource
+	/**
+	 * Get the list of fields fillable by the repository
+	 *
+	 * @return array
+	 */
+	public function getRepositoryFillable(): array;
+
+	/**
+	 * Get the list of relationships fillable by the repository
+	 *
+	 * @return array
+	 */
+	public function getRepositoryIncludable(): array;
 }
