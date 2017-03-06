@@ -4,11 +4,8 @@ namespace Fuzz\MagicBox\Middleware;
 
 use Fuzz\MagicBox\Utility\ExplicitModelResolver;
 use Illuminate\Http\Request;
-use Fuzz\MagicBox\Utility\Modeler;
-use Illuminate\Support\Facades\Auth;
 use Fuzz\MagicBox\EloquentRepository;
 use Fuzz\MagicBox\Contracts\Repository;
-use Fuzz\HttpException\AccessDeniedHttpException;
 
 class RepositoryMiddleware
 {
