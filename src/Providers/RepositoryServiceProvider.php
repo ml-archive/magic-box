@@ -2,8 +2,10 @@
 
 namespace Fuzz\MagicBox\Providers;
 
+use Fuzz\MagicBox\Contracts\ModelResolver;
 use Fuzz\MagicBox\Contracts\Repository;
 use Fuzz\MagicBox\EloquentRepository;
+use Fuzz\MagicBox\Utility\ExplicitModelResolver;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -27,8 +29,12 @@ class RepositoryServiceProvider extends ServiceProvider
 	{
 		$this->publishes([$this->configPath() => config_path('magic-box.php')]);
 
-		app()->instance(Repository::class, function () {
+		app()->instance(Repository::class, function() {
 			return new EloquentRepository;
+		});
+
+		app()->instance(ModelResolver::class, function() {
+			return new ExplicitModelResolver;
 		});
 	}
 

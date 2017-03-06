@@ -2,7 +2,7 @@
 
 namespace Fuzz\MagicBox\Middleware;
 
-use Fuzz\MagicBox\Utility\ExplicitModelResolver;
+use Fuzz\MagicBox\Contracts\ModelResolver;
 use Illuminate\Http\Request;
 use Fuzz\MagicBox\EloquentRepository;
 use Fuzz\MagicBox\Contracts\Repository;
@@ -38,7 +38,7 @@ class RepositoryMiddleware
 
 		// Resolve the model class if possible. And setup the repository.
 		/** @var \Illuminate\Database\Eloquent\Model $model_class */
-		$model_class = (new ExplicitModelResolver)->resolveModelClass($route);
+		$model_class = resolve(ModelResolver::class)->resolveModelClass($route);
 
 		// If the method is not GET lets get the input from everywhere.
 		// @TODO hmm, need to verify what happens on DELETE and PATCH.
