@@ -18,7 +18,7 @@ class EloquentRepositoryTest extends DBTestCase
 	 *
 	 * @param string|null $model_class
 	 * @param array $input
-	 * @return \Fuzz\MagicBox\EloquentRepository|static
+	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
 	private function getRepository($model_class = null, array $input = [])
 	{

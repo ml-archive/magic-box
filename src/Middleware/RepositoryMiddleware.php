@@ -2,6 +2,7 @@
 
 namespace Fuzz\MagicBox\Middleware;
 
+use Fuzz\MagicBox\Utility\ExplicitModelResolver;
 use Illuminate\Http\Request;
 use Fuzz\MagicBox\Utility\Modeler;
 use Illuminate\Support\Facades\Auth;
@@ -31,50 +32,34 @@ class RepositoryMiddleware
 	 * @param \Illuminate\Http\Request $request
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function buildRepository(Request $request)
+	public function buildRepository(Request $request): EloquentRepository
 	{
 		$input = [];
+
 		/** @var \Illuminate\Routing\Route $route */
 		$route = $request->route();
 
-		$modeler = new Modeler;
+		// Resolve the model class if possible. And setup the repository.
+		/** @var \Illuminate\Database\Eloquent\Model $model_class */
+		$model_class = (new ExplicitModelResolver)->resolveModelClass($route);
 
-		if ($request->segment(2) === 'me') {
-			/** @var \Illuminate\Database\Eloquent\Model $user */
-			$user = Auth::user();
-
-			if (is_null($user) || Auth::guest()) {
-				throw new AccessDeniedHttpException('You must be logged in.');
-			}
-
-			$model_class = get_class($user);
-			$input       = [$user->getKeyName() => $user->getKey()];
-		} else {
-			$model_class = $modeler->resolveModelClass($route);
-		}
-
-		// Look for /{model-class}/{id} RESTful requests
-		$parameters = $route->parametersWithoutNulls();
-		if (! empty($parameters)) {
-			$id    = reset($parameters);
-			$input = compact('id');
-		}
-
+		// If the method is not GET lets get the input from everywhere.
+		// @TODO hmm, need to verify what happens on DELETE and PATCH.
 		if ($request->method() !== 'GET') {
 			$input += $request->all();
 		}
 
 		// Resolve an eloquent repository bound to our standardized route parameter
 		$repository = resolve(Repository::class);
+
 		$repository->setModelClass($model_class)
 			->setFilters((array) $request->get('filters'))
 			->setSortOrder((array) $request->get('sort'))
+			->setGroupBy((array) $request->get('group'))
 			->setEagerLoads((array) $request->get('include'))
 			->setAggregate((array) $request->get('aggregate'))
-			->setGroupBy((array) $request->get('group'))
-			->setDepthRestriction(config('magicbox.depth_restriction', 3))
+			->setDepthRestriction(config('magic-box.eager_load_depth'))
 			->setInput($input);
-
 		return $repository;
 	}
 }
