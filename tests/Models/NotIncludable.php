@@ -5,58 +5,27 @@ namespace Fuzz\MagicBox\Tests\Models;
 use Fuzz\MagicBox\Contracts\MagicBoxResource;
 use Illuminate\Database\Eloquent\Model;
 
-class Tag extends Model implements MagicBoxResource
+class NotIncludable extends Model implements MagicBoxResource
 {
 	/**
 	 * @const array
 	 */
-	const FILLABLE = [
-		'label',
-		'posts',
-	];
+	const FILLABLE = [];
 
 	/**
 	 * @const array
 	 */
-	const INCLUDABLE = ['user', 'posts'];
+	const INCLUDABLE = [];
 
 	/**
 	 * @const array
 	 */
-	const FILTERABLE = [
-		'username',
-		'name',
-		'hands',
-		'occupation',
-		'times_captured',
-		'posts.label',
-	];
+	const FILTERABLE = [];
 
 	/**
 	 * @var string
 	 */
-	protected $table = 'tags';
-
-	/**
-	 * @var array
-	 */
-	protected $fillable = [
-		'label',
-		'posts',
-	];
-
-	/**
-	 * @var bool
-	 */
-	public $timestamps = false;
-
-	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
-	 */
-	public function posts()
-	{
-		return $this->belongsToMany(Post::class)->withPivot('extra');
-	}
+	protected $table = 'not_includable';
 
 	/**
 	 * Get the list of fields fillable by the repository

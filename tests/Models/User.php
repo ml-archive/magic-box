@@ -57,7 +57,7 @@ class User extends Model implements MagicBoxResource
 	 */
 	public function posts()
 	{
-		return $this->hasMany('Fuzz\MagicBox\Tests\Models\Post');
+		return $this->hasMany(Post::class);
 	}
 
 	/**
@@ -65,7 +65,7 @@ class User extends Model implements MagicBoxResource
 	 */
 	public function profile()
 	{
-		return $this->hasOne('Fuzz\MagicBox\Tests\Models\Profile');
+		return $this->hasOne(Profile::class);
 	}
 
 	/**

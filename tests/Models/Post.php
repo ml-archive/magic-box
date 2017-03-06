@@ -45,9 +45,17 @@ class Post extends Model implements MagicBoxResource
 	/**
 	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
+	public function not_includable()
+	{
+		return $this->belongsTo(NotIncludable::class);
+	}
+
+	/**
+	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 */
 	public function user()
 	{
-		return $this->belongsTo('Fuzz\MagicBox\Tests\Models\User');
+		return $this->belongsTo(User::class);
 	}
 
 	/**
@@ -55,7 +63,7 @@ class Post extends Model implements MagicBoxResource
 	 */
 	public function tags()
 	{
-		return $this->belongsToMany('Fuzz\MagicBox\Tests\Models\Tag')->withPivot('extra');
+		return $this->belongsToMany(Tag::class)->withPivot('extra');
 	}
 
 	/**

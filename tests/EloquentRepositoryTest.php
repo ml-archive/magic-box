@@ -4,6 +4,7 @@ namespace Fuzz\MagicBox\Tests;
 
 use Fuzz\MagicBox\Tests\Models\Tag;
 use Fuzz\MagicBox\Tests\Seeds\FilterDataSeeder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Fuzz\MagicBox\Tests\Models\User;
 use Fuzz\MagicBox\Tests\Models\Post;
@@ -1211,6 +1212,90 @@ class EloquentRepositoryTest extends DBTestCase
 
 		$this->assertFalse($repository->isFilterable('foobar'));
 		$this->assertTrue($repository->isFilterable('foo'));
+	}
+
+	public function testItDoesNotFillFieldThatIsNotFillable()
+	{
+		$post = $this->getRepository(
+				Post::class, [
+				'title' => 'All the Tags',
+				'not_fillable' => 'should not be set',
+				'user' => [
+					'username' => 'simon',
+					'not_fillable' => 'should not be set',
+					'profile' => [
+						'favorite_cheese' => 'brie',
+					],
+				],
+				'tags' => [
+					[
+						'label' => 'Important Stuff',
+						'not_fillable' => 'should not be set',
+					],
+					[
+						'label' => 'Less Important Stuff',
+						'not_fillable' => 'should not be set',
+					],
+				],
+			]
+		)->save();
+
+		$this->assertEquals($post->tags()->count(), 2);
+		$this->assertNotNull($post->user->profile);
+		$this->assertNotNull($post->user->profile->favorite_cheese, 'brie');
+
+		$this->assertNull($post->not_fillable);
+		$this->assertNull($post->user->not_fillable);
+		$this->assertNull($post->tags->get(0)->not_fillable);
+		$this->assertNull($post->tags->get(1)->not_fillable);
+	}
+
+	public function testItDoesNotIncludeRelationThatIsNotIncludable()
+	{
+		$this->getRepository(
+			User::class, [
+				'username' => 'joe',
+				'posts' => [
+					[
+						'title' => 'Some Great Post',
+					],
+				]
+			]
+		)->save();
+
+		$user = $this->getRepository(User::class)->setFilters(['username' => 'joe'])
+			->setEagerLoads(
+				[
+					'posts.nothing',
+					'not_exists',
+					'not_includable'
+				]
+			)->all()->first();
+
+		$this->assertNotNull($user);
+		$this->assertInstanceOf(Collection::class, $user->posts);
+		$this->assertInstanceOf(Post::class, $user->posts->first());
+
+		$user = $user->toArray();
+
+		$this->assertTrue(! isset($user['posts'][0]['nothing']));
+		$this->assertTrue(! isset($user['not_exists']));
+		$this->assertTrue(! isset($user['not_includable']));
+	}
+
+	public function testItDoesNotFilterOnWhatIsNotFilterable()
+	{
+		$this->seedUsers();
+
+		// Test that the repository implements filters correctly
+		$repository = $this->getRepository(User::class);
+		$this->assertEquals($repository->all()->count(), 4);
+
+		$found_users = $repository->setFilters([
+			'not_filterable' => '=foo', // Should not be applied
+			'posts.not_filterable' => '=foo', // Should not be applied
+		])->all();
+		$this->assertEquals($found_users->count(), 4); // No filters applied, expect to get all 4 users
 	}
 
 	public function testItCanAggregateQueryCount()

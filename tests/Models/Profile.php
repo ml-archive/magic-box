@@ -48,7 +48,7 @@ class Profile extends Model implements MagicBoxResource
 	 */
 	public function user()
 	{
-		return $this->belongsTo('Fuzz\MagicBox\Tests\Models\User');
+		return $this->belongsTo(User::class);
 	}
 
 	/**
