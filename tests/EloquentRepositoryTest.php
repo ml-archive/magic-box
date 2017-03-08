@@ -977,6 +977,8 @@ class EloquentRepositoryTest extends DBTestCase
 			'*' // allow all
 		]);
 
+		$this->assertSame(EloquentRepository::ALLOW_ALL, $repository->getFillable());
+
 		$this->assertTrue($repository->isFillable('foobar'));
 
 		$repository->setFillable([
@@ -1081,6 +1083,8 @@ class EloquentRepositoryTest extends DBTestCase
 		$repository->setIncludable([
 			'*' // Allow all
 		]);
+
+		$this->assertSame(EloquentRepository::ALLOW_ALL, $repository->getIncludable());
 
 		$this->assertTrue($repository->isIncludable('foobar'));
 
@@ -1202,6 +1206,8 @@ class EloquentRepositoryTest extends DBTestCase
 			'*'
 		]);
 
+		$this->assertSame(EloquentRepository::ALLOW_ALL, $repository->getFilterable());
+
 		$this->assertTrue($repository->isFilterable('foobar'));
 
 		$repository->setFilterable([
@@ -1296,6 +1302,81 @@ class EloquentRepositoryTest extends DBTestCase
 			'posts.not_filterable' => '=foo', // Should not be applied
 		])->all();
 		$this->assertEquals($found_users->count(), 4); // No filters applied, expect to get all 4 users
+	}
+
+	public function testItFiltersWithAllFieldsIfAllowAllIsSet()
+	{
+		$this->seedUsers();
+
+		$repository = $this->getRepository(User::class);
+		$this->assertEquals($repository->all()->count(), 4);
+
+		// Filters not applied
+		$repository->setFilterable([]);
+		$found_users = $repository->setFilters([
+			'profile.is_human' => '=true',
+			'times_captured' => '>2'
+		])->all();
+		$this->assertEquals($found_users->count(), 4);
+
+		// Filters now applied
+		$repository->setFilterable(EloquentRepository::ALLOW_ALL);
+		$found_users = $repository->setFilters([
+			'profile.is_human' => '=true',
+			'times_captured' => '>2'
+		])->all();
+		$this->assertEquals($found_users->count(), 2);
+	}
+
+	public function testItCanGetIncludableAsAssoc()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$repository->setIncludable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$this->assertSame([
+			'foo' => true,
+			'bar' => true,
+			'baz' => true,
+		], $repository->getIncludable(true));
+	}
+
+	public function testItCanGetFillableAsAssoc()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$repository->setFillable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$this->assertSame([
+			'foo' => true,
+			'bar' => true,
+			'baz' => true,
+		], $repository->getFillable(true));
+	}
+
+	public function testItCanGetFilterableAsAssoc()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$repository->setFilterable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$this->assertSame([
+			'foo' => true,
+			'bar' => true,
+			'baz' => true,
+		], $repository->getFilterable(true));
 	}
 
 	public function testItCanAggregateQueryCount()

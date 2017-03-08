@@ -403,11 +403,17 @@ class EloquentRepository implements Repository
 	/**
 	 * Get the fillable attributes
 	 *
+	 * @param bool $assoc
+	 *
 	 * @return array
 	 */
-	public function getFillable(): array
+	public function getFillable(bool $assoc = false): array
 	{
-		return array_keys($this->fillable);
+		if ($this->fillable === self::ALLOW_ALL) {
+			return self::ALLOW_ALL;
+		}
+
+		return $assoc ? $this->fillable : array_keys($this->fillable);
 	}
 
 	/**
@@ -514,11 +520,17 @@ class EloquentRepository implements Repository
 	/**
 	 * Get the includable relationships
 	 *
+	 * @param bool $assoc
+	 *
 	 * @return array
 	 */
-	public function getIncludable(): array
+	public function getIncludable(bool $assoc = false): array
 	{
-		return array_keys($this->includable);
+		if ($this->includable === self::ALLOW_ALL) {
+			return self::ALLOW_ALL;
+		}
+
+		return $assoc ? $this->includable : array_keys($this->includable);
 	}
 
 	/**
@@ -625,11 +637,17 @@ class EloquentRepository implements Repository
 	/**
 	 * Get the filterable fields
 	 *
+	 * @param bool $assoc
+	 *
 	 * @return array
 	 */
-	public function getFilterable(): array
+	public function getFilterable(bool $assoc = false): array
 	{
-		return array_keys($this->filterable);
+		if ($this->filterable === self::ALLOW_ALL) {
+			return self::ALLOW_ALL;
+		}
+
+		return $assoc ? $this->filterable : array_keys($this->filterable);
 	}
 
 	/**
@@ -759,9 +777,9 @@ class EloquentRepository implements Repository
 	protected function modifyQuery($query)
 	{
 		// Only include filters which have been whitelisted in $this->filterable
-		$filters = array_filter($this->getFilters(), function ($filter_key) {
-			return $this->isFilterable($filter_key);
-		}, ARRAY_FILTER_USE_KEY);
+		$filters = $this->getFilterable() === self::ALLOW_ALL ?
+			$this->getFilters() :
+			Filter::intersectAllowedFilters($this->getFilters(), $this->getFilterable(true));
 		$sort_order_options = $this->getSortOrder();
 		$group_by = $this->getGroupBy();
 		$aggregate = $this->getAggregate();

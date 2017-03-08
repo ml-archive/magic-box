@@ -44,6 +44,81 @@ class Filter implements FilterInterface
 	protected static $table_prefix = null;
 
 	/**
+	 * Clean a set of filters by checking them against an array of allowed filters
+	 *
+	 * This is similar to an array intersect, if a $filter is present in $allowed and set to true,
+	 * then it is an allowed filter.
+	 *
+	 * $filters = [
+	 *        'foo' => 'bar',
+	 *        'and' => [
+	 *            'baz' => 'bat'
+	 *            'or' => [
+	 *                'bag' => 'boo'
+	 *            ]
+	 *        ],
+	 *        'or' => [
+	 *            'bar' => 'foo'
+	 *        ],
+	 * ];
+	 *
+	 * $allowed = [
+	 *        'foo' => true,
+	 *        'baz' => true,
+	 *        'baz' => true,
+	 *        'bar' => true,
+	 * ];
+	 *
+	 * $result = [
+	 *        'foo' => 'bar',
+	 *        'and' => [
+	 *            'baz' => 'bat'
+	 *        ],
+	 *        'or' => [
+	 *            'bar' => 'foo'
+	 *        ],
+	 * ];
+	 *
+	 * @param array $filters
+	 * @param array $allowed
+	 *
+	 * @return array
+	 */
+	public static function intersectAllowedFilters(array $filters, array $allowed)
+	{
+		foreach ($filters as $filter => $value) {
+			// We want to recursively go down and check all OR conjuctions to ensure they're all whitlisted
+			if ($filter === 'or') {
+				$filters['or'] = self::intersectAllowedFilters($filters['or'], $allowed);
+
+				// If there are no more filters under this OR, we can safely unset it
+				if (count($filters['or']) === 0) {
+					unset($filters['or']);
+				}
+				continue;
+			}
+
+			// We want to recursively go down and check all AND conjuctions to ensure they're all whitlisted
+			if ($filter === 'and') {
+				$filters['and'] = self::intersectAllowedFilters($filters['and'], $allowed);
+
+				// If there are no more filters under this AND, we can safely unset it
+				if (count($filters['and']) === 0) {
+					unset($filters['and']);
+				}
+				continue;
+			}
+
+			// A whitelisted filter looks like 'filter_name' => true in $allowed
+			if (! isset($allowed[$filter]) || ! $allowed[$filter]) {
+				unset($filters[$filter]);
+			}
+		}
+
+		return $filters;
+	}
+
+	/**
 	 * Funnel for rest of filter methods
 	 *
 	 * @param \Illuminate\Database\Eloquent\Builder $query
@@ -57,8 +132,7 @@ class Filter implements FilterInterface
 		$query->where(
 			function ($query) use ($filters, $columns, $table) {
 				self::filterQuery($query, $filters, $columns, $table);
-			}
-		);
+			});
 	}
 
 	/**
@@ -88,8 +162,7 @@ class Filter implements FilterInterface
 				$query->$method(
 					function ($query) use ($filters, $columns, $column, $table) {
 						self::filterQuery($query, $filters[$column], $columns, $table);
-					}
-				);
+					});
 				continue;
 			}
 
@@ -129,8 +202,7 @@ class Filter implements FilterInterface
 						}
 
 						self::$method($column, $filter, $query);
-					}
-					);
+					});
 				} else {
 					$column = self::applyTablePrefix($column);
 					self::$method($column, $filter, $query);
@@ -145,8 +217,7 @@ class Filter implements FilterInterface
 						$relation, function ($query) use ($filter, $column) {
 						$where = camel_case('where' . $column);
 						$query->$where($filter);
-					}
-					);
+					});
 				} else {
 					$column = self::applyTablePrefix($column);
 					$where  = camel_case('where' . $column);
@@ -158,8 +229,7 @@ class Filter implements FilterInterface
 					$query->whereHas(
 						$relation, function ($query) use ($column, $filter) {
 						self::nullMethod($column, $filter, $query);
-					}
-					);
+					});
 				} else {
 					$column = self::applyTablePrefix($column);
 					self::nullMethod($column, $filter, $query);
@@ -176,6 +246,7 @@ class Filter implements FilterInterface
 	 * Ex: users?filters[posts.comments.rating]=>4
 	 *
 	 * @param string $filter_name
+	 *
 	 * @return array
 	 */
 	protected static function parseRelations($filter_name)
@@ -393,6 +464,7 @@ class Filter implements FilterInterface
 	 * Determine the token (if any) to use for the query
 	 *
 	 * @param string $filter
+	 *
 	 * @return bool|string
 	 */
 	private static function determineTokenType($filter)
@@ -413,6 +485,7 @@ class Filter implements FilterInterface
 	 * Determine if a token should accept a scalar value
 	 *
 	 * @param string $token
+	 *
 	 * @return bool
 	 */
 	private static function shouldBeScalar($token)
@@ -426,6 +499,7 @@ class Filter implements FilterInterface
 	 *
 	 * @param string $token
 	 * @param string $filter
+	 *
 	 * @return array|bool
 	 */
 	private static function cleanAndValidateFilter($token, $filter)
@@ -452,6 +526,7 @@ class Filter implements FilterInterface
 	 * Determine whether to apply a table prefix to prevent ambiguous columns
 	 *
 	 * @param $column
+	 *
 	 * @return string
 	 */
 	private static function applyTablePrefix($column)
@@ -464,6 +539,7 @@ class Filter implements FilterInterface
 	 *
 	 * @param string $base_name
 	 * @param bool   $or
+	 *
 	 * @return string
 	 */
 	private static function determineMethod($base_name, $or)

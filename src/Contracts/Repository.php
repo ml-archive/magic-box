@@ -203,9 +203,11 @@ interface Repository
 	/**
 	 * Get the fillable attributes
 	 *
+	 * @param bool $assoc
+	 *
 	 * @return array
 	 */
-	public function getFillable(): array;
+	public function getFillable(bool $assoc = false): array;
 
 	/**
 	 * Add a fillable attribute
@@ -264,9 +266,11 @@ interface Repository
 	/**
 	 * Get the includable relationships
 	 *
+	 * @param bool $assoc
+	 *
 	 * @return array
 	 */
-	public function getIncludable(): array;
+	public function getIncludable(bool $assoc = false): array;
 
 	/**
 	 * Add an includable relationship
@@ -325,9 +329,11 @@ interface Repository
 	/**
 	 * Get the filterable fields
 	 *
+	 * @param bool $assoc
+	 *
 	 * @return array
 	 */
-	public function getFilterable(): array;
+	public function getFilterable(bool $assoc = false): array;
 
 	/**
 	 * Add a filterable field
