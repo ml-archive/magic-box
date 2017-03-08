@@ -44,88 +44,6 @@ class Filter implements FilterInterface
 	protected static $table_prefix = null;
 
 	/**
-	 * Determine the token (if any) to use for the query
-	 *
-	 * @param string $filter
-	 * @return bool|string
-	 */
-	private static function determineTokenType($filter)
-	{
-		if (in_array(substr($filter, 0, 2), array_keys(self::$supported_tokens))) {
-			// Two character token (<=, >=, etc)
-			return substr($filter, 0, 2);
-		} elseif (in_array($filter[0], array_keys(self::$supported_tokens))) {
-			// Single character token (>, ^, $)
-			return $filter[0];
-		}
-
-		// No token
-		return false;
-	}
-
-	/**
-	 * Determine if a token should accept a scalar value
-	 *
-	 * @param string $token
-	 * @return bool
-	 */
-	private static function shouldBeScalar($token)
-	{
-		// Is token in array of tokens that can be non-scalar
-		return ! in_array($token, self::$non_scalar_tokens);
-	}
-
-	/**
-	 * Parse a filter string and confirm that it has a scalar value if it should.
-	 *
-	 * @param string $token
-	 * @param string $filter
-	 * @return array|bool
-	 */
-	private static function cleanAndValidateFilter($token, $filter)
-	{
-		$filter_should_be_scalar = self::shouldBeScalar($token);
-
-		// Format the filter, cutting off the trailing ']' if appropriate
-		$filter = $filter_should_be_scalar ? explode(',', substr($filter, strlen($token))) :
-			explode(',', substr($filter, strlen($token), -1));
-
-		if ($filter_should_be_scalar) {
-			if (count($filter) > 1) {
-				return false;
-			}
-
-			// Set to first index if should be scalar
-			$filter = $filter[0];
-		}
-
-		return $filter;
-	}
-
-	/**
-	 * Determine whether to apply a table prefix to prevent ambiguous columns
-	 *
-	 * @param $column
-	 * @return string
-	 */
-	private static function applyTablePrefix($column)
-	{
-		return is_null(self::$table_prefix) ? $column : self::$table_prefix . '.' . $column;
-	}
-
-	/**
-	 * Determine whether this an 'or' method or not
-	 *
-	 * @param string $base_name
-	 * @param bool   $or
-	 * @return string
-	 */
-	private static function determineMethod($base_name, $or)
-	{
-		return $or ? camel_case('or_' . $base_name) : $base_name;
-	}
-
-	/**
 	 * Funnel for rest of filter methods
 	 *
 	 * @param \Illuminate\Database\Eloquent\Builder $query
@@ -469,5 +387,87 @@ class Filter implements FilterInterface
 	{
 		$method = self::determineMethod('whereNotIn', $or);
 		$query->$method($column, $filter);
+	}
+
+	/**
+	 * Determine the token (if any) to use for the query
+	 *
+	 * @param string $filter
+	 * @return bool|string
+	 */
+	private static function determineTokenType($filter)
+	{
+		if (in_array(substr($filter, 0, 2), array_keys(self::$supported_tokens))) {
+			// Two character token (<=, >=, etc)
+			return substr($filter, 0, 2);
+		} elseif (in_array($filter[0], array_keys(self::$supported_tokens))) {
+			// Single character token (>, ^, $)
+			return $filter[0];
+		}
+
+		// No token
+		return false;
+	}
+
+	/**
+	 * Determine if a token should accept a scalar value
+	 *
+	 * @param string $token
+	 * @return bool
+	 */
+	private static function shouldBeScalar($token)
+	{
+		// Is token in array of tokens that can be non-scalar
+		return ! in_array($token, self::$non_scalar_tokens);
+	}
+
+	/**
+	 * Parse a filter string and confirm that it has a scalar value if it should.
+	 *
+	 * @param string $token
+	 * @param string $filter
+	 * @return array|bool
+	 */
+	private static function cleanAndValidateFilter($token, $filter)
+	{
+		$filter_should_be_scalar = self::shouldBeScalar($token);
+
+		// Format the filter, cutting off the trailing ']' if appropriate
+		$filter = $filter_should_be_scalar ? explode(',', substr($filter, strlen($token))) :
+			explode(',', substr($filter, strlen($token), -1));
+
+		if ($filter_should_be_scalar) {
+			if (count($filter) > 1) {
+				return false;
+			}
+
+			// Set to first index if should be scalar
+			$filter = $filter[0];
+		}
+
+		return $filter;
+	}
+
+	/**
+	 * Determine whether to apply a table prefix to prevent ambiguous columns
+	 *
+	 * @param $column
+	 * @return string
+	 */
+	private static function applyTablePrefix($column)
+	{
+		return is_null(self::$table_prefix) ? $column : self::$table_prefix . '.' . $column;
+	}
+
+	/**
+	 * Determine whether this an 'or' method or not
+	 *
+	 * @param string $base_name
+	 * @param bool   $or
+	 * @return string
+	 */
+	private static function determineMethod($base_name, $or)
+	{
+		return $or ? camel_case('or_' . $base_name) : $base_name;
 	}
 }
