@@ -232,7 +232,7 @@ interface Repository
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function removeFillable($fillable): EloquentRepository;
+	public function removeFillable(string $fillable): EloquentRepository;
 
 	/**
 	 * Remove many fillable fields
@@ -275,7 +275,7 @@ interface Repository
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function addIncludable($includable): EloquentRepository;
+	public function addIncludable(string $includable): EloquentRepository;
 
 	/**
 	 * Add many includable fields
@@ -289,11 +289,11 @@ interface Repository
 	/**
 	 * Remove an includable relationship
 	 *
-	 * @param $includable
+	 * @param string $includable
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function removeIncludable($includable): EloquentRepository;
+	public function removeIncludable(string $includable): EloquentRepository;
 
 	/**
 	 * Remove many includable relationships
@@ -336,7 +336,7 @@ interface Repository
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function addFilterable($filterable): EloquentRepository;
+	public function addFilterable(string $filterable): EloquentRepository;
 
 	/**
 	 * Add many filterable fields
@@ -350,11 +350,11 @@ interface Repository
 	/**
 	 * Remove a filterable field
 	 *
-	 * @param $filterable
+	 * @param string $filterable
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function removeFilterable($filterable): EloquentRepository;
+	public function removeFilterable(string $filterable): EloquentRepository;
 
 	/**
 	 * Remove many filterable fields

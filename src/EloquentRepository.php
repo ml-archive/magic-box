@@ -384,7 +384,18 @@ class EloquentRepository implements Repository
 	 */
 	public function setFillable(array $fillable): EloquentRepository
 	{
-		$this->fillable = $fillable;
+		if ($fillable === self::ALLOW_ALL) {
+			$this->fillable = self::ALLOW_ALL;
+
+			return $this;
+		}
+
+		// Reset fillable
+		$this->fillable = [];
+
+		foreach ($fillable as $allowed_field) {
+			$this->fillable[$allowed_field] = true;
+		}
 
 		return $this;
 	}
@@ -396,7 +407,7 @@ class EloquentRepository implements Repository
 	 */
 	public function getFillable(): array
 	{
-		return $this->fillable;
+		return array_keys($this->fillable);
 	}
 
 	/**
@@ -408,7 +419,7 @@ class EloquentRepository implements Repository
 	 */
 	public function addFillable(string $fillable): EloquentRepository
 	{
-		$this->fillable[] = $fillable;
+		$this->fillable[$fillable] = true;
 
 		return $this;
 	}
@@ -422,7 +433,9 @@ class EloquentRepository implements Repository
 	 */
 	public function addManyFillable(array $fillable): EloquentRepository
 	{
-		$this->fillable = array_merge($this->fillable, $fillable);
+		foreach ($fillable as $allowed_field) {
+			$this->addFillable($allowed_field);
+		}
 
 		return $this;
 	}
@@ -434,16 +447,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function removeFillable($fillable): EloquentRepository
+	public function removeFillable(string $fillable): EloquentRepository
 	{
-		foreach ($this->fillable as $i => $value) {
-			if ($value === $fillable) {
-				unset($this->fillable[$i]);
-			}
-		}
-
-		// Rebase array keys numerically
-		$this->setFillable(array_values($this->fillable));
+		unset($this->fillable[$fillable]);
 
 		return $this;
 	}
@@ -457,8 +463,9 @@ class EloquentRepository implements Repository
 	 */
 	public function removeManyFillable(array $fillable): EloquentRepository
 	{
-		// Diff then rebase keys numerically
-		$this->fillable = array_values(array_diff($this->fillable, $fillable));
+		foreach ($fillable as $disallowed_field) {
+			$this->removeFillable($disallowed_field);
+		}
 
 		return $this;
 	}
@@ -476,7 +483,7 @@ class EloquentRepository implements Repository
 			return true;
 		}
 
-		return in_array($key, $this->fillable);
+		return isset($this->fillable[$key]) && $this->fillable[$key];
 	}
 
 	/**
@@ -488,7 +495,18 @@ class EloquentRepository implements Repository
 	 */
 	public function setIncludable(array $includable): EloquentRepository
 	{
-		$this->includable = $includable;
+		if ($includable === self::ALLOW_ALL) {
+			$this->includable = self::ALLOW_ALL;
+
+			return $this;
+		}
+
+		// Reset includable
+		$this->includable = [];
+
+		foreach ($includable as $allowed_include) {
+			$this->includable[$allowed_include] = true;
+		}
 
 		return $this;
 	}
@@ -500,7 +518,7 @@ class EloquentRepository implements Repository
 	 */
 	public function getIncludable(): array
 	{
-		return $this->includable;
+		return array_keys($this->includable);
 	}
 
 	/**
@@ -510,9 +528,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function addIncludable($includable): EloquentRepository
+	public function addIncludable(string $includable): EloquentRepository
 	{
-		$this->includable[] = $includable;
+		$this->includable[$includable] = true;
 
 		return $this;
 	}
@@ -526,7 +544,9 @@ class EloquentRepository implements Repository
 	 */
 	public function addManyIncludable(array $includable): EloquentRepository
 	{
-		$this->includable = array_merge($this->includable, $includable);
+		foreach ($includable as $allowed_include) {
+			$this->addIncludable($allowed_include);
+		}
 
 		return $this;
 	}
@@ -534,20 +554,13 @@ class EloquentRepository implements Repository
 	/**
 	 * Remove an includable relationship
 	 *
-	 * @param $includable
+	 * @param string $includable
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function removeIncludable($includable): EloquentRepository
+	public function removeIncludable(string $includable): EloquentRepository
 	{
-		foreach ($this->includable as $i => $value) {
-			if ($value === $includable) {
-				unset($this->includable[$i]);
-			}
-		}
-
-		// Rebase array keys numerically
-		$this->setIncludable(array_values($this->includable));
+		unset($this->includable[$includable]);
 
 		return $this;
 	}
@@ -561,8 +574,9 @@ class EloquentRepository implements Repository
 	 */
 	public function removeManyIncludable(array $includable): EloquentRepository
 	{
-		// Diff then rebase keys numerically
-		$this->includable = array_values(array_diff($this->includable, $includable));
+		foreach ($includable as $disallowed_include) {
+			$this->removeIncludable($disallowed_include);
+		}
 
 		return $this;
 	}
@@ -580,7 +594,7 @@ class EloquentRepository implements Repository
 			return true;
 		}
 
-		return in_array($key, $this->includable);
+		return isset($this->includable[$key]) && $this->includable[$key];
 	}
 
 	/**
@@ -592,7 +606,18 @@ class EloquentRepository implements Repository
 	 */
 	public function setFilterable(array $filterable): EloquentRepository
 	{
-		$this->filterable = $filterable;
+		if ($filterable === self::ALLOW_ALL) {
+			$this->filterable = self::ALLOW_ALL;
+
+			return $this;
+		}
+
+		// Reset filterable
+		$this->filterable = [];
+
+		foreach ($filterable as $allowed_field) {
+			$this->filterable[$allowed_field] = true;
+		}
 
 		return $this;
 	}
@@ -604,7 +629,7 @@ class EloquentRepository implements Repository
 	 */
 	public function getFilterable(): array
 	{
-		return $this->filterable;
+		return array_keys($this->filterable);
 	}
 
 	/**
@@ -614,9 +639,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function addFilterable($filterable): EloquentRepository
+	public function addFilterable(string $filterable): EloquentRepository
 	{
-		$this->filterable[] = $filterable;
+		$this->filterable[$filterable] = true;
 
 		return $this;
 	}
@@ -630,7 +655,9 @@ class EloquentRepository implements Repository
 	 */
 	public function addManyFilterable(array $filterable): EloquentRepository
 	{
-		$this->filterable = array_merge($this->filterable, $filterable);
+		foreach ($filterable as $allowed_field) {
+			$this->addFilterable($allowed_field);
+		}
 
 		return $this;
 	}
@@ -638,20 +665,13 @@ class EloquentRepository implements Repository
 	/**
 	 * Remove a filterable field
 	 *
-	 * @param $filterable
+	 * @param string $filterable
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function removeFilterable($filterable): EloquentRepository
+	public function removeFilterable(string $filterable): EloquentRepository
 	{
-		foreach ($this->filterable as $i => $value) {
-			if ($value === $filterable) {
-				unset($this->filterable[$i]);
-			}
-		}
-
-		// Rebase array keys numerically
-		$this->setFilterable(array_values($this->filterable));
+		unset($this->filterable[$filterable]);
 
 		return $this;
 	}
@@ -665,8 +685,9 @@ class EloquentRepository implements Repository
 	 */
 	public function removeManyFilterable(array $filterable): EloquentRepository
 	{
-		// Diff then rebase keys numerically
-		$this->filterable = array_values(array_diff($this->filterable, $filterable));
+		foreach ($filterable as $disallowed_field) {
+			$this->removeFilterable($disallowed_field);
+		}
 
 		return $this;
 	}
@@ -684,7 +705,7 @@ class EloquentRepository implements Repository
 			return true;
 		}
 
-		return in_array($key, $this->filterable);
+		return isset($this->filterable[$key]) && $this->filterable[$key];
 	}
 
 	/**
