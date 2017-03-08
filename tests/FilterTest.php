@@ -919,4 +919,106 @@ class FilterTest extends DBTestCase
 			$this->assertTrue(in_array($result->username, ['lorgana@galaxyfarfaraway.com', 'solocup@galaxyfarfaraway.com', 'lskywalker@galaxyfarfaraway.com']));
 		}
 	}
+
+	public function testItCanIntersectAllowedFilters()
+	{
+		$filters = [
+			'username' => '^lskywalker',
+			'or'       => [
+				'name' => '$gana',
+				'and'      => [
+					'profile.favorite_cheese' => '=Provolone',
+					'username' => '$gana@galaxyfarfaraway.com'
+				],
+				'or' => [
+					'username' => '=solocup@galaxyfarfaraway.com',
+					'and' => [
+						'profile.least_favorite_cheese' => '~gouda'
+					]
+				]
+			]
+		];
+
+		$allowed = [
+			'username' => true,
+			'profile.favorite_cheese' => true,
+		];
+
+		$this->assertSame([
+			'username' => '^lskywalker',
+			'or'       => [
+				'and'      => [
+					'profile.favorite_cheese' => '=Provolone',
+					'username' => '$gana@galaxyfarfaraway.com'
+				],
+				'or' => [
+					'username' => '=solocup@galaxyfarfaraway.com',
+				]
+			]
+		], Filter::intersectAllowedFilters($filters, $allowed));
+
+		$filters = [
+			'username' => '^lskywalker',
+			'or'       => [
+				'name' => '$gana',
+				'and'      => [
+					'profile.favorite_cheese' => '=Provolone',
+					'username' => '$gana@galaxyfarfaraway.com'
+				],
+				'or' => [
+					'username' => '=solocup@galaxyfarfaraway.com',
+					'and' => [
+						'profile.least_favorite_cheese' => '~gouda'
+					]
+				]
+			]
+		];
+
+		$allowed = [
+			// None
+		];
+
+		$this->assertSame([], Filter::intersectAllowedFilters($filters, $allowed));
+
+		$filters = [
+			'username' => '^lskywalker',
+			'or'       => [
+				'name' => '$gana',
+				'and'      => [
+					'profile.favorite_cheese' => '=Provolone',
+					'username' => '$gana@galaxyfarfaraway.com'
+				],
+				'or' => [
+					'username' => '=solocup@galaxyfarfaraway.com',
+					'and' => [
+						'profile.least_favorite_cheese' => '~gouda'
+					]
+				]
+			]
+		];
+
+		$allowed = [
+			'username' => true,
+			'profile.favorite_cheese' => true,
+			'profile.least_favorite_cheese' => true,
+			'name' => true,
+		];
+
+		$this->assertSame([
+			'username' => '^lskywalker',
+			'or'       => [
+				'name' => '$gana',
+				'and'      => [
+					'profile.favorite_cheese' => '=Provolone',
+					'username' => '$gana@galaxyfarfaraway.com'
+				],
+				'or' => [
+					'username' => '=solocup@galaxyfarfaraway.com',
+					'and' => [
+						'profile.least_favorite_cheese' => '~gouda'
+					]
+				]
+			]
+		], Filter::intersectAllowedFilters($filters, $allowed));
+	}
 }

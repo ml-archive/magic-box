@@ -15,21 +15,22 @@ class CreateTagsTable extends Migration
 	{
 		Schema::create(
 			'tags', function (Blueprint $table) {
-				$table->increments('id');
-				$table->string('label');
-			}
-		);
+			$table->increments('id');
+			$table->string('label');
+			$table->string('not_fillable')->nullable();
+		});
 
 		Schema::create(
 			'post_tag', function (Blueprint $table) {
-				$table->increments('id');
-				$table->unsignedInteger('post_id');
-				$table->foreign('post_id')->references('id')->on('posts')->onDelete('cascade');
-				$table->unsignedInteger('tag_id');
-				$table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
-				$table->string('extra')->nullable();
-			}
-		);
+			$table->increments('id');
+			$table->unsignedInteger('post_id');
+			$table->string('not_fillable')->nullable();
+			$table->string('not_filterable')->nullable();
+			$table->foreign('post_id')->references('id')->on('posts')->onDelete('cascade');
+			$table->unsignedInteger('tag_id');
+			$table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
+			$table->string('extra')->nullable();
+		});
 	}
 
 	/**

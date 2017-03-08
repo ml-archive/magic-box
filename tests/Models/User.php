@@ -2,12 +2,50 @@
 
 namespace Fuzz\MagicBox\Tests\Models;
 
+use Fuzz\MagicBox\Contracts\MagicBoxResource;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class User extends Model
+class User extends Model implements MagicBoxResource
 {
 	use SoftDeletes;
+
+	/**
+	 * @const array
+	 */
+	const FILLABLE = [
+		'username',
+		'name',
+		'hands',
+		'occupation',
+		'times_captured',
+		'posts',
+		'profile',
+	];
+
+	/**
+	 * @const array
+	 */
+	const INCLUDABLE = [
+		'posts',
+		'posts.user',
+		'profile',
+	];
+
+	/**
+	 * @const array
+	 */
+	const FILTERABLE = [
+		'username',
+		'name',
+		'hands',
+		'occupation',
+		'times_captured',
+		'posts.title',
+		'posts.tags',
+		'posts.tags.label',
+		'profile.is_human',
+	];
 
 	/**
 	 * @var string
@@ -15,16 +53,11 @@ class User extends Model
 	protected $table = 'users';
 
 	/**
-	 * @var array
-	 */
-	protected $fillable = ['username', 'name', 'hands', 'occupation', 'times_captured', 'posts', 'profile'];
-
-	/**
 	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function posts()
 	{
-		return $this->hasMany('Fuzz\MagicBox\Tests\Models\Post');
+		return $this->hasMany(Post::class);
 	}
 
 	/**
@@ -32,7 +65,7 @@ class User extends Model
 	 */
 	public function profile()
 	{
-		return $this->hasOne('Fuzz\MagicBox\Tests\Models\Profile');
+		return $this->hasOne(Profile::class);
 	}
 
 	/**
@@ -49,6 +82,7 @@ class User extends Model
 	 * For unit testing purposes
 	 *
 	 * @param array $fillable
+	 *
 	 * @return $this
 	 */
 	public function setFillable(array $fillable)
@@ -56,5 +90,35 @@ class User extends Model
 		$this->fillable = $fillable;
 
 		return $this;
+	}
+
+	/**
+	 * Get the list of fields fillable by the repository
+	 *
+	 * @return array
+	 */
+	public function getRepositoryFillable(): array
+	{
+		return self::FILLABLE;
+	}
+
+	/**
+	 * Get the list of relationships fillable by the repository
+	 *
+	 * @return array
+	 */
+	public function getRepositoryIncludable(): array
+	{
+		return self::INCLUDABLE;
+	}
+
+	/**
+	 * Get the list of fields filterable by the repository
+	 *
+	 * @return array
+	 */
+	public function getRepositoryFilterable(): array
+	{
+		return self::FILTERABLE;
 	}
 }
