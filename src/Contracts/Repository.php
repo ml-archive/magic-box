@@ -143,13 +143,6 @@ interface Repository
 	public function random();
 
 	/**
-	 * Check if the model apparently exists.
-	 *
-	 * @return bool
-	 */
-	public function exists();
-
-	/**
 	 * Get the primary key from input.
 	 *
 	 * @return mixed
