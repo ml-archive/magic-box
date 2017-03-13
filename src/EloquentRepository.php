@@ -3,6 +3,7 @@
 namespace Fuzz\MagicBox;
 
 use Fuzz\MagicBox\Utility\ChecksRelations;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Fuzz\MagicBox\Contracts\Repository;
 use Illuminate\Database\Eloquent\Builder;
@@ -1143,29 +1144,23 @@ class EloquentRepository implements Repository
 	}
 
 	/**
-	 * Check if the model apparently exists.
-	 *
-	 * @return bool
-	 */
-	public function exists()
-	{
-		return array_key_exists(self::KEY_NAME, $this->getInput());
-	}
-
-	/**
 	 * Get the primary key from input.
 	 *
 	 * @return mixed
 	 */
 	public function getInputId()
 	{
-		if ( !$this->exists()) {
-			throw new \LogicException('ID is not specified in input.');
-		}
-
 		$input = $this->getInput();
 
-		return $input[self::KEY_NAME];
+		/** @var Model $model */
+		$model = $this->getModelClass();
+
+		// If the model or the input is not set, then we cannot get an id.
+		if (! $model || ! $input) {
+			return null;
+		}
+
+		return array_get($input, (new $model)->getKeyName());
 	}
 
 	/**
@@ -1319,7 +1314,7 @@ class EloquentRepository implements Repository
 	/**
 	 * Create a model.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Model
+	 * @return Model | Collection
 	 */
 	public function create()
 	{
@@ -1331,38 +1326,80 @@ class EloquentRepository implements Repository
 	}
 
 	/**
+	 * Create many models.
+	 *
+	 * @return Collection
+	 */
+	public function createMany(): Collection
+	{
+		$collection = new Collection();
+
+		foreach ($this->getInput() as $item) {
+			$repository = clone $this;
+			$repository->setInput($item);
+			$collection->add($repository->create());
+		}
+
+		return $collection;
+	}
+
+	/**
 	 * Read a model.
 	 *
+	 * @param int|string|null $id
+	 *
 	 * @return \Illuminate\Database\Eloquent\Model
 	 */
-	public function read()
+	public function read($id = null)
 	{
-		return $this->findOrFail($this->getInputId());
+		return $this->findOrFail($id ?? $this->getInputId());
 	}
 
 	/**
 	 * Update a model.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Model
+	 * @param int|string|null $id
+	 *
+	 * @return Model|Collection
 	 */
-	public function update()
+	public function update($id = null)
 	{
-		$instance = $this->read();
+		$instance = $this->read($id);
 		$this->fill($instance);
 
-		// Return the updated instance
-		return $this->read();
+		return $this->read($instance->getKey());
 	}
 
 	/**
-	 * Update a model.
+	 * Updates many models.
+	 *
+	 * @return Collection
+	 */
+	public function updateMany(): Collection
+	{
+		$collection = new Collection();
+
+		foreach ($this->getInput() as $item) {
+			$repository = clone $this;
+			$repository->setInput($item);
+			$collection->add($repository->update($repository->getInputId()));
+		}
+
+		return $collection;
+	}
+
+	/**
+	 * Delete a model.
+	 *
+	 * @param int|string|null $id
 	 *
 	 * @return bool
+	 *
 	 * @throws \Exception
 	 */
-	public function delete()
+	public function delete($id = null): bool
 	{
-		$instance = $this->read();
+		$instance = $this->read($id);
 
 		return $instance->delete();
 	}
@@ -1370,12 +1407,28 @@ class EloquentRepository implements Repository
 	/**
 	 * Save a model, regardless of whether or not it is "new".
 	 *
-	 * @return \Illuminate\Database\Eloquent\Model
+	 * @param int|string|null $id
+	 *
+	 * @return Model|Collection
 	 */
-	public function save()
+	public function save($id = null)
 	{
-		$input = $this->getInput();
+		$id = $id ?? $this->getInputId();
 
-		return isset($input['id']) ? $this->update() : $this->create();
+		if ($id) {
+			return $this->update($id);
+		}
+
+		return $this->create();
+	}
+
+	/**
+	 * Checks if the input has many items.
+	 *
+	 * @return bool
+	 */
+	public function isManyOperation(): bool
+	{
+		return ($this->getInput() && array_keys($this->getInput()) === range(0, count($this->getInput()) - 1));
 	}
 }
