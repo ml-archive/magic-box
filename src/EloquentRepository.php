@@ -677,7 +677,7 @@ class EloquentRepository implements Repository
 	 * @param int $id
 	 * @return \Illuminate\Database\Eloquent\Model
 	 */
-	final public function find($id)
+	public function find($id)
 	{
 		return $this->query()->find($id);
 	}
@@ -688,7 +688,7 @@ class EloquentRepository implements Repository
 	 * @param int $id
 	 * @return \Illuminate\Database\Eloquent\Model
 	 */
-	final public function findOrFail($id)
+	public function findOrFail($id)
 	{
 		return $this->query()->findOrFail($id);
 	}
@@ -698,7 +698,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Illuminate\Database\Eloquent\Collection
 	 */
-	final public function all()
+	public function all()
 	{
 		return $this->query()->get();
 	}
@@ -709,7 +709,7 @@ class EloquentRepository implements Repository
 	 * @param  int $per_page
 	 * @return \Illuminate\Pagination\Paginator
 	 */
-	final public function paginate($per_page)
+	public function paginate($per_page)
 	{
 		return $this->query()->paginate($per_page);
 	}
@@ -719,7 +719,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return int
 	 */
-	final public function count()
+	public function count()
 	{
 		return $this->query()->count();
 	}
@@ -729,7 +729,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return bool
 	 */
-	final public function hasAny()
+	public function hasAny()
 	{
 		return $this->count() > 0;
 	}
@@ -749,7 +749,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return bool
 	 */
-	final public function exists()
+	public function exists()
 	{
 		return array_key_exists(self::KEY_NAME, $this->getInput());
 	}
@@ -759,7 +759,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return mixed
 	 */
-	final public function getInputId()
+	public function getInputId()
 	{
 		if ( !$this->exists()) {
 			throw new \LogicException('ID is not specified in input.');
@@ -777,7 +777,7 @@ class EloquentRepository implements Repository
 	 * @return mixed
 	 * @todo support more relationship types, such as polymorphic ones!
 	 */
-	final protected function fill(Model $instance)
+	protected function fill(Model $instance)
 	{
 		$input = $this->getInput();
 		$model_fields = $this->getFields($instance);
@@ -831,7 +831,7 @@ class EloquentRepository implements Repository
 	 * @param \Illuminate\Database\Eloquent\Model $instance
 	 * @return void
 	 */
-	final protected function applyRelations(array $specs, Model $instance)
+	protected function applyRelations(array $specs, Model $instance)
 	{
 		foreach ($specs as $spec) {
 			$this->cascadeRelation($spec['relation'], $spec['value'], $instance);
@@ -847,7 +847,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return void
 	 */
-	final protected function cascadeRelation(Relation $relation, array $input, Model $parent = null)
+	protected function cascadeRelation(Relation $relation, array $input, Model $parent = null)
 	{
 		// Make a child repository for containing the cascaded relationship through saves
 		$target_model_class = get_class($relation->getQuery()->getModel());
@@ -927,7 +927,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Illuminate\Database\Eloquent\Model
 	 */
-	final public function create()
+	public function create()
 	{
 		$model_class = $this->getModelClass();
 		$instance = new $model_class;
@@ -941,7 +941,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Illuminate\Database\Eloquent\Model
 	 */
-	final public function read()
+	public function read()
 	{
 		return $this->findOrFail($this->getInputId());
 	}
@@ -951,7 +951,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Illuminate\Database\Eloquent\Model
 	 */
-	final public function update()
+	public function update()
 	{
 		$instance = $this->read();
 		$this->fill($instance);
@@ -965,7 +965,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return boolean
 	 */
-	final public function delete()
+	public function delete()
 	{
 		$instance = $this->read();
 
@@ -977,7 +977,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Illuminate\Database\Eloquent\Model
 	 */
-	final public function save()
+	public function save()
 	{
 		$input = $this->getInput();
 
