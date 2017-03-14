@@ -5,6 +5,7 @@ namespace Fuzz\MagicBox\Tests;
 use Fuzz\MagicBox\Tests\Models\Tag;
 use Fuzz\MagicBox\Tests\Seeds\FilterDataSeeder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Fuzz\MagicBox\Tests\Models\User;
 use Fuzz\MagicBox\Tests\Models\Post;
@@ -138,14 +139,6 @@ class EloquentRepositoryTest extends DBTestCase
 
 		$this->getRepository('Fuzz\MagicBox\Tests\Models\User', ['id' => 1])->delete();
 		$this->assertNull(User::find(1));
-	}
-
-	/**
-	 * @expectedException \LogicException
-	 */
-	public function testItExpectsInputIds()
-	{
-		$this->getRepository('Fuzz\MagicBox\Tests\Models\User', ['username' => 'joe'])->getInputId();
 	}
 
 	public function testItFillsBelongsToRelations()
@@ -977,6 +970,8 @@ class EloquentRepositoryTest extends DBTestCase
 			'*' // allow all
 		]);
 
+		$this->assertSame(EloquentRepository::ALLOW_ALL, $repository->getFillable());
+
 		$this->assertTrue($repository->isFillable('foobar'));
 
 		$repository->setFillable([
@@ -1081,6 +1076,8 @@ class EloquentRepositoryTest extends DBTestCase
 		$repository->setIncludable([
 			'*' // Allow all
 		]);
+
+		$this->assertSame(EloquentRepository::ALLOW_ALL, $repository->getIncludable());
 
 		$this->assertTrue($repository->isIncludable('foobar'));
 
@@ -1202,6 +1199,8 @@ class EloquentRepositoryTest extends DBTestCase
 			'*'
 		]);
 
+		$this->assertSame(EloquentRepository::ALLOW_ALL, $repository->getFilterable());
+
 		$this->assertTrue($repository->isFilterable('foobar'));
 
 		$repository->setFilterable([
@@ -1298,6 +1297,81 @@ class EloquentRepositoryTest extends DBTestCase
 		$this->assertEquals($found_users->count(), 4); // No filters applied, expect to get all 4 users
 	}
 
+	public function testItFiltersWithAllFieldsIfAllowAllIsSet()
+	{
+		$this->seedUsers();
+
+		$repository = $this->getRepository(User::class);
+		$this->assertEquals($repository->all()->count(), 4);
+
+		// Filters not applied
+		$repository->setFilterable([]);
+		$found_users = $repository->setFilters([
+			'profile.is_human' => '=true',
+			'times_captured' => '>2'
+		])->all();
+		$this->assertEquals($found_users->count(), 4);
+
+		// Filters now applied
+		$repository->setFilterable(EloquentRepository::ALLOW_ALL);
+		$found_users = $repository->setFilters([
+			'profile.is_human' => '=true',
+			'times_captured' => '>2'
+		])->all();
+		$this->assertEquals($found_users->count(), 2);
+	}
+
+	public function testItCanGetIncludableAsAssoc()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$repository->setIncludable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$this->assertSame([
+			'foo' => true,
+			'bar' => true,
+			'baz' => true,
+		], $repository->getIncludable(true));
+	}
+
+	public function testItCanGetFillableAsAssoc()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$repository->setFillable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$this->assertSame([
+			'foo' => true,
+			'bar' => true,
+			'baz' => true,
+		], $repository->getFillable(true));
+	}
+
+	public function testItCanGetFilterableAsAssoc()
+	{
+		$repository = $this->getRepository(User::class);
+
+		$repository->setFilterable([
+			'foo',
+			'bar',
+			'baz',
+		]);
+
+		$this->assertSame([
+			'foo' => true,
+			'bar' => true,
+			'baz' => true,
+		], $repository->getFilterable(true));
+	}
+
 	public function testItCanAggregateQueryCount()
 	{
 
@@ -1326,5 +1400,65 @@ class EloquentRepositoryTest extends DBTestCase
 	public function testItCanGroupQuery()
 	{
 
+	}
+
+	/**
+	 * @test
+	 *
+	 * The repository can create many models given an array of items.
+	 */
+	public function testItCanCreateMany()
+	{
+		$data = [
+			['username' => 'sue'],
+			['username' => 'dave'],
+		];
+
+		$users = $this->getRepository(User::class, $data)->createMany();
+
+		$this->assertInstanceOf(Collection::class, $users);
+		$this->assertEquals($users->where('username', '=', 'sue')->first()->username, 'sue');
+		$this->assertEquals($users->where('username', '=', 'dave')->first()->username, 'dave');
+	}
+
+	/**
+	 * @test
+	 *
+	 * The repository can update many models given an array of items with an id.
+	 */
+	public function testItCanUpdateMany()
+	{
+		$userOne = $this->getRepository(User::class, ['username' => 'bobby'])->save();
+		$userTwo = $this->getRepository(User::class, ['username' => 'sam'])->save();
+		$this->assertEquals($userOne->getKey(), 1);
+		$this->assertEquals($userOne->username, 'bobby');
+		$this->assertEquals($userTwo->getKey(), 2);
+		$this->assertEquals($userTwo->username, 'sam');
+
+		$users = $this->getRepository(User::class,[
+			['id' => 1, 'username' => 'sue'],
+			['id' => 2, 'username' => 'dave'],
+		])->updateMany();
+
+		$this->assertInstanceOf(Collection::class, $users);
+		$this->assertEquals($users->find(1)->id, 1);
+		$this->assertEquals($users->find(1)->username, 'sue');
+		$this->assertEquals($users->find(2)->id, 2);
+		$this->assertEquals($users->find(2)->username, 'dave');
+	}
+
+	/**
+	 * @test
+	 *
+	 * The repository can check if the input should be a many operation or not.
+	 */
+	public function testItCanCheckIfManyOperation()
+	{
+		$notManyOperationData = ['id' => 1, 'username' => 'bobby'];
+		$manyOperationData = [['id' => 1, 'username' => 'bobby'], ['id' => 2, 'username' => 'sam']];
+
+		$this->assertFalse($this->getRepository(User::class, [])->isManyOperation());
+		$this->assertFalse($this->getRepository(User::class, $notManyOperationData)->isManyOperation());
+		$this->assertTrue($this->getRepository(User::class, $manyOperationData)->isManyOperation());
 	}
 }

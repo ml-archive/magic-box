@@ -3,6 +3,7 @@
 namespace Fuzz\MagicBox;
 
 use Fuzz\MagicBox\Utility\ChecksRelations;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Fuzz\MagicBox\Contracts\Repository;
 use Illuminate\Database\Eloquent\Builder;
@@ -384,7 +385,18 @@ class EloquentRepository implements Repository
 	 */
 	public function setFillable(array $fillable): EloquentRepository
 	{
-		$this->fillable = $fillable;
+		if ($fillable === self::ALLOW_ALL) {
+			$this->fillable = self::ALLOW_ALL;
+
+			return $this;
+		}
+
+		// Reset fillable
+		$this->fillable = [];
+
+		foreach ($fillable as $allowed_field) {
+			$this->fillable[$allowed_field] = true;
+		}
 
 		return $this;
 	}
@@ -392,11 +404,17 @@ class EloquentRepository implements Repository
 	/**
 	 * Get the fillable attributes
 	 *
+	 * @param bool $assoc
+	 *
 	 * @return array
 	 */
-	public function getFillable(): array
+	public function getFillable(bool $assoc = false): array
 	{
-		return $this->fillable;
+		if ($this->fillable === self::ALLOW_ALL) {
+			return self::ALLOW_ALL;
+		}
+
+		return $assoc ? $this->fillable : array_keys($this->fillable);
 	}
 
 	/**
@@ -408,7 +426,7 @@ class EloquentRepository implements Repository
 	 */
 	public function addFillable(string $fillable): EloquentRepository
 	{
-		$this->fillable[] = $fillable;
+		$this->fillable[$fillable] = true;
 
 		return $this;
 	}
@@ -422,7 +440,9 @@ class EloquentRepository implements Repository
 	 */
 	public function addManyFillable(array $fillable): EloquentRepository
 	{
-		$this->fillable = array_merge($this->fillable, $fillable);
+		foreach ($fillable as $allowed_field) {
+			$this->addFillable($allowed_field);
+		}
 
 		return $this;
 	}
@@ -434,16 +454,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function removeFillable($fillable): EloquentRepository
+	public function removeFillable(string $fillable): EloquentRepository
 	{
-		foreach ($this->fillable as $i => $value) {
-			if ($value === $fillable) {
-				unset($this->fillable[$i]);
-			}
-		}
-
-		// Rebase array keys numerically
-		$this->setFillable(array_values($this->fillable));
+		unset($this->fillable[$fillable]);
 
 		return $this;
 	}
@@ -457,8 +470,9 @@ class EloquentRepository implements Repository
 	 */
 	public function removeManyFillable(array $fillable): EloquentRepository
 	{
-		// Diff then rebase keys numerically
-		$this->fillable = array_values(array_diff($this->fillable, $fillable));
+		foreach ($fillable as $disallowed_field) {
+			$this->removeFillable($disallowed_field);
+		}
 
 		return $this;
 	}
@@ -476,7 +490,7 @@ class EloquentRepository implements Repository
 			return true;
 		}
 
-		return in_array($key, $this->fillable);
+		return isset($this->fillable[$key]) && $this->fillable[$key];
 	}
 
 	/**
@@ -488,7 +502,18 @@ class EloquentRepository implements Repository
 	 */
 	public function setIncludable(array $includable): EloquentRepository
 	{
-		$this->includable = $includable;
+		if ($includable === self::ALLOW_ALL) {
+			$this->includable = self::ALLOW_ALL;
+
+			return $this;
+		}
+
+		// Reset includable
+		$this->includable = [];
+
+		foreach ($includable as $allowed_include) {
+			$this->includable[$allowed_include] = true;
+		}
 
 		return $this;
 	}
@@ -496,11 +521,17 @@ class EloquentRepository implements Repository
 	/**
 	 * Get the includable relationships
 	 *
+	 * @param bool $assoc
+	 *
 	 * @return array
 	 */
-	public function getIncludable(): array
+	public function getIncludable(bool $assoc = false): array
 	{
-		return $this->includable;
+		if ($this->includable === self::ALLOW_ALL) {
+			return self::ALLOW_ALL;
+		}
+
+		return $assoc ? $this->includable : array_keys($this->includable);
 	}
 
 	/**
@@ -510,9 +541,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function addIncludable($includable): EloquentRepository
+	public function addIncludable(string $includable): EloquentRepository
 	{
-		$this->includable[] = $includable;
+		$this->includable[$includable] = true;
 
 		return $this;
 	}
@@ -526,7 +557,9 @@ class EloquentRepository implements Repository
 	 */
 	public function addManyIncludable(array $includable): EloquentRepository
 	{
-		$this->includable = array_merge($this->includable, $includable);
+		foreach ($includable as $allowed_include) {
+			$this->addIncludable($allowed_include);
+		}
 
 		return $this;
 	}
@@ -534,20 +567,13 @@ class EloquentRepository implements Repository
 	/**
 	 * Remove an includable relationship
 	 *
-	 * @param $includable
+	 * @param string $includable
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function removeIncludable($includable): EloquentRepository
+	public function removeIncludable(string $includable): EloquentRepository
 	{
-		foreach ($this->includable as $i => $value) {
-			if ($value === $includable) {
-				unset($this->includable[$i]);
-			}
-		}
-
-		// Rebase array keys numerically
-		$this->setIncludable(array_values($this->includable));
+		unset($this->includable[$includable]);
 
 		return $this;
 	}
@@ -561,8 +587,9 @@ class EloquentRepository implements Repository
 	 */
 	public function removeManyIncludable(array $includable): EloquentRepository
 	{
-		// Diff then rebase keys numerically
-		$this->includable = array_values(array_diff($this->includable, $includable));
+		foreach ($includable as $disallowed_include) {
+			$this->removeIncludable($disallowed_include);
+		}
 
 		return $this;
 	}
@@ -580,7 +607,7 @@ class EloquentRepository implements Repository
 			return true;
 		}
 
-		return in_array($key, $this->includable);
+		return isset($this->includable[$key]) && $this->includable[$key];
 	}
 
 	/**
@@ -592,7 +619,18 @@ class EloquentRepository implements Repository
 	 */
 	public function setFilterable(array $filterable): EloquentRepository
 	{
-		$this->filterable = $filterable;
+		if ($filterable === self::ALLOW_ALL) {
+			$this->filterable = self::ALLOW_ALL;
+
+			return $this;
+		}
+
+		// Reset filterable
+		$this->filterable = [];
+
+		foreach ($filterable as $allowed_field) {
+			$this->filterable[$allowed_field] = true;
+		}
 
 		return $this;
 	}
@@ -600,11 +638,17 @@ class EloquentRepository implements Repository
 	/**
 	 * Get the filterable fields
 	 *
+	 * @param bool $assoc
+	 *
 	 * @return array
 	 */
-	public function getFilterable(): array
+	public function getFilterable(bool $assoc = false): array
 	{
-		return $this->filterable;
+		if ($this->filterable === self::ALLOW_ALL) {
+			return self::ALLOW_ALL;
+		}
+
+		return $assoc ? $this->filterable : array_keys($this->filterable);
 	}
 
 	/**
@@ -614,9 +658,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function addFilterable($filterable): EloquentRepository
+	public function addFilterable(string $filterable): EloquentRepository
 	{
-		$this->filterable[] = $filterable;
+		$this->filterable[$filterable] = true;
 
 		return $this;
 	}
@@ -630,7 +674,9 @@ class EloquentRepository implements Repository
 	 */
 	public function addManyFilterable(array $filterable): EloquentRepository
 	{
-		$this->filterable = array_merge($this->filterable, $filterable);
+		foreach ($filterable as $allowed_field) {
+			$this->addFilterable($allowed_field);
+		}
 
 		return $this;
 	}
@@ -638,20 +684,13 @@ class EloquentRepository implements Repository
 	/**
 	 * Remove a filterable field
 	 *
-	 * @param $filterable
+	 * @param string $filterable
 	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
-	public function removeFilterable($filterable): EloquentRepository
+	public function removeFilterable(string $filterable): EloquentRepository
 	{
-		foreach ($this->filterable as $i => $value) {
-			if ($value === $filterable) {
-				unset($this->filterable[$i]);
-			}
-		}
-
-		// Rebase array keys numerically
-		$this->setFilterable(array_values($this->filterable));
+		unset($this->filterable[$filterable]);
 
 		return $this;
 	}
@@ -665,8 +704,9 @@ class EloquentRepository implements Repository
 	 */
 	public function removeManyFilterable(array $filterable): EloquentRepository
 	{
-		// Diff then rebase keys numerically
-		$this->filterable = array_values(array_diff($this->filterable, $filterable));
+		foreach ($filterable as $disallowed_field) {
+			$this->removeFilterable($disallowed_field);
+		}
 
 		return $this;
 	}
@@ -684,7 +724,7 @@ class EloquentRepository implements Repository
 			return true;
 		}
 
-		return in_array($key, $this->filterable);
+		return isset($this->filterable[$key]) && $this->filterable[$key];
 	}
 
 	/**
@@ -738,9 +778,9 @@ class EloquentRepository implements Repository
 	protected function modifyQuery($query)
 	{
 		// Only include filters which have been whitelisted in $this->filterable
-		$filters = array_filter($this->getFilters(), function ($filter_key) {
-			return $this->isFilterable($filter_key);
-		}, ARRAY_FILTER_USE_KEY);
+		$filters = $this->getFilterable() === self::ALLOW_ALL ?
+			$this->getFilters() :
+			Filter::intersectAllowedFilters($this->getFilters(), $this->getFilterable(true));
 		$sort_order_options = $this->getSortOrder();
 		$group_by = $this->getGroupBy();
 		$aggregate = $this->getAggregate();
@@ -1036,7 +1076,7 @@ class EloquentRepository implements Repository
 	 * @param int $id
 	 * @return \Illuminate\Database\Eloquent\Model
 	 */
-	final public function find($id)
+	public function find($id)
 	{
 		return $this->query()->find($id);
 	}
@@ -1047,7 +1087,7 @@ class EloquentRepository implements Repository
 	 * @param int $id
 	 * @return \Illuminate\Database\Eloquent\Model
 	 */
-	final public function findOrFail($id)
+	public function findOrFail($id)
 	{
 		return $this->query()->findOrFail($id);
 	}
@@ -1057,7 +1097,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Illuminate\Database\Eloquent\Collection
 	 */
-	final public function all()
+	public function all()
 	{
 		return $this->query()->get();
 	}
@@ -1068,7 +1108,7 @@ class EloquentRepository implements Repository
 	 * @param  int $per_page
 	 * @return \Illuminate\Pagination\Paginator
 	 */
-	final public function paginate($per_page)
+	public function paginate($per_page)
 	{
 		return $this->query()->paginate($per_page);
 	}
@@ -1078,7 +1118,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return int
 	 */
-	final public function count()
+	public function count()
 	{
 		return $this->query()->count();
 	}
@@ -1088,7 +1128,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return bool
 	 */
-	final public function hasAny()
+	public function hasAny()
 	{
 		return $this->count() > 0;
 	}
@@ -1104,29 +1144,23 @@ class EloquentRepository implements Repository
 	}
 
 	/**
-	 * Check if the model apparently exists.
-	 *
-	 * @return bool
-	 */
-	final public function exists()
-	{
-		return array_key_exists(self::KEY_NAME, $this->getInput());
-	}
-
-	/**
 	 * Get the primary key from input.
 	 *
 	 * @return mixed
 	 */
-	final public function getInputId()
+	public function getInputId()
 	{
-		if ( !$this->exists()) {
-			throw new \LogicException('ID is not specified in input.');
-		}
-
 		$input = $this->getInput();
 
-		return $input[self::KEY_NAME];
+		/** @var Model $model */
+		$model = $this->getModelClass();
+
+		// If the model or the input is not set, then we cannot get an id.
+		if (! $model || ! $input) {
+			return null;
+		}
+
+		return array_get($input, (new $model)->getKeyName());
 	}
 
 	/**
@@ -1136,7 +1170,7 @@ class EloquentRepository implements Repository
 	 * @return mixed
 	 * @todo support more relationship types, such as polymorphic ones!
 	 */
-	final protected function fill(Model $instance)
+	protected function fill(Model $instance)
 	{
 		$input = $this->getInput();
 		$model_fields = $this->getFields($instance);
@@ -1186,7 +1220,7 @@ class EloquentRepository implements Repository
 	 * @param \Illuminate\Database\Eloquent\Model $instance
 	 * @return void
 	 */
-	final protected function applyRelations(array $specs, Model $instance)
+	protected function applyRelations(array $specs, Model $instance)
 	{
 		foreach ($specs as $spec) {
 			$this->cascadeRelation($spec['relation'], $spec['value'], $instance);
@@ -1202,7 +1236,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return void
 	 */
-	final protected function cascadeRelation(Relation $relation, array $input, Model $parent = null)
+	protected function cascadeRelation(Relation $relation, array $input, Model $parent = null)
 	{
 		// Make a child repository for containing the cascaded relationship through saves
 		$target_model_class = get_class($relation->getQuery()->getModel());
@@ -1280,9 +1314,9 @@ class EloquentRepository implements Repository
 	/**
 	 * Create a model.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Model
+	 * @return Model | Collection
 	 */
-	final public function create()
+	public function create()
 	{
 		$model_class = $this->getModelClass();
 		$instance = new $model_class;
@@ -1292,38 +1326,80 @@ class EloquentRepository implements Repository
 	}
 
 	/**
+	 * Create many models.
+	 *
+	 * @return Collection
+	 */
+	public function createMany(): Collection
+	{
+		$collection = new Collection();
+
+		foreach ($this->getInput() as $item) {
+			$repository = clone $this;
+			$repository->setInput($item);
+			$collection->add($repository->create());
+		}
+
+		return $collection;
+	}
+
+	/**
 	 * Read a model.
 	 *
+	 * @param int|string|null $id
+	 *
 	 * @return \Illuminate\Database\Eloquent\Model
 	 */
-	final public function read()
+	public function read($id = null)
 	{
-		return $this->findOrFail($this->getInputId());
+		return $this->findOrFail($id ?? $this->getInputId());
 	}
 
 	/**
 	 * Update a model.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Model
+	 * @param int|string|null $id
+	 *
+	 * @return Model|Collection
 	 */
-	final public function update()
+	public function update($id = null)
 	{
-		$instance = $this->read();
+		$instance = $this->read($id);
 		$this->fill($instance);
 
-		// Return the updated instance
-		return $this->read();
+		return $this->read($instance->getKey());
 	}
 
 	/**
-	 * Update a model.
+	 * Updates many models.
+	 *
+	 * @return Collection
+	 */
+	public function updateMany(): Collection
+	{
+		$collection = new Collection();
+
+		foreach ($this->getInput() as $item) {
+			$repository = clone $this;
+			$repository->setInput($item);
+			$collection->add($repository->update($repository->getInputId()));
+		}
+
+		return $collection;
+	}
+
+	/**
+	 * Delete a model.
+	 *
+	 * @param int|string|null $id
 	 *
 	 * @return bool
+	 *
 	 * @throws \Exception
 	 */
-	final public function delete()
+	public function delete($id = null): bool
 	{
-		$instance = $this->read();
+		$instance = $this->read($id);
 
 		return $instance->delete();
 	}
@@ -1331,12 +1407,28 @@ class EloquentRepository implements Repository
 	/**
 	 * Save a model, regardless of whether or not it is "new".
 	 *
-	 * @return \Illuminate\Database\Eloquent\Model
+	 * @param int|string|null $id
+	 *
+	 * @return Model|Collection
 	 */
-	final public function save()
+	public function save($id = null)
 	{
-		$input = $this->getInput();
+		$id = $id ?? $this->getInputId();
 
-		return isset($input['id']) ? $this->update() : $this->create();
+		if ($id) {
+			return $this->update($id);
+		}
+
+		return $this->create();
+	}
+
+	/**
+	 * Checks if the input has many items.
+	 *
+	 * @return bool
+	 */
+	public function isManyOperation(): bool
+	{
+		return ($this->getInput() && array_keys($this->getInput()) === range(0, count($this->getInput()) - 1));
 	}
 }

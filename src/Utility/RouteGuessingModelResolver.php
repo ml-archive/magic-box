@@ -3,11 +3,12 @@
 namespace Fuzz\MagicBox\Utility;
 
 use Fuzz\MagicBox\Contracts\MagicBoxResource;
+use Fuzz\MagicBox\Contracts\ModelResolver;
 use Illuminate\Support\Str;
 use Illuminate\Routing\Route;
 use Illuminate\Console\AppNamespaceDetectorTrait;
 
-class Modeler
+class RouteGuessingModelResolver implements ModelResolver
 {
 	use AppNamespaceDetectorTrait;
 
@@ -17,7 +18,7 @@ class Modeler
 	 * @param \Illuminate\Routing\Route $route
 	 * @return string
 	 */
-	final public function resolveModelClass(Route $route)
+	public function resolveModelClass(Route $route): string
 	{
 		// The plural resource name is always the second URL segment, after the API version
 		$route_name = $route->getName();
