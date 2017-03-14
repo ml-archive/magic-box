@@ -11,13 +11,13 @@ use Illuminate\Support\ServiceProvider;
 class RepositoryServiceProvider extends ServiceProvider
 {
 	/**
-	* Register any other events for your application.
-	*
-	* @return void
-	*/
+	 * Register any other events for your application.
+	 *
+	 * @return void
+	 */
 	public function boot()
 	{
-		$this->publishes([$this->configPath() => config_path('magic-box.php')]);
+		$this->publishes([$this->configPath() => config_path('magic-box.php')], 'config');
 	}
 
 	/**
@@ -27,13 +27,11 @@ class RepositoryServiceProvider extends ServiceProvider
 	 */
 	public function register()
 	{
-		$this->publishes([$this->configPath() => config_path('magic-box.php')]);
-
-		app()->instance(Repository::class, function() {
+		app()->singleton(Repository::class, function() {
 			return new EloquentRepository;
 		});
 
-		app()->instance(ModelResolver::class, function() {
+		app()->bind(ModelResolver::class, function() {
 			return new ExplicitModelResolver;
 		});
 	}
@@ -45,6 +43,6 @@ class RepositoryServiceProvider extends ServiceProvider
 	 */
 	protected function configPath()
 	{
-		return realpath(__DIR__ . '/../config/magic-box.php');
+		return realpath(__DIR__ . '/../../config/magic-box.php');
 	}
 }

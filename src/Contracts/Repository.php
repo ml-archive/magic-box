@@ -38,6 +38,20 @@ interface Repository
 	public function getInput();
 
 	/**
+	 * Get the PK name
+	 *
+	 * @return string
+	 */
+	public function getKeyName(): string;
+
+	/**
+	 * Determine if the model exists
+	 *
+	 * @return bool
+	 */
+	public function exists(): bool;
+
+	/**
 	 * Set eager load manually.
 	 *
 	 * @param array $eager_loads

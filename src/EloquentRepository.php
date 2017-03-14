@@ -113,11 +113,11 @@ class EloquentRepository implements Repository
 	private $filterable = [];
 
 	/**
-	 * The key name used in all queries.
+	 * PK name
 	 *
-	 * @var int
+	 * @var string
 	 */
-	const KEY_NAME = 'id';
+	private $key_name = 'id';
 
 	/**
 	 * The glue for nested strings
@@ -140,6 +140,7 @@ class EloquentRepository implements Repository
 
 		$this->model_class = $model_class;
 
+		/** @var \Illuminate\Database\Eloquent\Model|\Fuzz\MagicBox\Contracts\MagicBoxResource $instance */
 		$instance = new $model_class;
 
 		// @todo use set methods
@@ -147,7 +148,29 @@ class EloquentRepository implements Repository
 		$this->setIncludable($instance->getRepositoryIncludable());
 		$this->setFilterable($instance->getRepositoryFilterable());
 
+		$this->key_name = $instance->getKeyName();
+
 		return $this;
+	}
+
+	/**
+	 * Get the PK name
+	 *
+	 * @return string
+	 */
+	public function getKeyName(): string
+	{
+		return $this->key_name;
+	}
+
+	/**
+	 * Determine if the model exists
+	 *
+	 * @return bool
+	 */
+	public function exists(): bool
+	{
+		return array_key_exists($this->getKeyName(), $this->getInput());
 	}
 
 	/**
@@ -1257,16 +1280,16 @@ class EloquentRepository implements Repository
 				 * @var \Illuminate\Database\Eloquent\Relations\HasMany $relation
 				 */
 				// The parent model "owns" child models; any not specified here should be deleted.
-				$current_ids = $relation->pluck(self::KEY_NAME)->toArray();
-				$new_ids = array_filter(array_column($input, self::KEY_NAME));
+				$current_ids = $relation->pluck($this->getKeyName())->toArray();
+				$new_ids = array_filter(array_column($input, $this->getKeyName()));
 				$removed_ids = array_diff($current_ids, $new_ids);
 				if ( !empty($removed_ids)) {
-					$relation->whereIn(self::KEY_NAME, $removed_ids)->delete();
+					$relation->whereIn($this->getKeyName(), $removed_ids)->delete();
 				}
 
 				// Set foreign keys on the children from the parent, and save.
 				foreach ($input as $sub_input) {
-					$sub_input[$relation->getPlainForeignKey()] = $parent->{self::KEY_NAME};
+					$sub_input[$relation->getPlainForeignKey()] = $parent->{$this->getKeyName()};
 					$relation_repository->setInput($sub_input)->save();
 				}
 				break;
@@ -1278,13 +1301,13 @@ class EloquentRepository implements Repository
 				// existing child model, delete the old one.
 				$current = $relation->getResults();
 				if ( !is_null($current)
-					&& ( !isset($input[self::KEY_NAME]) || $current->{self::KEY_NAME} !== intval($input[self::KEY_NAME]))
+					&& ( !isset($input[$this->getKeyName()]) || $current->{$this->getKeyName()} !== intval($input[$this->getKeyName()]))
 				) {
 					$relation->delete();
 				}
 
 				// Set foreign key on the child from the parent, and save.
-				$input[$relation->getPlainForeignKey()] = $parent->{self::KEY_NAME};
+				$input[$relation->getPlainForeignKey()] = $parent->{$this->getKeyName()};
 				$relation_repository->setInput($input)->save();
 				break;
 			case BelongsToMany::class:
@@ -1295,7 +1318,7 @@ class EloquentRepository implements Repository
 				$ids = [];
 
 				foreach ($input as $sub_input) {
-					$id = $relation_repository->setInput($sub_input)->save()->{self::KEY_NAME};
+					$id = $relation_repository->setInput($sub_input)->save()->{$this->getKeyName()};
 
 					// If we were passed pivot data, pass it through accordingly.
 					if (isset($sub_input['pivot'])) {
