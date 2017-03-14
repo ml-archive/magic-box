@@ -40,6 +40,13 @@ class RepositoryMiddleware
 		/** @var \Illuminate\Database\Eloquent\Model $model_class */
 		$model_class = resolve(ModelResolver::class)->resolveModelClass($route);
 
+		// Look for /{model-class}/{id} RESTful requests
+		$parameters = $route->parametersWithoutNulls();
+		if (! empty($parameters)) {
+			$id    = reset($parameters);
+			$input = compact('id');
+		}
+
 		// If the method is not GET lets get the input from everywhere.
 		// @TODO hmm, need to verify what happens on DELETE and PATCH.
 		if ($request->method() !== 'GET') {
