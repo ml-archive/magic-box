@@ -36,6 +36,9 @@
 		],
 		"test-coverage": [
 			"vendor/bin/phpunit --coverage-html tests/coverage"
+		],
+		"open-coverage": [
+			"open -a \"Google Chrome\" tests/coverage/index.html"
 		]
 	},
 	"minimum-stability": "stable"
