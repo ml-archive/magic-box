@@ -12,6 +12,11 @@
         <exclude name="CamelCaseParameterName"/>
     </rule>
 
+    <rule ref="rulesets/naming.xml">
+        <exclude name="ShortVariable"/>
+        <exclude name="ShortMethodName"/>
+    </rule>
+
     <rule ref="rulesets/naming.xml/ShortVariable">
         <properties>
             <property name="exceptions" value="is,in,or,id,q,i,j,v,e,f,fp" />
