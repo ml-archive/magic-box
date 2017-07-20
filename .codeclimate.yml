@@ -22,7 +22,7 @@ engines:
         enabled: false
     config:
       file_extensions: "php"
-      rulesets: "unusedcode,codesize,naming,.phpmd.rulesets.xml"
+      rulesets: "unusedcode,codesize,naming,phpmd.rulesets.xml"
 ratings:
   paths:
   - "**.inc"
