@@ -14,27 +14,13 @@
 
     <rule ref="rulesets/naming.xml/ShortVariable">
         <properties>
-            <property name="exceptions">
-                <value>
-                    id,
-                    is,
-                    in,
-                    or
-                </value>
-            </property>
+            <property name="exceptions" value="is,in,or,id,q,i,j,v,e,f,fp" />
         </properties>
     </rule>
 
     <rule ref="rulesets/naming.xml/ShortMethodName">
         <properties>
-            <property name="exceptions">
-                <value>
-                    id,
-                    is,
-                    in,
-                    or
-                </value>
-            </property>
+            <property name="exceptions" value="is,in,or" />
         </properties>
     </rule>
 </ruleset>
