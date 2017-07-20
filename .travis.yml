@@ -1,22 +1,6 @@
 language: php
 php:
   - '7.0'
+  - '7.1'
 install:
   - composer install
-
-env:
-  global:
-    - CC_TEST_REPORTER_ID=be1d1d2c8da85d1e40dc77a22661b8e73a6fa27fc3c406aac48d85b59d877400
-    - GIT_COMMITTED_AT=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then git log -1 --pretty=format:%ct; else git log -1 --skip 1 --pretty=format:%ct; fi)
-before_script:
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  - chmod +x ./cc-test-reporter
-script:
-  - vendor/bin/phpunit --coverage-clover ./
-  # Preferably you will run test-reporter on branch update events. But
-  # if you setup travis to build PR updates only, you don't need to run
-  # the line below
-  - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then ./cc-test-reporter after-build --prefix tests/coverage --exit-code $TRAVIS_TEST_RESULT; fi
-  # In the case where travis is setup to build PR updates only,
-  # uncomment the line below
-  # - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
