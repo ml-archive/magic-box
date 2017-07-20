@@ -20,13 +20,9 @@ engines:
         enabled: false
       Controversial/CamelCaseParameterName:
         enabled: false
-      Naming/ShortVariable:
-        enabled: false
-      Naming/ShortMethodName:
-        enabled: false
     config:
       file_extensions: "php"
-      rulesets: "unusedcode,codesize,naming,phpmd.rulesets.xml"
+      rulesets: "unusedcode,codesize,phpmd.rulesets.xml"
 ratings:
   paths:
   - "**.inc"
