@@ -1202,7 +1202,9 @@ class EloquentRepository implements Repository
 		$instance_model = get_class($instance);
 		$safe_instance = new $instance_model;
 
-		foreach (array_except($input, [$instance->getKeyName()]) as $key => $value) {
+		$input = ($safe_instance->getIncrementing()) ? array_except($input, [$instance->getKeyName()]) : $input;
+
+		foreach ($input as $key => $value) {
 			if (($relation = $this->isRelation($instance, $key, $instance_model)) && $this->isFillable($key)) {
 				$relation_type = get_class($relation);
 
