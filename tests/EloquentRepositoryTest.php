@@ -19,12 +19,13 @@ class EloquentRepositoryTest extends DBTestCase
 	 * Retrieve a sample repository for testing.
 	 *
 	 * @param string|null $model_class
-	 * @param array $input
+	 * @param array       $input
+	 *
 	 * @return \Fuzz\MagicBox\EloquentRepository
 	 */
 	private function getRepository($model_class = null, array $input = [])
 	{
-		if (!is_null($model_class)) {
+		if (! is_null($model_class)) {
 			return (new EloquentRepository)->setModelClass($model_class)->setDepthRestriction(3)->setInput($input);
 		}
 
@@ -33,11 +34,9 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function seedUsers()
 	{
-		$this->artisan->call(
-			'db:seed', [
+		$this->artisan->call('db:seed', [
 				'--class' => FilterDataSeeder::class
-			]
-		);
+			]);
 	}
 
 	/**
@@ -57,8 +56,8 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItCanFindASimpleModel()
 	{
-		$repo = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-		$user = $repo->save();
+		$repo       = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$user       = $repo->save();
 		$found_user = $repo->find($user->id);
 		$this->assertNotNull($found_user);
 		$this->assertEquals($user->id, $found_user->id);
@@ -73,8 +72,8 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItPaginates()
 	{
-		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-		$first_user = $repository->setInput(['username' => 'bob'])->save();
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput(['username' => 'bob'])->save();
 		$second_user = $repository->setInput(['username' => 'sue'])->save();
 
 		$paginator = $repository->paginate(1);
@@ -84,24 +83,20 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItEagerLoadsRelationsSafely()
 	{
-		$this->getRepository(
-			'Fuzz\MagicBox\Tests\Models\User', [
+		$this->getRepository('Fuzz\MagicBox\Tests\Models\User', [
 				'username' => 'joe',
-				'posts' => [
+				'posts'    => [
 					[
 						'title' => 'Some Great Post',
 					],
 				]
-			]
-		)->save();
+			])->save();
 
 		$user = $this->getRepository('Fuzz\MagicBox\Tests\Models\User')->setFilters(['username' => 'joe'])
-			->setEagerLoads(
-				[
+			->setEagerLoads([
 					'posts.nothing',
 					'nada'
-				]
-			)->all()->first();
+				])->all()->first();
 
 		$this->assertNotNull($user);
 		$this->assertInstanceOf('Illuminate\Database\Eloquent\Collection', $user->posts);
@@ -121,12 +116,10 @@ class EloquentRepositoryTest extends DBTestCase
 		$this->assertEquals($user->id, 1);
 		$this->assertEquals($user->username, 'bobby');
 
-		$user = $this->getRepository(
-			'Fuzz\MagicBox\Tests\Models\User', [
-				'id' => 1,
+		$user = $this->getRepository('Fuzz\MagicBox\Tests\Models\User', [
+				'id'       => 1,
 				'username' => 'sue'
-			]
-		)->save();
+			])->save();
 		$this->assertEquals($user->id, 1);
 		$this->assertEquals($user->username, 'sue');
 	}
@@ -143,14 +136,12 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItFillsBelongsToRelations()
 	{
-		$post = $this->getRepository(
-			'Fuzz\MagicBox\Tests\Models\Post', [
+		$post = $this->getRepository('Fuzz\MagicBox\Tests\Models\Post', [
 				'title' => 'Some Great Post',
-				'user' => [
+				'user'  => [
 					'username' => 'jimmy',
 				],
-			]
-		)->save();
+			])->save();
 
 		$this->assertNotNull($post->user);
 		$this->assertEquals($post->user->username, 'jimmy');
@@ -158,10 +149,9 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItFillsHasManyRelations()
 	{
-		$user = $this->getRepository(
-			'Fuzz\MagicBox\Tests\Models\User', [
+		$user = $this->getRepository('Fuzz\MagicBox\Tests\Models\User', [
 				'username' => 'joe',
-				'posts' => [
+				'posts'    => [
 					[
 						'title' => 'Some Great Post',
 					],
@@ -169,39 +159,32 @@ class EloquentRepositoryTest extends DBTestCase
 						'title' => 'Yet Another Great Post',
 					],
 				]
-			]
-		)->save();
+			])->save();
 
-		$this->assertEquals(
-			$user->posts->pluck('id')->toArray(), [
+		$this->assertEquals($user->posts->pluck('id')->toArray(), [
 				1,
 				2
-			]
-		);
+			]);
 
 		$post = Post::find(2);
 		$this->assertNotNull($post);
 		$this->assertEquals($post->user_id, $user->id);
 		$this->assertEquals($post->title, 'Yet Another Great Post');
 
-		$this->getRepository(
-			'Fuzz\MagicBox\Tests\Models\User', [
-				'id' => $user->id,
+		$this->getRepository('Fuzz\MagicBox\Tests\Models\User', [
+				'id'    => $user->id,
 				'posts' => [
 					[
 						'id' => 1,
 					],
 				],
-			]
-		)->save();
+			])->save();
 
 		$user->load('posts');
 
-		$this->assertEquals(
-			$user->posts->pluck('id')->toArray(), [
+		$this->assertEquals($user->posts->pluck('id')->toArray(), [
 				1,
-			]
-		);
+			]);
 
 		$post = Post::find(2);
 		$this->assertNull($post);
@@ -209,27 +192,23 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItFillsHasOneRelations()
 	{
-		$user = $this->getRepository(
-			'Fuzz\MagicBox\Tests\Models\User', [
+		$user = $this->getRepository('Fuzz\MagicBox\Tests\Models\User', [
 				'username' => 'joe',
-				'profile' => [
+				'profile'  => [
 					'favorite_cheese' => 'brie',
 				],
-			]
-		)->save();
+			])->save();
 
 		$this->assertNotNull($user->profile);
 		$this->assertEquals($user->profile->favorite_cheese, 'brie');
 		$old_profile_id = $user->profile->id;
 
-		$user = $this->getRepository(
-			'Fuzz\MagicBox\Tests\Models\User', [
-				'id' => $user->id,
+		$user = $this->getRepository('Fuzz\MagicBox\Tests\Models\User', [
+				'id'      => $user->id,
 				'profile' => [
 					'favorite_cheese' => 'pepper jack',
 				],
-			]
-		)->save();
+			])->save();
 
 		$this->assertNotNull($user->profile);
 		$this->assertEquals($user->profile->favorite_cheese, 'pepper jack');
@@ -240,16 +219,15 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItCascadesThroughSupportedRelations()
 	{
-		$post = $this->getRepository(
-			'Fuzz\MagicBox\Tests\Models\Post', [
+		$post = $this->getRepository('Fuzz\MagicBox\Tests\Models\Post', [
 				'title' => 'All the Tags',
-				'user' => [
+				'user'  => [
 					'username' => 'simon',
-					'profile' => [
+					'profile'  => [
 						'favorite_cheese' => 'brie',
 					],
 				],
-				'tags' => [
+				'tags'  => [
 					[
 						'label' => 'Important Stuff',
 					],
@@ -257,8 +235,7 @@ class EloquentRepositoryTest extends DBTestCase
 						'label' => 'Less Important Stuff',
 					],
 				],
-			]
-		)->save();
+			])->save();
 
 		$this->assertEquals($post->tags()->count(), 2);
 		$this->assertNotNull($post->user->profile);
@@ -267,13 +244,12 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItUpdatesBelongsToManyPivots()
 	{
-		$post = $this->getRepository(
-			'Fuzz\MagicBox\Tests\Models\Post', [
+		$post = $this->getRepository('Fuzz\MagicBox\Tests\Models\Post', [
 				'title' => 'All the Tags',
-				'user' => [
+				'user'  => [
 					'username' => 'josh',
 				],
-				'tags' => [
+				'tags'  => [
 					[
 						'label' => 'Has Extra',
 						'pivot' => [
@@ -281,25 +257,22 @@ class EloquentRepositoryTest extends DBTestCase
 						],
 					],
 				],
-			]
-		)->save();
+			])->save();
 
 		$tag = $post->tags->first();
 		$this->assertEquals($tag->pivot->extra, 'Meowth');
 
-		$post = $this->getRepository(
-			'Fuzz\MagicBox\Tests\Models\Post', [
-				'id' => $post->id,
+		$post = $this->getRepository('Fuzz\MagicBox\Tests\Models\Post', [
+				'id'   => $post->id,
 				'tags' => [
 					[
-						'id' => $tag->id,
+						'id'    => $tag->id,
 						'pivot' => [
 							'extra' => 'Pikachu',
 						],
 					],
 				],
-			]
-		)->save();
+			])->save();
 
 		$tag = $post->tags->first();
 		$this->assertEquals($tag->pivot->extra, 'Pikachu');
@@ -307,77 +280,63 @@ class EloquentRepositoryTest extends DBTestCase
 
 	public function testItSorts()
 	{
-		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-		$first_user = $repository->setInput(
-			[
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput([
 				'username' => 'Bobby'
-			]
-		)->save();
-		$second_user = $repository->setInput(
-			[
+			])->save();
+		$second_user = $repository->setInput([
 				'username' => 'Robby'
-			]
-		)->save();
+			])->save();
 		$this->assertEquals($repository->all()->count(), 2);
 
-		$found_users = $repository->setSortOrder(
-			[
+		$found_users = $repository->setSortOrder([
 				'id' => 'desc'
-			]
-		)->all();
+			])->all();
 		$this->assertEquals($found_users->count(), 2);
 		$this->assertEquals($found_users->first()->id, 2);
 	}
 
 	public function testItSortsNested()
 	{
-		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
-		$first_user = $repository->setInput(
-			[
+		$repository  = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$first_user  = $repository->setInput([
 				'username' => 'Bobby',
-				'posts' => [
+				'posts'    => [
 					[
 						'title' => 'First Post',
-						'tags' => [
+						'tags'  => [
 							['label' => 'Tag1']
 						]
 					]
 				]
-			]
-		)->save();
-		$second_user = $repository->setInput(
-			[
+			])->save();
+		$second_user = $repository->setInput([
 				'username' => 'Robby',
-				'posts' => [
+				'posts'    => [
 					[
 						'title' => 'Zis is the final post alphabetically',
-						'tags' => [
+						'tags'  => [
 							['label' => 'Tag2']
 						]
 					]
 				]
-			]
-		)->save();
-		$third_user = $repository->setInput(
-			[
+			])->save();
+		$third_user  = $repository->setInput([
 				'username' => 'Gobby',
-				'posts' => [
+				'posts'    => [
 					[
 						'title' => 'Third Post',
-						'tags' => [
+						'tags'  => [
 							['label' => 'Tag3']
 						]
 					]
 				]
-			]
-		)->save();
+			])->save();
 		$this->assertEquals($repository->all()->count(), 3);
 
-		$found_users = $repository->setSortOrder(
-			[
+		$found_users = $repository->setSortOrder([
 				'posts.title' => 'desc'
-			]
-		)->all();
+			])->all();
 		$this->assertEquals($found_users->count(), 3);
 		$this->assertEquals($found_users->first()->username, 'Robby');
 	}
@@ -387,13 +346,24 @@ class EloquentRepositoryTest extends DBTestCase
 		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User', ['username' => 'Billy']);
 		$repository->save();
 		$this->assertEquals($repository->count(), 1);
-		$repository->setModifiers(
-			[
+		$repository->setModifiers([
 				function (Builder $query) {
 					$query->whereRaw(DB::raw('0 = 1'));
 				}
-			]
-		);
+			]);
+		$this->assertEquals($repository->count(), 0);
+	}
+
+	public function testItAddsModifier()
+	{
+		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User', ['username' => 'Billy']);
+		$repository->save();
+		$this->assertEquals($repository->count(), 1);
+		$repository->addModifier(function (Builder $query) {
+				$query->whereRaw(DB::raw('0 = 1'));
+			});
+
+		$this->assertSame(1, count($repository->getModifiers()));
 		$this->assertEquals($repository->count(), 0);
 	}
 
