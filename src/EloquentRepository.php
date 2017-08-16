@@ -2,7 +2,9 @@
 
 namespace Fuzz\MagicBox;
 
+use Closure;
 use Fuzz\MagicBox\Utility\ChecksRelations;
+use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Fuzz\MagicBox\Contracts\Repository;
@@ -131,9 +133,9 @@ class EloquentRepository implements Repository
 	 * Set the model for an instance of this resource controller.
 	 *
 	 * @param string $model_class
-	 * @return static
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function setModelClass($model_class)
+	public function setModelClass($model_class): Repository
 	{
 		if ( !is_subclass_of($model_class, Model::class)) {
 			throw new InvalidArgumentException('Specified model class must be an instance of ' . Model::class);
@@ -179,7 +181,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return string
 	 */
-	public function getModelClass()
+	public function getModelClass(): string
 	{
 		return $this->model_class;
 	}
@@ -188,9 +190,9 @@ class EloquentRepository implements Repository
 	 * Set input manually.
 	 *
 	 * @param array $input
-	 * @return static
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function setInput(array $input)
+	public function setInput(array $input): Repository
 	{
 		$this->input = $input;
 
@@ -202,7 +204,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return array
 	 */
-	public function getInput()
+	public function getInput(): array
 	{
 		return $this->input;
 	}
@@ -211,9 +213,9 @@ class EloquentRepository implements Repository
 	 * Set eager load manually.
 	 *
 	 * @param array $eager_loads
-	 * @return static
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function setEagerLoads(array $eager_loads)
+	public function setEagerLoads(array $eager_loads): Repository
 	{
 		$this->eager_loads = $eager_loads;
 
@@ -225,7 +227,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return array
 	 */
-	public function getEagerLoads()
+	public function getEagerLoads(): array
 	{
 		return $this->eager_loads;
 	}
@@ -235,7 +237,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return int
 	 */
-	public function getDepthRestriction()
+	public function getDepthRestriction(): int
 	{
 		return $this->depth_restriction;
 	}
@@ -246,9 +248,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param int $depth
 	 *
-	 * @return $this
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function setDepthRestriction($depth)
+	public function setDepthRestriction($depth): Repository
 	{
 		$this->depth_restriction = $depth;
 
@@ -259,9 +261,9 @@ class EloquentRepository implements Repository
 	 * Set filters manually.
 	 *
 	 * @param array $filters
-	 * @return static
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function setFilters(array $filters)
+	public function setFilters(array $filters): Repository
 	{
 		$this->filters = $filters;
 
@@ -273,7 +275,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return array
 	 */
-	public function getFilters()
+	public function getFilters(): array
 	{
 		return $this->filters;
 	}
@@ -282,9 +284,9 @@ class EloquentRepository implements Repository
 	 * Add filters to already existing filters without overwriting them.
 	 *
 	 * @param array $filters
-	 * @return static
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function addFilters(array $filters)
+	public function addFilters(array $filters): Repository
 	{
 		foreach ($filters as $key => $value) {
 			$this->addFilter($key, $value);
@@ -298,9 +300,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param string $key
 	 * @param string $value
-	 * @return static
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function addFilter(string $key, string $value)
+	public function addFilter(string $key, string $value): Repository
 	{
 		$this->filters[$key] = $value;
 
@@ -313,7 +315,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return array
 	 */
-	public function getGroupBy()
+	public function getGroupBy(): array
 	{
 		return $this->group_by;
 	}
@@ -323,9 +325,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param array $group_by
 	 *
-	 * @return $this
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function setGroupBy(array $group_by)
+	public function setGroupBy(array $group_by): Repository
 	{
 		$this->group_by = $group_by;
 
@@ -335,7 +337,7 @@ class EloquentRepository implements Repository
 	/**
 	 * @return array
 	 */
-	public function getAggregate()
+	public function getAggregate(): array
 	{
 		return $this->aggregate;
 	}
@@ -345,9 +347,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param array $aggregate
 	 *
-	 * @return $this
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function setAggregate(array $aggregate)
+	public function setAggregate(array $aggregate): Repository
 	{
 		$this->aggregate = $aggregate;
 
@@ -358,9 +360,9 @@ class EloquentRepository implements Repository
 	 * Set sort order manually.
 	 *
 	 * @param array $sort_order
-	 * @return $this
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function setSortOrder(array $sort_order)
+	public function setSortOrder(array $sort_order): Repository
 	{
 		$this->sort_order = $sort_order;
 
@@ -372,18 +374,32 @@ class EloquentRepository implements Repository
 	 *
 	 * @return array
 	 */
-	public function getSortOrder()
+	public function getSortOrder(): array
 	{
 		return $this->sort_order;
+	}
+
+	/**
+	 * Add a single modifier
+	 *
+	 * @param \Closure $modifier
+	 *
+	 * @return \Fuzz\MagicBox\Contracts\Repository
+	 */
+	public function addModifier(Closure $modifier): Repository
+	{
+		$this->modifiers[] = $modifier;
+
+		return $this;
 	}
 
 	/**
 	 * Set modifiers.
 	 *
 	 * @param array $modifiers
-	 * @return static
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function setModifiers(array $modifiers)
+	public function setModifiers(array $modifiers): Repository
 	{
 		$this->modifiers = $modifiers;
 
@@ -395,7 +411,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return array
 	 */
-	public function getModifiers()
+	public function getModifiers(): array
 	{
 		return $this->modifiers;
 	}
@@ -405,9 +421,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param array $fillable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function setFillable(array $fillable): EloquentRepository
+	public function setFillable(array $fillable): Repository
 	{
 		if ($fillable === self::ALLOW_ALL) {
 			$this->fillable = self::ALLOW_ALL;
@@ -446,9 +462,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param string $fillable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function addFillable(string $fillable): EloquentRepository
+	public function addFillable(string $fillable): Repository
 	{
 		$this->fillable[$fillable] = true;
 
@@ -460,9 +476,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param array $fillable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function addManyFillable(array $fillable): EloquentRepository
+	public function addManyFillable(array $fillable): Repository
 	{
 		foreach ($fillable as $allowed_field) {
 			$this->addFillable($allowed_field);
@@ -476,9 +492,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param string $fillable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function removeFillable(string $fillable): EloquentRepository
+	public function removeFillable(string $fillable): Repository
 	{
 		unset($this->fillable[$fillable]);
 
@@ -490,9 +506,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param array $fillable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function removeManyFillable(array $fillable): EloquentRepository
+	public function removeManyFillable(array $fillable): Repository
 	{
 		foreach ($fillable as $disallowed_field) {
 			$this->removeFillable($disallowed_field);
@@ -522,9 +538,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param array $includable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function setIncludable(array $includable): EloquentRepository
+	public function setIncludable(array $includable): Repository
 	{
 		if ($includable === self::ALLOW_ALL) {
 			$this->includable = self::ALLOW_ALL;
@@ -563,9 +579,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param string $includable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function addIncludable(string $includable): EloquentRepository
+	public function addIncludable(string $includable): Repository
 	{
 		$this->includable[$includable] = true;
 
@@ -577,9 +593,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param array $includable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function addManyIncludable(array $includable): EloquentRepository
+	public function addManyIncludable(array $includable): Repository
 	{
 		foreach ($includable as $allowed_include) {
 			$this->addIncludable($allowed_include);
@@ -593,9 +609,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param string $includable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function removeIncludable(string $includable): EloquentRepository
+	public function removeIncludable(string $includable): Repository
 	{
 		unset($this->includable[$includable]);
 
@@ -607,9 +623,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param array $includable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function removeManyIncludable(array $includable): EloquentRepository
+	public function removeManyIncludable(array $includable): Repository
 	{
 		foreach ($includable as $disallowed_include) {
 			$this->removeIncludable($disallowed_include);
@@ -639,9 +655,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param array $filterable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function setFilterable(array $filterable): EloquentRepository
+	public function setFilterable(array $filterable): Repository
 	{
 		if ($filterable === self::ALLOW_ALL) {
 			$this->filterable = self::ALLOW_ALL;
@@ -680,9 +696,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param string $filterable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function addFilterable(string $filterable): EloquentRepository
+	public function addFilterable(string $filterable): Repository
 	{
 		$this->filterable[$filterable] = true;
 
@@ -694,9 +710,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param array $filterable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function addManyFilterable(array $filterable): EloquentRepository
+	public function addManyFilterable(array $filterable): Repository
 	{
 		foreach ($filterable as $allowed_field) {
 			$this->addFilterable($allowed_field);
@@ -710,9 +726,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param string $filterable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function removeFilterable(string $filterable): EloquentRepository
+	public function removeFilterable(string $filterable): Repository
 	{
 		unset($this->filterable[$filterable]);
 
@@ -724,9 +740,9 @@ class EloquentRepository implements Repository
 	 *
 	 * @param array $filterable
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository
 	 */
-	public function removeManyFilterable(array $filterable): EloquentRepository
+	public function removeManyFilterable(array $filterable): Repository
 	{
 		foreach ($filterable as $disallowed_field) {
 			$this->removeFilterable($disallowed_field);
@@ -757,7 +773,7 @@ class EloquentRepository implements Repository
 	 * @param \Illuminate\Database\Eloquent\Model $instance
 	 * @return array
 	 */
-	public static function getFields(Model $instance)
+	public static function getFields(Model $instance): array
 	{
 		return Schema::getColumnListing($instance->getTable());
 	}
@@ -1111,7 +1127,7 @@ class EloquentRepository implements Repository
 	 * @param int $id
 	 * @return \Illuminate\Database\Eloquent\Model
 	 */
-	public function findOrFail($id)
+	public function findOrFail($id): Model
 	{
 		return $this->query()->findOrFail($id);
 	}
@@ -1121,7 +1137,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Illuminate\Database\Eloquent\Collection
 	 */
-	public function all()
+	public function all(): Collection
 	{
 		return $this->query()->get();
 	}
@@ -1130,9 +1146,9 @@ class EloquentRepository implements Repository
 	 * Return paginated response.
 	 *
 	 * @param  int $per_page
-	 * @return \Illuminate\Pagination\Paginator
+	 * @return \Illuminate\Contracts\Pagination\Paginator
 	 */
-	public function paginate($per_page)
+	public function paginate($per_page): Paginator
 	{
 		return $this->query()->paginate($per_page);
 	}
@@ -1142,7 +1158,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return int
 	 */
-	public function count()
+	public function count(): int
 	{
 		return $this->query()->count();
 	}
@@ -1152,7 +1168,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return bool
 	 */
-	public function hasAny()
+	public function hasAny(): bool
 	{
 		return $this->count() > 0;
 	}
@@ -1162,7 +1178,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Illuminate\Database\Eloquent\Model
 	 */
-	public function random()
+	public function random(): Model
 	{
 		return $this->query()->orderByRaw('RAND()')->first();
 	}
@@ -1194,7 +1210,7 @@ class EloquentRepository implements Repository
 	 * @return mixed
 	 * @todo support more relationship types, such as polymorphic ones!
 	 */
-	protected function fill(Model $instance)
+	protected function fill(Model $instance): bool
 	{
 		$input = $this->getInput();
 		$model_fields = $this->getFields($instance);
@@ -1342,7 +1358,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return Model | Collection
 	 */
-	public function create()
+	public function create(): Model
 	{
 		$model_class = $this->getModelClass();
 		$instance = new $model_class;
@@ -1376,7 +1392,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return \Illuminate\Database\Eloquent\Model
 	 */
-	public function read($id = null)
+	public function read($id = null): Model
 	{
 		return $this->findOrFail($id ?? $this->getInputId());
 	}
@@ -1388,7 +1404,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return Model|Collection
 	 */
-	public function update($id = null)
+	public function update($id = null): Model
 	{
 		$instance = $this->read($id);
 		$this->fill($instance);
@@ -1437,7 +1453,7 @@ class EloquentRepository implements Repository
 	 *
 	 * @return Model|Collection
 	 */
-	public function save($id = null)
+	public function save($id = null): Model
 	{
 		$id = $id ?? $this->getInputId();
 
