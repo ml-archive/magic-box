@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -1291,7 +1292,7 @@ class EloquentRepository implements Repository
 
 				// Set foreign keys on the children from the parent, and save.
 				foreach ($input as $sub_input) {
-					$sub_input[$relation->getPlainForeignKey()] = $parent->{$this->getKeyName()};
+					$sub_input[$this->getRelationsForeignKeyName($relation)] = $parent->{$this->getKeyName()};
 					$relation_repository->setInput($sub_input)->save();
 				}
 				break;
@@ -1309,7 +1310,7 @@ class EloquentRepository implements Repository
 				}
 
 				// Set foreign key on the child from the parent, and save.
-				$input[$relation->getPlainForeignKey()] = $parent->{$this->getKeyName()};
+				$input[$this->getRelationsForeignKeyName($relation)] = $parent->{$this->getKeyName()};
 				$relation_repository->setInput($input)->save();
 				break;
 			case BelongsToMany::class:
@@ -1455,5 +1456,19 @@ class EloquentRepository implements Repository
 	public function isManyOperation(): bool
 	{
 		return ($this->getInput() && array_keys($this->getInput()) === range(0, count($this->getInput()) - 1));
+	}
+
+	/**
+	 * A helper method for backwards compatibility.
+	 *
+	 * In laravel 5.4 they renamed the method `getPlainForeignKey` to `getForeignKeyName`
+	 *
+	 * @param HasOneOrMany $relation
+	 *
+	 * @return string
+	 */
+	private function getRelationsForeignKeyName(HasOneOrMany $relation): string
+	{
+		return method_exists($relation, 'getForeignKeyName') ? $relation->getForeignKeyName() : $relation->getPlainForeignKey();
 	}
 }
