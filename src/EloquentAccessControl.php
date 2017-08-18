@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
-class EloquentAccessCompiler implements AccessControl
+class EloquentAccessControl implements AccessControl
 {
 	/**
 	 * How many levels deep relationships can be included.

@@ -73,7 +73,7 @@ class EloquentRepository implements Repository
 	public function accessControl(): AccessControl
 	{
 		if (is_null($this->access_compiler)) {
-			$this->access_compiler = new EloquentAccessCompiler;
+			$this->access_compiler = new EloquentAccessControl;
 		}
 
 		return $this->access_compiler;

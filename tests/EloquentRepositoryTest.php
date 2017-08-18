@@ -3,7 +3,6 @@
 namespace Fuzz\MagicBox\Tests;
 
 use Fuzz\MagicBox\Contracts\AccessControl;
-use Fuzz\MagicBox\Contracts\QueryModifier;
 use Fuzz\MagicBox\Tests\Models\Tag;
 use Fuzz\MagicBox\Tests\Seeds\FilterDataSeeder;
 use Illuminate\Database\Eloquent\Collection;
