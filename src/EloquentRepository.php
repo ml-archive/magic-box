@@ -231,12 +231,10 @@ class EloquentRepository implements Repository
 	 */
 	protected function query()
 	{
-		$query = forward_static_call(
-			[
-				$this->getModelClass(),
-				'query',
-			]
-		);
+		$query = forward_static_call([
+			$this->getModelClass(),
+			'query',
+		]);
 
 		$access_compiler = $this->accessControl();
 

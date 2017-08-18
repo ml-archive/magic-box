@@ -99,7 +99,7 @@ class EloquentAccessControl implements AccessControl
 	 */
 	public function setFillable(array $fillable): AccessControl
 	{
-		if ($fillable === self::ALLOW_ALL) {
+		if ($this->canAllowAll($fillable)) {
 			$this->fillable = self::ALLOW_ALL;
 
 			return $this;
@@ -124,7 +124,7 @@ class EloquentAccessControl implements AccessControl
 	 */
 	public function getFillable(bool $assoc = false): array
 	{
-		if ($this->fillable === self::ALLOW_ALL) {
+		if ($this->canAllowAll($this->fillable)) {
 			return self::ALLOW_ALL;
 		}
 
@@ -200,7 +200,7 @@ class EloquentAccessControl implements AccessControl
 	 */
 	public function isFillable(string $key): bool
 	{
-		if ($this->fillable === self::ALLOW_ALL) {
+		if ($this->canAllowAll($this->fillable)) {
 			return true;
 		}
 
@@ -216,7 +216,7 @@ class EloquentAccessControl implements AccessControl
 	 */
 	public function setIncludable(array $includable): AccessControl
 	{
-		if ($includable === self::ALLOW_ALL) {
+		if ($this->canAllowAll($includable)) {
 			$this->includable = self::ALLOW_ALL;
 
 			return $this;
@@ -241,7 +241,7 @@ class EloquentAccessControl implements AccessControl
 	 */
 	public function getIncludable(bool $assoc = false): array
 	{
-		if ($this->includable === self::ALLOW_ALL) {
+		if ($this->canAllowAll($this->includable)) {
 			return self::ALLOW_ALL;
 		}
 
@@ -317,7 +317,7 @@ class EloquentAccessControl implements AccessControl
 	 */
 	public function isIncludable(string $key): bool
 	{
-		if ($this->includable === self::ALLOW_ALL) {
+		if ($this->canAllowAll($this->includable)) {
 			return true;
 		}
 
@@ -333,7 +333,7 @@ class EloquentAccessControl implements AccessControl
 	 */
 	public function setFilterable(array $filterable): AccessControl
 	{
-		if ($filterable === self::ALLOW_ALL) {
+		if ($this->canAllowAll($filterable)) {
 			$this->filterable = self::ALLOW_ALL;
 
 			return $this;
@@ -358,7 +358,7 @@ class EloquentAccessControl implements AccessControl
 	 */
 	public function getFilterable(bool $assoc = false): array
 	{
-		if ($this->filterable === self::ALLOW_ALL) {
+		if ($this->canAllowAll($this->filterable)) {
 			return self::ALLOW_ALL;
 		}
 
@@ -434,10 +434,22 @@ class EloquentAccessControl implements AccessControl
 	 */
 	public function isFilterable(string $key): bool
 	{
-		if ($this->filterable === self::ALLOW_ALL) {
+		if ($this->canAllowAll($this->filterable)) {
 			return true;
 		}
 
 		return isset($this->filterable[$key]) && $this->filterable[$key];
+	}
+
+	/**
+	 * Determine if the values are the ALLOW_ALL token
+	 *
+	 * @param array $values
+	 *
+	 * @return bool
+	 */
+	protected function canAllowAll(array $values): bool
+	{
+		return $values === AccessControl::ALLOW_ALL;
 	}
 }
