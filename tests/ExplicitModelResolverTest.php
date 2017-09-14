@@ -24,7 +24,7 @@ class ExplicitExplicitModelResolverTest extends TestCase
 	{
 		$route = Mockery::mock(Route::class);
 		$route->shouldReceive('getAction')->twice()->andReturn([
-			'resource' => User::class
+			'resource' => User::class,
 		]);
 
 		$model = (new ExplicitModelResolver())->resolveModelClass($route);
@@ -53,13 +53,24 @@ class ExplicitExplicitModelResolverTest extends TestCase
 	{
 		$route = Mockery::mock(Route::class);
 		$route->shouldReceive('getAction')->zeroOrMoreTimes()->andReturn([
-			'uses' => 'Fuzz\MagicBox\Tests\UserController@getUsers'
+			'uses' => 'Fuzz\MagicBox\Tests\UserController@getUsers',
 		]);
 
 		$model = (new ExplicitModelResolver())->resolveModelClass($route);
 
 		$this->assertEquals(User::class, $model);
 		$this->assertNotEquals(Post::class, $model);
+	}
+
+	public function testItThrowsModelNotResolvedExceptionIfControllerDoesNotHaveResource()
+	{
+		$route = Mockery::mock(Route::class);
+		$route->shouldReceive('getAction')->zeroOrMoreTimes()->andReturn([
+			'uses' => 'Fuzz\MagicBox\Tests\ExplicitExplicitModelResolverTestStubControllerNoResource@getUsers',
+		]);
+
+		$this->expectException(ModelNotResolvedException::class);
+		$model = (new ExplicitModelResolver())->resolveModelClass($route);
 	}
 
 	/**
@@ -76,13 +87,23 @@ class ExplicitExplicitModelResolverTest extends TestCase
 	{
 		$route = Mockery::mock(Route::class);
 		$route->shouldReceive('getAction')->zeroOrMoreTimes()->andReturn([
-			'uses' => function() {
+			'uses' => function () {
 				return null;
-			}
+			},
 		]);
 
 		$this->expectException(ModelNotResolvedException::class);
 		$model = (new ExplicitModelResolver())->resolveModelClass($route);
+	}
+
+	public function testItCanGetRouteMethodFromRoute()
+	{
+		$route = Mockery::mock(Route::class);
+		$route->shouldReceive('getAction')->zeroOrMoreTimes()->andReturn([
+			'uses' => 'FooController@barMethod',
+		]);
+
+		$this->assertSame('barMethod', (new ExplicitModelResolver())->getRouteMethod($route));
 	}
 }
 
@@ -95,4 +116,9 @@ class ExplicitExplicitModelResolverTest extends TestCase
 class UserController extends Controller
 {
 	public static $resource = User::class;
+}
+
+class ExplicitExplicitModelResolverTestStubControllerNoResource
+{
+
 }

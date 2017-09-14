@@ -2,9 +2,9 @@
 
 namespace Fuzz\MagicBox\Providers;
 
-use Fuzz\MagicBox\Contracts\ModelResolver;
 use Fuzz\MagicBox\Contracts\Repository;
 use Fuzz\MagicBox\EloquentRepository;
+use Fuzz\MagicBox\Facades\ModelResolver;
 use Fuzz\MagicBox\Utility\ExplicitModelResolver;
 use Illuminate\Support\ServiceProvider;
 
