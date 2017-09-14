@@ -19,6 +19,13 @@ use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use InvalidArgumentException;
 
+/**
+ * Class EloquentRepository
+ *
+ * A Repository implementation for Eloquent.
+ *
+ * @package Fuzz\MagicBox
+ */
 class EloquentRepository implements Repository
 {
 	use ChecksRelations, ChecksModelFields;

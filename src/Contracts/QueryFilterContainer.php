@@ -2,6 +2,13 @@
 
 namespace Fuzz\MagicBox\Contracts;
 
+/**
+ * Interface QueryFilterContainer
+ *
+ * A QueryFilterContainer modifies an Eloquent query and applies filters to it.
+ *
+ * @package Fuzz\MagicBox\Contracts
+ */
 interface QueryFilterContainer
 {
 	/**

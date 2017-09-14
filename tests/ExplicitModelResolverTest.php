@@ -2,7 +2,6 @@
 
 namespace Fuzz\MagicBox\Tests;
 
-
 use Fuzz\MagicBox\Exception\ModelNotResolvedException;
 use Fuzz\MagicBox\Tests\Models\Post;
 use Fuzz\MagicBox\Tests\Models\User;
@@ -11,10 +10,8 @@ use Illuminate\Routing\Controller;
 use Illuminate\Routing\Route;
 use Mockery;
 
-
 class ExplicitExplicitModelResolverTest extends TestCase
 {
-
 	/**
 	 * Given a route has a property named resource
 	 * When the model is resolved

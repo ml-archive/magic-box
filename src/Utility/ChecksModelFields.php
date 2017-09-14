@@ -10,6 +10,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Class ChecksModelFields
+ *
+ * Finds fields for a model.
+ *
+ * @package Fuzz\MagicBox\Utility
+ */
 trait ChecksModelFields
 {
 	/**

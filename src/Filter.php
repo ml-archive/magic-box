@@ -4,6 +4,13 @@ namespace Fuzz\MagicBox;
 
 use Fuzz\MagicBox\Contracts\QueryFilterContainer;
 
+/**
+ * Class Filter
+ *
+ * A QueryFilterContainer implementation for Eloquent.
+ *
+ * @package Fuzz\MagicBox
+ */
 class Filter implements QueryFilterContainer
 {
 	/**

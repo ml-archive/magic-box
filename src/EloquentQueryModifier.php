@@ -16,6 +16,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+/**
+ * Class EloquentQueryModifier
+ *
+ * A QueryModifier implementation for Eloquent.
+ *
+ * @package Fuzz\MagicBox
+ */
 class EloquentQueryModifier implements QueryModifier
 {
 	use ChecksRelations, ChecksModelFields;

@@ -3,7 +3,9 @@
 namespace Fuzz\MagicBox\Contracts;
 
 /**
- * Interface Resource
+ * Interface MagicBoxResource
+ *
+ * A MagicBoxResource is a resource (Model) which can be accessed via MagicBox.
  *
  * @package Fuzz\Agency\Contracts
  */

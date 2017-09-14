@@ -2,11 +2,18 @@
 
 namespace Fuzz\MagicBox\Middleware;
 
-use Fuzz\MagicBox\Contracts\ModelResolver;
+use Fuzz\MagicBox\Facades\ModelResolver;
 use Illuminate\Http\Request;
 use Fuzz\MagicBox\EloquentRepository;
 use Fuzz\MagicBox\Contracts\Repository;
 
+/**
+ * Class RepositoryMiddleware
+ *
+ * Responsible for accepting a request and building a Repository for the appropriate class.
+ *
+ * @package Fuzz\MagicBox\Middleware
+ */
 class RepositoryMiddleware
 {
 	/**
@@ -27,7 +34,8 @@ class RepositoryMiddleware
 	 * Build a repository based on inbound request data.
 	 *
 	 * @param \Illuminate\Http\Request $request
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 *
+	 * @return \Fuzz\MagicBox\Contracts\Repository|\Fuzz\MagicBox\EloquentRepository
 	 */
 	public function buildRepository(Request $request): EloquentRepository
 	{

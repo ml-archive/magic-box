@@ -22,6 +22,13 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
+/**
+ * Class EloquentAccessControl
+ *
+ * An AccessControl implementation for Eloquent.
+ *
+ * @package Fuzz\MagicBox
+ */
 class EloquentAccessControl implements AccessControl
 {
 	/**

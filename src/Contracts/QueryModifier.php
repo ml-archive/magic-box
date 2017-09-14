@@ -5,6 +5,13 @@ namespace Fuzz\MagicBox\Contracts;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * Interface QueryModifier
+ *
+ * A QueryModifier applies query modifications such as eager loads, groupings, aggregations, etc to a query.
+ *
+ * @package Fuzz\MagicBox\Contracts
+ */
 interface QueryModifier
 {
 	/**

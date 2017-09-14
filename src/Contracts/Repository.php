@@ -6,12 +6,36 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Pagination\Paginator;
 
+/**
+ * Interface Repository
+ *
+ * A Repository is an implementation of the core MagicBox functionality and it is responsible for pulling in all
+ * relevant logic.
+ *
+ * @package Fuzz\MagicBox\Contracts
+ */
 interface Repository
 {
+	/**
+	 * Access the AccessControl instance
+	 *
+	 * @return \Fuzz\MagicBox\Contracts\AccessControl
+	 */
 	public function accessControl(): AccessControl;
-	public function modify(): QueryModifier;
-	public function queryFilters(): QueryFilterContainer;
 
+	/**
+	 * Access the QueryModifier instance
+	 *
+	 * @return \Fuzz\MagicBox\Contracts\QueryModifier
+	 */
+	public function modify(): QueryModifier;
+
+	/**
+	 * Access the QueryFilterContainer instance
+	 *
+	 * @return \Fuzz\MagicBox\Contracts\QueryFilterContainer
+	 */
+	public function queryFilters(): QueryFilterContainer;
 
 	/**
 	 * Set the model for an instance of this resource controller.
