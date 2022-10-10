@@ -2,10 +2,10 @@
 
 namespace Fuzz\MagicBox\Tests;
 
+use Fuzz\MagicBox\Contracts\AccessControl;
 use Fuzz\MagicBox\Tests\Models\Tag;
 use Fuzz\MagicBox\Tests\Seeds\FilterDataSeeder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Fuzz\MagicBox\Tests\Models\User;
 use Fuzz\MagicBox\Tests\Models\Post;
@@ -21,12 +21,15 @@ class EloquentRepositoryTest extends DBTestCase
 	 * @param string|null $model_class
 	 * @param array       $input
 	 *
-	 * @return \Fuzz\MagicBox\EloquentRepository
+	 * @return \Fuzz\MagicBox\Contracts\Repository|\Fuzz\MagicBox\EloquentRepository
 	 */
 	private function getRepository($model_class = null, array $input = [])
 	{
 		if (! is_null($model_class)) {
-			return (new EloquentRepository)->setModelClass($model_class)->setDepthRestriction(3)->setInput($input);
+			$repository = (new EloquentRepository)->setModelClass($model_class)->setInput($input);
+			$repository->accessControl()->setDepthRestriction(3);
+
+			return $repository;
 		}
 
 		return new EloquentRepository;
@@ -92,11 +95,15 @@ class EloquentRepositoryTest extends DBTestCase
 				]
 			])->save();
 
-		$user = $this->getRepository('Fuzz\MagicBox\Tests\Models\User')->setFilters(['username' => 'joe'])
+		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User');
+		$repository->modify()
+			->setFilters(['username' => 'joe'])
 			->setEagerLoads([
 					'posts.nothing',
 					'nada'
-				])->all()->first();
+				]);
+		$user = $repository->all()->first();
+
 
 		$this->assertNotNull($user);
 		$this->assertInstanceOf('Illuminate\Database\Eloquent\Collection', $user->posts);
@@ -289,9 +296,12 @@ class EloquentRepositoryTest extends DBTestCase
 			])->save();
 		$this->assertEquals($repository->all()->count(), 2);
 
-		$found_users = $repository->setSortOrder([
+		$repository->modify()->setSortOrder([
 				'id' => 'desc'
-			])->all();
+			]);
+
+		$found_users = $repository->all();
+
 		$this->assertEquals($found_users->count(), 2);
 		$this->assertEquals($found_users->first()->id, 2);
 	}
@@ -334,9 +344,12 @@ class EloquentRepositoryTest extends DBTestCase
 			])->save();
 		$this->assertEquals($repository->all()->count(), 3);
 
-		$found_users = $repository->setSortOrder([
+		$repository->modify()->setSortOrder([
 				'posts.title' => 'desc'
-			])->all();
+			]);
+
+		$found_users = $repository->all();
+
 		$this->assertEquals($found_users->count(), 3);
 		$this->assertEquals($found_users->first()->username, 'Robby');
 	}
@@ -346,7 +359,7 @@ class EloquentRepositoryTest extends DBTestCase
 		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User', ['username' => 'Billy']);
 		$repository->save();
 		$this->assertEquals($repository->count(), 1);
-		$repository->setModifiers([
+		$repository->modify()->set([
 				function (Builder $query) {
 					$query->whereRaw(DB::raw('0 = 1'));
 				}
@@ -359,11 +372,11 @@ class EloquentRepositoryTest extends DBTestCase
 		$repository = $this->getRepository('Fuzz\MagicBox\Tests\Models\User', ['username' => 'Billy']);
 		$repository->save();
 		$this->assertEquals($repository->count(), 1);
-		$repository->addModifier(function (Builder $query) {
+		$repository->modify()->add(function (Builder $query) {
 				$query->whereRaw(DB::raw('0 = 1'));
 			});
 
-		$this->assertSame(1, count($repository->getModifiers()));
+		$this->assertSame(1, count($repository->modify()->getModifiers()));
 		$this->assertEquals($repository->count(), 0);
 	}
 
@@ -375,7 +388,9 @@ class EloquentRepositoryTest extends DBTestCase
 		$repository = $this->getRepository(User::class);
 		$this->assertEquals($repository->all()->count(), 4);
 
-		$found_users = $repository->setFilters(['username' => '=chewbaclava@galaxyfarfaraway.com'])->all();
+		$repository->modify()->setFilters(['username' => '=chewbaclava@galaxyfarfaraway.com']);
+		$found_users = $repository->all();
+
 		$this->assertEquals($found_users->count(), 1);
 		$this->assertEquals($found_users->first()->username, 'chewbaclava@galaxyfarfaraway.com');
 	}
@@ -513,36 +528,41 @@ class EloquentRepositoryTest extends DBTestCase
 		];
 
 		$repository = $this->getRepository(User::class, $input);
-		$this->assertEquals(3, $repository->getDepthRestriction()); // getRepository sets 3 by default
-		$repository->setDepthRestriction(5);
-		$this->assertEquals(5, $repository->getDepthRestriction());
+		$this->assertEquals(3, $repository->accessControl()->getDepthRestriction()); // getRepository sets 3 by default
+		$repository->accessControl()->setDepthRestriction(5);
+		$this->assertEquals(5, $repository->accessControl()->getDepthRestriction());
 	}
 
 	public function testItDepthRestrictsEagerLoads()
 	{
 		$this->seedUsers();
 
-		$users = $this->getRepository(User::class)
-			->setDepthRestriction(0)
-			->setEagerLoads(
-				[
-					'posts.tags',
-				]
-			)->all()->toArray(); // toArray so we don't pull relations
+		$repository = $this->getRepository(User::class);
+		$repository
+			->accessControl()
+			->setDepthRestriction(0);
+		$repository->modify()->setEagerLoads(
+			[
+				'posts.tags',
+			]
+		);
+		$users = $repository->all()->toArray(); // toArray so we don't pull relations
 
 		foreach ($users as $user) {
 			$this->assertTrue(!isset($user['posts']));
 			$this->assertTrue(!isset($user['posts']['tags'])); // We should load neither
 		}
 
-		$users = $this->getRepository(User::class)
-			->setDepthRestriction(1)
-			->setEagerLoads(
-				[
-					'posts',
-					'posts.tags',
-				]
-			)->all()->toArray(); // toArray so we don't pull relations
+		$repository = $this->getRepository(User::class);
+		$repository->accessControl()
+			->setDepthRestriction(1);
+		$repository->modify()
+			->setEagerLoads([
+				'posts',
+				'posts.tags',
+			]);
+
+		$users = $repository->all()->toArray(); // toArray so we don't pull relations
 
 		foreach ($users as $user) {
 			$this->assertTrue(isset($user['posts']));
@@ -550,14 +570,16 @@ class EloquentRepositoryTest extends DBTestCase
 			$this->assertTrue(!isset($user['posts'][0]['tags'])); // We should load posts (1 level) but not tags (2 levels)
 		}
 
-		$users = $this->getRepository(User::class)
-			->setDepthRestriction(2)
-			->setEagerLoads(
-				[
-					'posts',
-					'posts.user',
-				]
-			)->all()->toArray(); // toArray so we don't pull relations
+		$repository = $this->getRepository(User::class);
+		$repository->accessControl()
+			->setDepthRestriction(2);
+		$repository->modify()
+			->setEagerLoads([
+				'posts',
+				'posts.user',
+			]
+		);
+		$users = $repository->all()->toArray(); // toArray so we don't pull relations
 
 		foreach ($users as $user) {
 			$this->assertTrue(isset($user['posts']));
@@ -573,14 +595,14 @@ class EloquentRepositoryTest extends DBTestCase
 		/**
 		 * Test with 0 depth, filter too long
 		 */
-		$users = $this->getRepository(User::class)
-			->setDepthRestriction(0)
-			->setFilters(
-				[
-					'posts.tags.label' => '=#mysonistheworst'
-				]
-			)
-			->all();
+		$repository = $this->getRepository(User::class);
+		$repository->accessControl()
+			->setDepthRestriction(0);
+		$repository->modify()->setFilters([
+			'posts.tags.label' => '=#mysonistheworst'
+		]);
+
+		$users = $repository->all();
 
 		// Filter should not apply because depth restriction is 0
 		$this->assertEquals(User::all()->count(), $users->count());
@@ -588,14 +610,13 @@ class EloquentRepositoryTest extends DBTestCase
 		/**
 		 * Test with 1 depth, filter is allowed
 		 */
-		$users = $this->getRepository(User::class)
-			->setDepthRestriction(1)
-			->setFilters(
-				[
-					'posts.title' => '~10 Easy Ways to Clean'
-				]
-			)
-			->all();
+		$repository = $this->getRepository(User::class);
+		$repository->accessControl()
+			->setDepthRestriction(1);
+		$repository->modify()->setFilters([
+			'posts.title' => '~10 Easy Ways to Clean'
+		]);
+		$users = $repository->all();
 
 		// Filter should apply because depth restriction is 1
 		$this->assertEquals(1, $users->count());
@@ -604,14 +625,13 @@ class EloquentRepositoryTest extends DBTestCase
 		/**
 		 * Test with 1 depth, filter is too long
 		 */
-		$users = $this->getRepository(User::class)
-			->setDepthRestriction(1)
-			->setFilters(
-				[
-					'posts.tags.label' => '=#mysonistheworst'
-				]
-			)
-			->all();
+		$repository = $this->getRepository(User::class);
+		$repository->accessControl()
+			->setDepthRestriction(1);
+		$repository->modify()->setFilters([
+			'posts.tags.label' => '=#mysonistheworst'
+		]);
+		$users = $repository->all();
 
 		// Filter should apply because depth restriction is 1
 		$this->assertEquals(User::all()->count(), $users->count());
@@ -619,14 +639,13 @@ class EloquentRepositoryTest extends DBTestCase
 		/**
 		 * Test with 1 depth, filter is okay
 		 */
-		$users = $this->getRepository(User::class)
-			->setDepthRestriction(2)
-			->setFilters(
-				[
-					'posts.tags.label' => '=#mysonistheworst'
-				]
-			)
-			->all();
+		$repository = $this->getRepository(User::class);
+		$repository->accessControl()
+			->setDepthRestriction(2);
+		$repository->modify()->setFilters([
+			'posts.tags.label' => '=#mysonistheworst'
+		]);
+		$users = $repository->all();
 
 		// Filter should not apply because depth restriction is 2
 		$this->assertEquals(2, $users->count());
@@ -640,9 +659,9 @@ class EloquentRepositoryTest extends DBTestCase
 	{
 		$this->seedUsers();
 
-		$users = $this->getRepository(User::class)
-			->setSortOrder(['times_captured' => 'asc'])
-			->all();
+		$repository = $this->getRepository(User::class);
+		$repository->modify()->setSortOrder(['times_captured' => 'asc']);
+		$users = $repository->all();
 
 		$this->assertEquals(User::all()->count(), $users->count());
 
@@ -660,9 +679,10 @@ class EloquentRepositoryTest extends DBTestCase
 	{
 		$this->seedUsers();
 
-		$users = $this->getRepository(User::class)
-			->setSortOrder(['times_captured' => 'desc'])
-			->all();
+		$repository = $this->getRepository(User::class);
+		$repository->modify()
+			->setSortOrder(['times_captured' => 'desc']);
+		$users = $repository->all();
 
 		$this->assertEquals(User::all()->count(), $users->count());
 
@@ -683,10 +703,12 @@ class EloquentRepositoryTest extends DBTestCase
 		/**
 		 * Sort depth zero, expect sorting by top level ID
 		 */
-		$users = $this->getRepository(User::class)
-			->setDepthRestriction(0)
-			->setSortOrder(['profile.favorite_cheese' => 'asc'])
-			->all();
+		$repository = $this->getRepository(User::class);
+		$repository->accessControl()
+			->setDepthRestriction(0);
+		$repository->modify()
+			->setSortOrder(['profile.favorite_cheese' => 'asc']);
+		$users = $repository->all();
 
 		$this->assertEquals(User::all()->count(), $users->count());
 
@@ -702,10 +724,12 @@ class EloquentRepositoryTest extends DBTestCase
 		/**
 		 * Sort depth 1, expect sorting by favorite cheese, asc alphabetical
 		 */
-		$users = $this->getRepository(User::class)
-			->setDepthRestriction(1)
-			->setSortOrder(['profile.favorite_cheese' => 'asc'])
-			->all();
+		$repository = $this->getRepository(User::class);
+		$repository->accessControl()
+			->setDepthRestriction(1);
+		$repository->modify()
+			->setSortOrder(['profile.favorite_cheese' => 'asc']);
+		$users = $repository->all();
 
 		$this->assertEquals(User::all()->count(), $users->count());
 
@@ -724,10 +748,12 @@ class EloquentRepositoryTest extends DBTestCase
 		/**
 		 * Sort depth 1, expect sorting by favorite cheese, desc alphabetical
 		 */
-		$users = $this->getRepository(User::class)
-			->setDepthRestriction(1)
-			->setSortOrder(['profile.favorite_cheese' => 'desc'])
-			->all();
+		$repository = $this->getRepository(User::class);
+		$repository->accessControl()
+			->setDepthRestriction(1);
+		$repository->modify()
+			->setSortOrder(['profile.favorite_cheese' => 'desc']);
+		$users = $repository->all();
 
 		$this->assertEquals(User::all()->count(), $users->count());
 
@@ -748,10 +774,11 @@ class EloquentRepositoryTest extends DBTestCase
 		/**
 		 * Sort depth 1, expect sorting by favorite cheese, asc alphabetical
 		 */
-		$profiles = $this->getRepository(Profile::class)
+		$repository = $this->getRepository(Profile::class);
+		$repository->modify()
 			->setSortOrder(['users.username' => 'asc'])
-			->setEagerLoads(['user'])
-			->all()->toArray();
+			->setEagerLoads(['user']);
+		$profiles = $repository->all()->toArray();
 
 		$this->assertEquals(Profile::all()->count(), count($profiles));
 
@@ -775,10 +802,11 @@ class EloquentRepositoryTest extends DBTestCase
 		/**
 		 * Sort depth 1, expect sorting by favorite cheese, asc alphabetical
 		 */
-		$tags = $this->getRepository(Tag::class)
+		$repository = $this->getRepository(Tag::class);
+		$repository->modify()
 			->setSortOrder(['posts.title' => 'asc'])
-			->setEagerLoads(['posts'])
-			->all()->toArray();
+			->setEagerLoads(['posts']);
+		$tags = $repository->all()->toArray();
 
 		$this->assertEquals(Tag::all()->count(), count($tags));
 
@@ -804,7 +832,8 @@ class EloquentRepositoryTest extends DBTestCase
 		$repository = $this->getRepository(User::class);
 		$this->assertEquals($repository->all()->count(), 4);
 
-		$found_users = $repository->setFilters(['username' => '~galaxyfarfaraway.com'])->all();
+		$repository->modify()->setFilters(['username' => '~galaxyfarfaraway.com']);
+		$found_users = $repository->all();
 		$this->assertEquals($found_users->count(), 4);
 
 		$additional_filters = [
@@ -812,10 +841,11 @@ class EloquentRepositoryTest extends DBTestCase
 			'times_captured' => '>2'
 		];
 
-		$found_users = $repository->addFilters($additional_filters)->all();
+		$repository->modify()->addFilters($additional_filters);
+		$found_users = $repository->all();
 		$this->assertEquals($found_users->count(), 2);
 
-		$filters = $repository->getFilters();
+		$filters = $repository->modify()->getFilters();
 		$this->assertEquals([
 			'username' => '~galaxyfarfaraway.com',
 			'profile.is_human' => '=true',
@@ -830,13 +860,15 @@ class EloquentRepositoryTest extends DBTestCase
 		$repository = $this->getRepository(User::class);
 		$this->assertEquals($repository->all()->count(), 4);
 
-		$found_users = $repository->setFilters(['username' => '~galaxyfarfaraway.com'])->all();
+		$repository->modify()->setFilters(['username' => '~galaxyfarfaraway.com']);
+		$found_users = $repository->all();
 		$this->assertEquals($found_users->count(), 4);
 
-		$found_users = $repository->addFilter('profile.is_human', '=true')->all();
+		$repository->modify()->addFilter('profile.is_human', '=true');
+		$found_users = $repository->all();
 		$this->assertEquals($found_users->count(), 3);
 
-		$filters = $repository->getFilters();
+		$filters = $repository->modify()->getFilters();
 		$this->assertEquals([
 			'username' => '~galaxyfarfaraway.com',
 			'profile.is_human' => '=true',
@@ -847,50 +879,50 @@ class EloquentRepositoryTest extends DBTestCase
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::FILLABLE, $repository->getFillable());
+		$this->assertSame(User::FILLABLE, $repository->accessControl()->getFillable());
 
-		$repository->setFillable(['foo']);
+		$repository->accessControl()->setFillable(['foo']);
 
-		$this->assertSame(['foo'], $repository->getFillable());
+		$this->assertSame(['foo'], $repository->accessControl()->getFillable());
 	}
 
 	public function testItCanAddFillable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::FILLABLE, $repository->getFillable());
+		$this->assertSame(User::FILLABLE, $repository->accessControl()->getFillable());
 
-		$repository->addFillable('foo');
+		$repository->accessControl()->addFillable('foo');
 
 		$expect = User::FILLABLE;
 		$expect[] = 'foo';
 
-		$this->assertSame($expect, $repository->getFillable());
+		$this->assertSame($expect, $repository->accessControl()->getFillable());
 	}
 
 	public function testItCanAddManyFillable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::FILLABLE, $repository->getFillable());
+		$this->assertSame(User::FILLABLE, $repository->accessControl()->getFillable());
 
-		$repository->addManyFillable(['foo', 'bar', 'baz']);
+		$repository->accessControl()->addManyFillable(['foo', 'bar', 'baz']);
 
 		$expect = User::FILLABLE;
 		$expect[] = 'foo';
 		$expect[] = 'bar';
 		$expect[] = 'baz';
 
-		$this->assertSame($expect, $repository->getFillable());
+		$this->assertSame($expect, $repository->accessControl()->getFillable());
 	}
 
 	public function testItCanRemoveFillable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::FILLABLE, $repository->getFillable());
+		$this->assertSame(User::FILLABLE, $repository->accessControl()->getFillable());
 
-		$repository->setFillable([
+		$repository->accessControl()->setFillable([
 			'foo',
 			'baz',
 			'bag',
@@ -900,20 +932,20 @@ class EloquentRepositoryTest extends DBTestCase
 			'foo',
 			'baz',
 			'bag',
-		], $repository->getFillable());
+		], $repository->accessControl()->getFillable());
 
-		$repository->removeFillable('baz');
+		$repository->accessControl()->removeFillable('baz');
 
-		$this->assertSame(['foo', 'bag'], $repository->getFillable());
+		$this->assertSame(['foo', 'bag'], $repository->accessControl()->getFillable());
 	}
 
 	public function testItCanRemoveManyFillable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::FILLABLE, $repository->getFillable());
+		$this->assertSame(User::FILLABLE, $repository->accessControl()->getFillable());
 
-		$repository->setFillable([
+		$repository->accessControl()->setFillable([
 			'foo',
 			'baz',
 			'bag',
@@ -923,151 +955,151 @@ class EloquentRepositoryTest extends DBTestCase
 			'foo',
 			'baz',
 			'bag',
-		], $repository->getFillable());
+		], $repository->accessControl()->getFillable());
 
-		$repository->removeManyFillable(['baz', 'bag']);
+		$repository->accessControl()->removeManyFillable(['baz', 'bag']);
 
-		$this->assertSame(['foo',], $repository->getFillable());
+		$this->assertSame(['foo',], $repository->accessControl()->getFillable());
 	}
 
 	public function testItCanDetermineIfIsFillable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::FILLABLE, $repository->getFillable());
+		$this->assertSame(User::FILLABLE, $repository->accessControl()->getFillable());
 
-		$repository->setFillable([
+		$repository->accessControl()->setFillable([
 			'*' // allow all
 		]);
 
-		$this->assertSame(EloquentRepository::ALLOW_ALL, $repository->getFillable());
+		$this->assertSame(AccessControl::ALLOW_ALL, $repository->accessControl()->getFillable());
 
-		$this->assertTrue($repository->isFillable('foobar'));
+		$this->assertTrue($repository->accessControl()->isFillable('foobar'));
 
-		$repository->setFillable([
+		$repository->accessControl()->setFillable([
 			'foo',
 			'baz',
 			'bag',
 		]);
 
-		$this->assertFalse($repository->isFillable('foobar'));
-		$this->assertTrue($repository->isFillable('foo'));
+		$this->assertFalse($repository->accessControl()->isFillable('foobar'));
+		$this->assertTrue($repository->accessControl()->isFillable('foo'));
 	}
 
 	public function testItCanSetIncludable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+		$this->assertSame(User::INCLUDABLE, $repository->accessControl()->getIncludable());
 
-		$repository->setIncludable([
+		$repository->accessControl()->setIncludable([
 			'foo',
 			'bar',
 			'baz'
 		]);
 
-		$this->assertSame(['foo', 'bar', 'baz'], $repository->getIncludable());
+		$this->assertSame(['foo', 'bar', 'baz'], $repository->accessControl()->getIncludable());
 	}
 
 	public function testItCanAddIncludable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+		$this->assertSame(User::INCLUDABLE, $repository->accessControl()->getIncludable());
 
-		$repository->setIncludable([
+		$repository->accessControl()->setIncludable([
 			'foo',
 			'bar',
 			'baz'
 		]);
 
-		$repository->addIncludable('foobar');
+		$repository->accessControl()->addIncludable('foobar');
 
-		$this->assertSame(['foo', 'bar', 'baz', 'foobar'], $repository->getIncludable());
+		$this->assertSame(['foo', 'bar', 'baz', 'foobar'], $repository->accessControl()->getIncludable());
 	}
 
 	public function testItCanAddManyIncludable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+		$this->assertSame(User::INCLUDABLE, $repository->accessControl()->getIncludable());
 
-		$repository->setIncludable([
+		$repository->accessControl()->setIncludable([
 			'foo',
 			'bar',
 			'baz'
 		]);
 
-		$repository->addManyIncludable(['foobar', 'bazbat']);
+		$repository->accessControl()->addManyIncludable(['foobar', 'bazbat']);
 
-		$this->assertSame(['foo', 'bar', 'baz', 'foobar', 'bazbat'], $repository->getIncludable());
+		$this->assertSame(['foo', 'bar', 'baz', 'foobar', 'bazbat'], $repository->accessControl()->getIncludable());
 	}
 
 	public function testItCanRemoveIncludable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+		$this->assertSame(User::INCLUDABLE, $repository->accessControl()->getIncludable());
 
-		$repository->setIncludable([
+		$repository->accessControl()->setIncludable([
 			'foo',
 			'bar',
 			'baz'
 		]);
 
-		$repository->removeIncludable('foo');
+		$repository->accessControl()->removeIncludable('foo');
 
-		$this->assertSame(['bar', 'baz'], $repository->getIncludable());
+		$this->assertSame(['bar', 'baz'], $repository->accessControl()->getIncludable());
 	}
 
 	public function testItCanRemoveManyIncludable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+		$this->assertSame(User::INCLUDABLE, $repository->accessControl()->getIncludable());
 
-		$repository->setIncludable([
+		$repository->accessControl()->setIncludable([
 			'foo',
 			'bar',
 			'baz'
 		]);
 
-		$repository->removeManyIncludable(['foo', 'bar']);
+		$repository->accessControl()->removeManyIncludable(['foo', 'bar']);
 
-		$this->assertSame(['baz'], $repository->getIncludable());
+		$this->assertSame(['baz'], $repository->accessControl()->getIncludable());
 	}
 
 	public function testItCanDetermineIsIncludable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::INCLUDABLE, $repository->getIncludable());
+		$this->assertSame(User::INCLUDABLE, $repository->accessControl()->getIncludable());
 
-		$repository->setIncludable([
+		$repository->accessControl()->setIncludable([
 			'*' // Allow all
 		]);
 
-		$this->assertSame(EloquentRepository::ALLOW_ALL, $repository->getIncludable());
+		$this->assertSame(AccessControl::ALLOW_ALL, $repository->accessControl()->getIncludable());
 
-		$this->assertTrue($repository->isIncludable('foobar'));
+		$this->assertTrue($repository->accessControl()->isIncludable('foobar'));
 
-		$repository->setIncludable([
+		$repository->accessControl()->setIncludable([
 			'foo',
 			'bar',
 			'baz'
 		]);
 
-		$this->assertFalse($repository->isIncludable('foobar'));
-		$this->assertTrue($repository->isIncludable('foo'));
+		$this->assertFalse($repository->accessControl()->isIncludable('foobar'));
+		$this->assertTrue($repository->accessControl()->isIncludable('foo'));
 	}
 
 	public function testItCanSetFilterable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+		$this->assertSame(User::FILTERABLE, $repository->accessControl()->getFilterable());
 
-		$repository->setFilterable([
+		$repository->accessControl()->setFilterable([
 			'foo',
 			'bar',
 			'baz',
@@ -1077,44 +1109,44 @@ class EloquentRepositoryTest extends DBTestCase
 			'foo',
 			'bar',
 			'baz',
-		], $repository->getFilterable());
+		], $repository->accessControl()->getFilterable());
 	}
 
 	public function testItCanAddFilterable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+		$this->assertSame(User::FILTERABLE, $repository->accessControl()->getFilterable());
 
-		$repository->setFilterable([
+		$repository->accessControl()->setFilterable([
 			'foo',
 			'bar',
 			'baz',
 		]);
 
-		$repository->addFilterable('foobar');
+		$repository->accessControl()->addFilterable('foobar');
 
 		$this->assertSame([
 			'foo',
 			'bar',
 			'baz',
 			'foobar',
-		], $repository->getFilterable());
+		], $repository->accessControl()->getFilterable());
 	}
 
 	public function testItCanAddManyFilterable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+		$this->assertSame(User::FILTERABLE, $repository->accessControl()->getFilterable());
 
-		$repository->setFilterable([
+		$repository->accessControl()->setFilterable([
 			'foo',
 			'bar',
 			'baz',
 		]);
 
-		$repository->addManyFilterable(['foobar', 'bazbat']);
+		$repository->accessControl()->addManyFilterable(['foobar', 'bazbat']);
 
 		$this->assertSame([
 			'foo',
@@ -1122,65 +1154,65 @@ class EloquentRepositoryTest extends DBTestCase
 			'baz',
 			'foobar',
 			'bazbat',
-		], $repository->getFilterable());
+		], $repository->accessControl()->getFilterable());
 	}
 
 	public function testItCanRemoveFilterable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+		$this->assertSame(User::FILTERABLE, $repository->accessControl()->getFilterable());
 
-		$repository->setFilterable([
+		$repository->accessControl()->setFilterable([
 			'foo',
 			'bar',
 			'baz',
 		]);
 
-		$repository->removeFilterable('bar');
+		$repository->accessControl()->removeFilterable('bar');
 
-		$this->assertSame(['foo', 'baz',], $repository->getFilterable());
+		$this->assertSame(['foo', 'baz',], $repository->accessControl()->getFilterable());
 	}
 
 	public function testItCanRemoveManyFilterable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+		$this->assertSame(User::FILTERABLE, $repository->accessControl()->getFilterable());
 
-		$repository->setFilterable([
+		$repository->accessControl()->setFilterable([
 			'foo',
 			'bar',
 			'baz',
 		]);
 
-		$repository->removeManyFilterable(['foo', 'baz']);
+		$repository->accessControl()->removeManyFilterable(['foo', 'baz']);
 
-		$this->assertSame(['bar',], $repository->getFilterable());
+		$this->assertSame(['bar',], $repository->accessControl()->getFilterable());
 	}
 
 	public function testItCanDetermineIsFilterable()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$this->assertSame(User::FILTERABLE, $repository->getFilterable());
+		$this->assertSame(User::FILTERABLE, $repository->accessControl()->getFilterable());
 
-		$repository->setFilterable([
+		$repository->accessControl()->setFilterable([
 			'*'
 		]);
 
-		$this->assertSame(EloquentRepository::ALLOW_ALL, $repository->getFilterable());
+		$this->assertSame(AccessControl::ALLOW_ALL, $repository->accessControl()->getFilterable());
 
-		$this->assertTrue($repository->isFilterable('foobar'));
+		$this->assertTrue($repository->accessControl()->isFilterable('foobar'));
 
-		$repository->setFilterable([
+		$repository->accessControl()->setFilterable([
 			'foo',
 			'bar',
 			'baz',
 		]);
 
-		$this->assertFalse($repository->isFilterable('foobar'));
-		$this->assertTrue($repository->isFilterable('foo'));
+		$this->assertFalse($repository->accessControl()->isFilterable('foobar'));
+		$this->assertTrue($repository->accessControl()->isFilterable('foo'));
 	}
 
 	public function testItDoesNotFillFieldThatIsNotFillable()
@@ -1232,14 +1264,16 @@ class EloquentRepositoryTest extends DBTestCase
 			]
 		)->save();
 
-		$user = $this->getRepository(User::class)->setFilters(['username' => 'joe'])
+		$repository = $this->getRepository(User::class);
+		$repository->modify()->setFilters(['username' => 'joe'])
 			->setEagerLoads(
 				[
 					'posts.nothing',
 					'not_exists',
 					'not_includable'
 				]
-			)->all()->first();
+			);
+		$user = $repository->all()->first();
 
 		$this->assertNotNull($user);
 		$this->assertInstanceOf(Collection::class, $user->posts);
@@ -1260,10 +1294,11 @@ class EloquentRepositoryTest extends DBTestCase
 		$repository = $this->getRepository(User::class);
 		$this->assertEquals($repository->all()->count(), 4);
 
-		$found_users = $repository->setFilters([
+		$repository->modify()->setFilters([
 			'not_filterable' => '=foo', // Should not be applied
 			'posts.not_filterable' => '=foo', // Should not be applied
-		])->all();
+		]);
+		$found_users = $repository->all();
 		$this->assertEquals($found_users->count(), 4); // No filters applied, expect to get all 4 users
 	}
 
@@ -1275,19 +1310,21 @@ class EloquentRepositoryTest extends DBTestCase
 		$this->assertEquals($repository->all()->count(), 4);
 
 		// Filters not applied
-		$repository->setFilterable([]);
-		$found_users = $repository->setFilters([
+		$repository->accessControl()->setFilterable([]);
+		$repository->modify()->setFilters([
 			'profile.is_human' => '=true',
 			'times_captured' => '>2'
-		])->all();
+		]);
+		$found_users = $repository->all();
 		$this->assertEquals($found_users->count(), 4);
 
 		// Filters now applied
-		$repository->setFilterable(EloquentRepository::ALLOW_ALL);
-		$found_users = $repository->setFilters([
+		$repository->accessControl()->setFilterable(AccessControl::ALLOW_ALL);
+		$repository->modify()->setFilters([
 			'profile.is_human' => '=true',
 			'times_captured' => '>2'
-		])->all();
+		]);
+		$found_users = $repository->all();
 		$this->assertEquals($found_users->count(), 2);
 	}
 
@@ -1295,7 +1332,7 @@ class EloquentRepositoryTest extends DBTestCase
 	{
 		$repository = $this->getRepository(User::class);
 
-		$repository->setIncludable([
+		$repository->accessControl()->setIncludable([
 			'foo',
 			'bar',
 			'baz',
@@ -1305,14 +1342,14 @@ class EloquentRepositoryTest extends DBTestCase
 			'foo' => true,
 			'bar' => true,
 			'baz' => true,
-		], $repository->getIncludable(true));
+		], $repository->accessControl()->getIncludable(true));
 	}
 
 	public function testItCanGetFillableAsAssoc()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$repository->setFillable([
+		$repository->accessControl()->setFillable([
 			'foo',
 			'bar',
 			'baz',
@@ -1322,14 +1359,14 @@ class EloquentRepositoryTest extends DBTestCase
 			'foo' => true,
 			'bar' => true,
 			'baz' => true,
-		], $repository->getFillable(true));
+		], $repository->accessControl()->getFillable(true));
 	}
 
 	public function testItCanGetFilterableAsAssoc()
 	{
 		$repository = $this->getRepository(User::class);
 
-		$repository->setFilterable([
+		$repository->accessControl()->setFilterable([
 			'foo',
 			'bar',
 			'baz',
@@ -1339,7 +1376,7 @@ class EloquentRepositoryTest extends DBTestCase
 			'foo' => true,
 			'bar' => true,
 			'baz' => true,
-		], $repository->getFilterable(true));
+		], $repository->accessControl()->getFilterable(true));
 	}
 
 	public function testItCanAggregateQueryCount()

@@ -9,6 +9,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
+/**
+ * Class ChecksRelations
+ *
+ * Safely determine if a key is a relation on a model.
+ *
+ * @package Fuzz\MagicBox\Utility
+ */
 trait ChecksRelations
 {
 	/**

@@ -2,13 +2,41 @@
 
 namespace Fuzz\MagicBox\Contracts;
 
-use Closure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Pagination\Paginator;
 
+/**
+ * Interface Repository
+ *
+ * A Repository is an implementation of the core MagicBox functionality and it is responsible for pulling in all
+ * relevant logic.
+ *
+ * @package Fuzz\MagicBox\Contracts
+ */
 interface Repository
 {
+	/**
+	 * Access the AccessControl instance
+	 *
+	 * @return \Fuzz\MagicBox\Contracts\AccessControl
+	 */
+	public function accessControl(): AccessControl;
+
+	/**
+	 * Access the QueryModifier instance
+	 *
+	 * @return \Fuzz\MagicBox\Contracts\QueryModifier
+	 */
+	public function modify(): QueryModifier;
+
+	/**
+	 * Access the QueryFilterContainer instance
+	 *
+	 * @return \Fuzz\MagicBox\Contracts\QueryFilterContainer
+	 */
+	public function queryFilters(): QueryFilterContainer;
+
 	/**
 	 * Set the model for an instance of this resource controller.
 	 *
@@ -52,68 +80,6 @@ interface Repository
 	 * @return bool
 	 */
 	public function exists(): bool;
-
-	/**
-	 * Set eager load manually.
-	 *
-	 * @param array $eager_loads
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function setEagerLoads(array $eager_loads): Repository;
-
-	/**
-	 * Get eager loads.
-	 *
-	 * @return array
-	 */
-	public function getEagerLoads(): array;
-
-	/**
-	 * Set filters manually.
-	 *
-	 * @param array $filters
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function setFilters(array $filters): Repository;
-
-	/**
-	 * Get filters.
-	 *
-	 * @return array
-	 */
-	public function getFilters(): array;
-
-	/**
-	 * Add a single modifier
-	 *
-	 * @param \Closure $modifier
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function addModifier(Closure $modifier): Repository;
-
-	/**
-	 * Set modifiers.
-	 *
-	 * @param array $modifiers
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function setModifiers(array $modifiers): Repository;
-
-	/**
-	 * Get modifiers.
-	 *
-	 * @return array
-	 */
-	public function getModifiers(): array;
-
-	/**
-	 * Return a model's fields.
-	 *
-	 * @param \Illuminate\Database\Eloquent\Model $instance
-	 * @return array
-	 */
-	public static function getFields(Model $instance): array;
 
 	/**
 	 * Find an instance of a model by ID.
@@ -208,193 +174,4 @@ interface Repository
 	 * @return \Illuminate\Database\Eloquent\Model
 	 */
 	public function save(): Model;
-
-	/**
-	 * Set the fillable array
-	 *
-	 * @param array $fillable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function setFillable(array $fillable): Repository;
-
-	/**
-	 * Get the fillable attributes
-	 *
-	 * @param bool $assoc
-	 *
-	 * @return array
-	 */
-	public function getFillable(bool $assoc = false): array;
-
-	/**
-	 * Add a fillable attribute
-	 *
-	 * @param string $fillable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function addFillable(string $fillable): Repository;
-
-	/**
-	 * Add many fillable fields
-	 *
-	 * @param array $fillable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function addManyFillable(array $fillable): Repository;
-
-	/**
-	 * Remove a fillable attribute
-	 *
-	 * @param string $fillable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function removeFillable(string $fillable): Repository;
-
-	/**
-	 * Remove many fillable fields
-	 *
-	 * @param array $fillable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function removeManyFillable(array $fillable): Repository;
-
-	/**
-	 * Determine whether a given key is fillable
-	 *
-	 * @param string $key
-	 *
-	 * @return bool
-	 */
-	public function isFillable(string $key): bool;
-
-	/**
-	 * Set the relationships which can be included by the model
-	 *
-	 * @param array $includable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function setIncludable(array $includable): Repository;
-
-	/**
-	 * Get the includable relationships
-	 *
-	 * @param bool $assoc
-	 *
-	 * @return array
-	 */
-	public function getIncludable(bool $assoc = false): array;
-
-	/**
-	 * Add an includable relationship
-	 *
-	 * @param string $includable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function addIncludable(string $includable): Repository;
-
-	/**
-	 * Add many includable fields
-	 *
-	 * @param array $includable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function addManyIncludable(array $includable): Repository;
-
-	/**
-	 * Remove an includable relationship
-	 *
-	 * @param string $includable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function removeIncludable(string $includable): Repository;
-
-	/**
-	 * Remove many includable relationships
-	 *
-	 * @param array $includable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function removeManyIncludable(array $includable): Repository;
-
-	/**
-	 * Determine whether a given key is includable
-	 *
-	 * @param string $key
-	 *
-	 * @return bool
-	 */
-	public function isIncludable(string $key): bool;
-
-	/**
-	 * Set the fields which can be filtered on the model
-	 *
-	 * @param array $filterable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function setFilterable(array $filterable): Repository;
-
-	/**
-	 * Get the filterable fields
-	 *
-	 * @param bool $assoc
-	 *
-	 * @return array
-	 */
-	public function getFilterable(bool $assoc = false): array;
-
-	/**
-	 * Add a filterable field
-	 *
-	 * @param string $filterable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function addFilterable(string $filterable): Repository;
-
-	/**
-	 * Add many filterable fields
-	 *
-	 * @param array $filterable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function addManyFilterable(array $filterable): Repository;
-
-	/**
-	 * Remove a filterable field
-	 *
-	 * @param string $filterable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function removeFilterable(string $filterable): Repository;
-
-	/**
-	 * Remove many filterable fields
-	 *
-	 * @param array $filterable
-	 *
-	 * @return \Fuzz\MagicBox\Contracts\Repository
-	 */
-	public function removeManyFilterable(array $filterable): Repository;
-
-	/**
-	 * Determine whether a given key is filterable
-	 *
-	 * @param string $key
-	 *
-	 * @return bool
-	 */
-	public function isFilterable(string $key): bool;
 }

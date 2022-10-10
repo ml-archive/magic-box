@@ -2,9 +2,16 @@
 
 namespace Fuzz\MagicBox;
 
-use Fuzz\MagicBox\Contracts\FilterInterface;
+use Fuzz\MagicBox\Contracts\QueryFilterContainer;
 
-class Filter implements FilterInterface
+/**
+ * Class Filter
+ *
+ * A QueryFilterContainer implementation for Eloquent.
+ *
+ * @package Fuzz\MagicBox
+ */
+class Filter implements QueryFilterContainer
 {
 	/**
 	 * Supported filter methods
@@ -146,7 +153,7 @@ class Filter implements FilterInterface
 	 * @param array                                 $columns
 	 * @param string                                $table
 	 */
-	public static function filterQuery($query, $filters, $columns, $table)
+	protected static function filterQuery($query, $filters, $columns, $table)
 	{
 		if (! is_null($table)) {
 			self::$table_prefix = $table;

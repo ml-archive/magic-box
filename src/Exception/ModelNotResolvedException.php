@@ -7,7 +7,7 @@ use RuntimeException;
 /**
  * Class ModelNotResolvedException
  *
- * Thrown when a model could not be resolved by a model resolver.
+ * Thrown when a model could not be resolved by a ModelResolver.
  *
  * @package Fuzz\MagicBox\Exception
  */

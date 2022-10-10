@@ -2,13 +2,17 @@
 
 namespace Fuzz\MagicBox\Utility;
 
-use Fuzz\MagicBox\Contracts\MagicBoxResource;
 use Fuzz\MagicBox\Contracts\ModelResolver;
 use Fuzz\MagicBox\Exception\ModelNotResolvedException;
-use Illuminate\Support\Str;
 use Illuminate\Routing\Route;
-use Illuminate\Console\AppNamespaceDetectorTrait;
 
+/**
+ * Class ExplicitModelResolver
+ *
+ * A ModelResolver which expects a controller to define the resource its repositories should work on.
+ *
+ * @package Fuzz\MagicBox\Utility
+ */
 class ExplicitModelResolver implements ModelResolver
 {
 	/**
@@ -45,6 +49,7 @@ class ExplicitModelResolver implements ModelResolver
 		// Model could not be resolved
 		throw new ModelNotResolvedException;
 	}
+
 	/**
 	 * Checks the route for a resource property.
 	 *
@@ -56,6 +61,7 @@ class ExplicitModelResolver implements ModelResolver
 	{
 		return array_key_exists('resource', $route->getAction());
 	}
+
 	/**
 	 * Get the resource property from a route.
 	 *
@@ -67,6 +73,7 @@ class ExplicitModelResolver implements ModelResolver
 	{
 		return $route->getAction()['resource'];
 	}
+
 	/**
 	 * Checks if the action uses a callable.
 	 *
@@ -78,6 +85,7 @@ class ExplicitModelResolver implements ModelResolver
 	{
 		return (is_callable($action['uses']));
 	}
+
 	/**
 	 * Check if the controller has a resource.
 	 *
@@ -89,6 +97,7 @@ class ExplicitModelResolver implements ModelResolver
 	{
 		return isset($controller::$resource);
 	}
+
 	/**
 	 * Get the routes controller.
 	 *
@@ -100,6 +109,7 @@ class ExplicitModelResolver implements ModelResolver
 	{
 		return explode('@', $route->getAction()['uses'])[0];
 	}
+
 	/**
 	 * Get the controllers resource.
 	 *
@@ -111,6 +121,7 @@ class ExplicitModelResolver implements ModelResolver
 	{
 		return $controller::$resource;
 	}
+
 	/**
 	 * Get the routes method.
 	 *

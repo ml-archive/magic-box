@@ -8,6 +8,13 @@ use Illuminate\Support\Str;
 use Illuminate\Routing\Route;
 use Illuminate\Console\AppNamespaceDetectorTrait;
 
+/**
+ * Class RouteGuessingModelResolver
+ *
+ * A ModelResolver which guesses the resource currently being worked on based on the route name.
+ *
+ * @package Fuzz\MagicBox\Utility
+ */
 class RouteGuessingModelResolver implements ModelResolver
 {
 	use AppNamespaceDetectorTrait;
